@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FlexNet - Simulador Operativo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { 
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
+            --blue-600: #2563eb; --blue-50: #eff6ff;
+            --emerald-600: #059669; --emerald-50: #ecfdf5;
+            --red-600: #dc2626; --red-50: #fef2f2;
+            --amber-600: #d97706; --purple-600: #7c3aed;
+        }
+        
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
+        
+        /* NAVBAR CORPORATIVO */
+        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); }
+        
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+
+        /* GRID PRINCIPAL (Layout lateral) */
+        .wrapper { max-width: 1500px; margin: 25px auto; display: grid; grid-template-columns: 360px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
+        
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
+        .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
+
+        /* FORMULARIOS (Aside) */
+        label { display: block; font-weight: 600; margin: 15px 0 6px; font-size: 0.9em; color: var(--slate-700); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+        .row-flex { display: flex; gap: 15px; }
+        
+        .checkbox-label { display: flex; align-items: center; gap: 8px; margin-top: 15px; cursor: pointer; background: var(--slate-50); padding: 12px; border-radius: 6px; border: 1px solid var(--slate-200); }
+        .checkbox-label input { width: auto; margin: 0; }
+
+        button { width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-success { background: var(--emerald-600); margin-top: 10px; }
+        .btn-success:hover { background: #047857; }
+
+        /* ESTADO DEL SISTEMA (Status) */
+        .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
+        .status-ready { color: var(--emerald-600); background: var(--emerald-50); border-color: #a7f3d0; }
+        .status-error { color: var(--red-600); background: var(--red-50); border-color: #fecaca; }
+        .status-loading { color: var(--blue-600); }
+
+        .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* KPIs SUPERIORES (Main) */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); position: relative; overflow: hidden; border-left: 4px solid var(--slate-400); }
+        .stat-box h4 { margin: 0 0 5px 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .stat-box span { font-size: 1.8em; font-weight: 800; color: var(--slate-900); display: block; }
+        .stat-detail { font-size: 0.75em; color: #64748b; margin-top: 8px; line-height: 1.4; font-weight: 500; }
+        
+        .box-ing { border-left-color: var(--blue-600); }
+        .box-ing span { color: var(--blue-600); }
+        .box-cos { border-left-color: var(--red-600); }
+        .box-cos span { color: var(--red-600); }
+        .box-ren { border-left-color: var(--slate-400); transition: border-color 0.3s; }
+        .box-ped { border-left-color: var(--amber-600); }
+
+        /* TABLA DE RESULTADOS */
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: inset 0 0 0 1px var(--slate-200); border-radius: 8px; }
+        .table-wrapper::-webkit-scrollbar { height: 10px; }
+        .table-wrapper::-webkit-scrollbar-track { background: var(--slate-50); border-radius: 0 0 8px 8px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; white-space: nowrap; }
+        th { background: var(--slate-50); padding: 12px 15px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--slate-200); }
+        
+        .col-tarifa { color: #64748b; font-size: 0.9em; }
+        .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); }
+        .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
+        
+        .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; }
+        .badge-cobrado { background: var(--amber-50); color: var(--amber-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fde68a; }
+    </style>
+    
+    <script src="config.js"></script>
+    <script src="motorTarifas.js"></script> 
+</head>
+<body>
+
+<div class="navbar" id="navbar">
+    <div class="navbar-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        Simulador Operativo
+    </div>
+    
+    <div class="nav-links">
+        <a href="Inicio.html">&larr; Menú Principal</a>
+        <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
+        <a href="Rentabilidad.html">📊 Rentabilidad</a>
+        <a href="RentabilidadVehiculos.html">🚛 Vehículos</a>
+        <a href="Reportes.html">📈 Dashboard</a>
+        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    </div>
+
+    <div class="user-info" id="infoUsuario"></div>
+</div>
+
+<div class="wrapper">
+    <aside>
+        <div class="card" style="border-top: 4px solid var(--blue-600); padding: 20px;">
+            <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
+            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Descargando Tarifario Nube...</div>
+            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Sincronizando Monitor PC...</div>
+        </div>
+
+        <div class="card">
+            <h3>⚙️ Configuración de Ruta</h3>
+            
+            <label>📅 Fecha de Despacho:</label>
+            <input type="date" id="fechaDespacho">
+            
+            <label>🏢 Proveedor Logístico:</label>
+            <select id="selProv" onchange="actualizarVehiculos()"><option value="">Cargando proveedores...</option></select>
+            
+            <label>🚛 Vehículo Asignado:</label>
+            <select id="selVehiculo"></select>
+
+            <div class="row-flex">
+                <div style="flex:1">
+                    <label>Cant. Estibas:</label>
+                    <input type="number" id="numEstibas" value="0" min="0">
+                </div>
+                <div style="flex:1">
+                    <label>Horas Extra:</label>
+                    <input type="number" id="numHE" value="0" min="0">
+                </div>
+            </div>
+
+            <label class="checkbox-label">
+                <input type="checkbox" id="chkExc">
+                <span>Servicio Exclusivo (Horario Laboral)</span>
+            </label>
+            
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <label>📦 Cargar IDs de Pedidos:</label>
+                <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--blue-600); margin-bottom:6px;">0 Únicos</span>
+            </div>
+            <textarea id="txtPedidos" rows="6" oninput="contarPedidos()" placeholder="Pegue aquí el listado de IDs..."></textarea>
+
+            <button id="btnCalc" onclick="ejecutar()" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                CALCULAR SIMULACIÓN
+            </button>
+            <button onclick="guardar()" class="btn-success">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                CONFIRMAR Y GUARDAR
+            </button>
+        </div>
+    </aside>
+
+    <main>
+        <div class="stats-grid">
+            <div class="stat-box box-ing">
+                <h4>Ingresos Brutos</h4>
+                <span id="vIng">$0.00</span>
+            </div>
+            <div class="stat-box box-cos">
+                <h4>Costo Operativo</h4>
+                <span id="vCos">$0.00</span>
+                <div id="detallesCosto" class="stat-detail">Base: $0.00 | Estibas: $0.00 <br> Exc: $0.00 | H.E.: $0.00</div>
+            </div>
+            <div id="boxR" class="stat-box box-ren">
+                <h4>Rentabilidad Neta</h4>
+                <span id="vRent">$0.00</span>
+            </div>
+            <div class="stat-box box-ped">
+                <h4>Volumen Carga</h4>
+                <span id="vCant">0</span>
+                <div class="stat-detail">Pedidos facturables procesados.</div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow:hidden;">
+            <h3 style="margin: 0; padding: 20px 20px 15px; border-bottom: none;">📋 Detalle de Facturación por Ruta</h3>
+            <div class="table-wrapper">
+                <table id="tblD">
+                    <thead>
+                        <tr>
+                            <th>ID Pedido</th>
+                            <th>Cliente</th>
+                            <th style="text-align:center;">Intentos</th>
+                            <th>Localidad / CP</th>
+                            <th>Trayecto Base</th>
+                            <th style="text-align:center;">Peso (Kg)</th>
+                            <th class="col-tarifa">Tfa. x Peso</th>
+                            <th class="col-tarifa">Tfa. x Pedido</th>
+                            <th class="col-tarifa">Tfa. Rango</th>
+                            <th class="col-tarifa">Tfa. Medida</th>
+                            <th class="col-total" style="background:var(--slate-50);">Tarifa Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando datos para simulación...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+
+    let dMonitor = [], dTarifas = [];
+    let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
+    let cloudLista = false, monitorListo = false;
+    let pedidosHistoricos = new Set(); 
+    let monitorSincronizando = true; 
+    let tarifasSincronizando = true;
+
+    // --- FUNCIONES DE SÚPER MEMORIA (IndexedDB) ---
+    const dbName = "SimuladorDB";
+    const storeName = "MonitorStore";
+
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: "id" }); }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function guardarDatoDB(id, data) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put({ id: id, data: data });
+        return new Promise(resolve => tx.oncomplete = resolve);
+    }
+
+    async function obtenerDatoDB(id) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readonly");
+        const request = tx.objectStore(storeName).get(id);
+        return new Promise(resolve => {
+            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    window.onload = async function() {
+        document.getElementById('infoUsuario').innerHTML = `
+            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+        if (sesion.rol !== 'Administrador') { document.getElementById('linkRegistro').style.display = 'none'; }
+        document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
+
+        // 1. CARGA INTELIGENTE DE TARIFAS
+        let promesaTarifas = (async () => {
+            try {
+                const cacheTarifas = await obtenerDatoDB("tarifasCargadas");
+                if (cacheTarifas) {
+                    dTarifas = cacheTarifas.dTarifas || []; tfaPesoDB = cacheTarifas.tfaPesoDB || [];
+                    tfaPedidoDB = cacheTarifas.tfaPedidoDB || []; tfaRangoDB = cacheTarifas.tfaRangoDB || [];
+                    tfaMedidaDB = cacheTarifas.tfaMedidaDB || []; trayectoDB = cacheTarifas.trayectoDB || [];
+                    pedidosHistoricos = new Set(cacheTarifas.pedidosHistoricos || []);
+
+                    let box = document.getElementById('statusNube');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Tarifas en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span> Actualizando...</span>`;
+                    cloudLista = true; cargarProveedores(); checkReady();
+                }
+
+                const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                    fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                    fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                    fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                ]);
+
+                const dbData = await resDB.json();
+                dTarifas = await resTarifas.json(); tfaPesoDB = await resTPeso.json();
+                tfaPedidoDB = await resTPedido.json(); tfaRangoDB = await resTRango.json();
+                tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
+
+                pedidosHistoricos.clear();
+                dbData.forEach(row => { if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); });
+
+                await guardarDatoDB("tarifasCargadas", { dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, pedidosHistoricos: Array.from(pedidosHistoricos) });
+                tarifasSincronizando = false;
+
+                let box = document.getElementById('statusNube');
+                box.className = "status-box status-ready";
+                box.innerHTML = "✅ Tarifario Nube: Sincronizado";
+                cloudLista = true; cargarProveedores(); checkReady();
+            } catch (e) {
+                tarifasSincronizando = false;
+                let box = document.getElementById('statusNube');
+                if(!dTarifas.length) {
+                    box.className = "status-box status-error"; box.innerHTML = "❌ Error Tarifas: Revise conexión.";
+                } else {
+                    box.className = "status-box status-ready"; box.innerHTML = "✅ Tarifas (Modo Offline)";
+                }
+            }
+        })();
+
+        // 2. CARGA INTELIGENTE DEL MONITOR
+        let promesaMonitor = (async () => {
+            try {
+                const cache = await obtenerDatoDB("monitorCargado");
+                if (cache && cache.length > 0) {
+                    dMonitor = cache;
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Monitor en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span> Actualizando...</span>`;
+                    monitorListo = true; checkReady();
+                }
+
+                const resExcel = await fetch(`${SCRIPT_URL}?action=getMonitorExcel`);
+                const base64Data = await resExcel.text();
+                if(base64Data.startsWith('[') || base64Data.startsWith('{')) throw new Error("Error de servidor.");
+
+                const binaryData = atob(base64Data);
+                const uint8Array = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) { uint8Array[i] = binaryData.charCodeAt(i); }
+                const workbook = XLSX.read(uint8Array, {type: 'array'});
+                
+                dMonitor = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: false});
+                await guardarDatoDB("monitorCargado", dMonitor);
+                monitorSincronizando = false;
+
+                let box = document.getElementById('statusMonitor');
+                box.className = "status-box status-ready";
+                box.innerHTML = `✅ Monitor Nube: Sincronizado (${dMonitor.length})`;
+                monitorListo = true; checkReady();
+            } catch (e) {
+                monitorSincronizando = false;
+                let box = document.getElementById('statusMonitor');
+                if(!dMonitor.length) { 
+                    box.className = "status-box status-error"; box.innerHTML = `❌ Error Monitor: ${e.message}`;
+                } else { 
+                    box.className = "status-box status-ready"; box.innerHTML = `✅ Monitor (Modo Offline)`;
+                }
+            }
+        })();
+
+        await Promise.all([promesaTarifas, promesaMonitor]);
+    };
+
+    function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
+
+    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function cargarProveedores() {
+        const provs = [...new Set(dTarifas.map(v => v.PROVEEDOR))];
+        const sel = document.getElementById('selProv');
+        const valorActual = sel.value; 
+        
+        sel.innerHTML = '<option value="">Seleccione proveedor...</option>';
+        provs.forEach(p => { if(p) sel.innerHTML += `<option value="${p}">${p}</option>`; });
+        
+        if(valorActual) { sel.value = valorActual; actualizarVehiculos(); }
+    }
+
+    function actualizarVehiculos() {
+        const p = document.getElementById('selProv').value;
+        const c = document.getElementById('selVehiculo');
+        const valorActual = c.value;
+
+        c.innerHTML = '';
+        dTarifas.filter(v => v.PROVEEDOR === p).forEach(v => {
+            let ciudadVehiculo = String(v.CIUDAD).trim().toUpperCase();
+            if (sesion.rol === 'Administrador' || ciudadVehiculo === sesion.ciudad) {
+                let baseClean = parseDinero(v['Precio Base Dia']);
+                let excClean = parseDinero(v['SERVICIO EXCLUSIVO HORARIO LABORAL']);
+                let heClean = parseDinero(v['HORAS EXTRAS']);
+                if (heClean === 0) heClean = 6.25;
+                c.innerHTML += `<option value="${baseClean}" data-ex="${excClean}" data-he="${heClean}">${v.PLACA || v.PLACAS} - ${v.CIUDAD}</option>`;
+            }
+        });
+        if(valorActual && Array.from(c.options).some(opt => opt.value === valorActual)){ c.value = valorActual; }
+    }
+
+    function contarPedidos() {
+        const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').filter(x => x.trim()))];
+        document.getElementById('lblCant').innerText = ids.length + " Únicos";
+    }
+
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-' || String(valorExcel).trim() === '$ -') return 0;
+        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
+    function ejecutar() {
+        const fecha = document.getElementById('fechaDespacho').value;
+        const prov = document.getElementById('selProv').value;
+        const selV = document.getElementById('selVehiculo');
+        const estibas = document.getElementById('numEstibas').value;
+        const horasExtra = document.getElementById('numHE').value;
+
+        if (!fecha || !prov || selV.selectedIndex === -1 || !selV.value || estibas === "" || estibas < 0 || horasExtra === "" || horasExtra < 0) {
+            return alert("⚠️ Faltan campos por llenar o datos inválidos en la configuración de la ruta.");
+        }
+
+        const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').map(x => x.trim()).filter(x => x))];
+        if (ids.length === 0) return alert("⚠️ Ingrese al menos un ID de pedido.");
+
+        for (let id of ids) {
+            if (!/^\d{7}$/.test(id)) return alert(`⚠️ El ID (${id}) es incorrecto. Deben ser 7 dígitos numéricos.`);
+            const existe = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
+            if (!existe) {
+                let msg = `❌ PEDIDO NO EXISTE (${id}).`;
+                if(monitorSincronizando) msg += `\n\n⏳ El sistema aún está descargando datos nuevos en segundo plano. Espera unos segundos e intenta de nuevo.`;
+                return alert(msg);
+            }
+        }
+
+        const tbody = document.querySelector('#tblD tbody');
+        const opt = selV.options[selV.selectedIndex];
+        tbody.innerHTML = '';
+        let tIngresosValidos = 0;
+        
+        ids.forEach(id => {
+            const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
+            if(p) {
+                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
+                let intentos = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos']) || 1);
+                let cobradoAntes = pedidosHistoricos.has(String(id));
+                let esRedespacho = cobradoAntes || intentos > 1;
+
+                let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(p['TipoTrayecto'] || p['Tipo_Trayecto'] || p['Trayecto'] || '-').trim().toUpperCase();
+
+                // LLAMADA AL ARCHIVO motorTarifas.js
+                let calcNube = calcularTarifasAutomaticas(p);
+                
+                let tfaCalculada = calcNube.total > 0 ? calcNube.total : 0;
+                let cobroReal = esRedespacho ? 0 : tfaCalculada;
+                tIngresosValidos += cobroReal;
+                
+                let htmlStatus = "";
+                let classTotal = "col-total";
+                
+                if (cobradoAntes) {
+                    htmlStatus = `<div class="badge-cobrado">YA COBRADO</div>`;
+                    classTotal += " col-tachada";
+                } else if (esRedespacho) {
+                    htmlStatus = `<div class="badge-redespacho">REDESPACHO</div>`;
+                    classTotal += " col-tachada";
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${id}</strong></td>
+                    <td>${p.Cliente || '-'}</td>
+                    <td style="text-align:center;"><b>${intentos}</b><br>${htmlStatus}</td>
+                    <td style="color:var(--blue-600); font-weight:600;">${cp}</td>
+                    <td style="color:var(--slate-500);">${calcNube.trayUsado}</td>
+                    <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaPeso.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaPedido.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaRango.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaMedida.toFixed(2)}</td>
+                    <td class="${classTotal}">$${tfaCalculada.toFixed(2)}</td>
+                </tr>`;
+            }
+        });
+        
+        const cBase = parseFloat(selV.value) || 0;
+        const cEstibas = (parseFloat(estibas) || 0) * 30;
+        const cExc = document.getElementById('chkExc').checked ? parseFloat(opt.dataset.ex) : 0;
+        const cHE = (parseFloat(horasExtra) || 0) * parseFloat(opt.dataset.he);
+        const cTotal = cBase + cEstibas + cExc + cHE;
+        const util = tIngresosValidos - cTotal;
+        
+        document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        document.getElementById('vCos').innerText = `$${cTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        document.getElementById('vRent').innerText = `$${util.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        document.getElementById('vCant').innerText = ids.length;
+        
+        const boxR = document.getElementById('boxR');
+        if (util < 0) {
+            boxR.style.borderLeftColor = 'var(--red-600)';
+            document.getElementById('vRent').style.color = 'var(--red-600)';
+        } else {
+            boxR.style.borderLeftColor = 'var(--emerald-600)';
+            document.getElementById('vRent').style.color = 'var(--emerald-600)';
+        }
+
+        document.getElementById('detallesCosto').innerHTML = `Base: $${cBase} | Est: $${cEstibas}<br>Exc: $${cExc} | HE: $${cHE.toFixed(2)}`;
+    }
+
+    async function guardar() {
+        const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').map(x => x.trim()).filter(x => x))];
+        if(ids.length === 0) return alert("No hay pedidos procesados para guardar.");
+        
+        const selV = document.getElementById('selVehiculo');
+        const opt = selV.options[selV.selectedIndex];
+        const textV = opt.text; 
+        const ciudad = textV.split('- ')[1] || "GENERAL";
+        const placaVehiculo = textV.split(' - ')[0].trim();
+        const fechaElegida = document.getElementById('fechaDespacho').value;
+
+        const rutaData = {
+            fecha: fechaElegida, ciudad: ciudad.trim().toUpperCase(), pedidos: ids.length,
+            ingresos: parseFloat(document.getElementById('vIng').innerText.replace(/[$,]/g,'')),
+            cBase: parseFloat(selV.value) || 0, cAyudantes: (parseFloat(document.getElementById('numEstibas').value) || 0) * 30,
+            cExc: document.getElementById('chkExc').checked ? parseFloat(opt.dataset.ex) : 0,
+            cHE: (parseFloat(document.getElementById('numHE').value) || 0) * parseFloat(opt.dataset.he),
+            placa: placaVehiculo,
+            listaIds: ids.join(',')
+        };
+
+        const btnConf = event.target;
+        btnConf.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> GUARDANDO EN NUBE...`;
+        btnConf.disabled = true;
+        
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { "Content-Type": "text/plain" }, body: JSON.stringify(rutaData) });
+            alert("✅ Ruta guardada con éxito en la base de datos.");
+            
+            ids.forEach(id => pedidosHistoricos.add(String(id)));
+            
+            document.getElementById('txtPedidos').value = '';
+            document.getElementById('lblCant').innerText = "0 Únicos";
+            document.querySelector('#tblD tbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando nueva ruta...</td></tr>`;
+            
+            ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
+            document.getElementById('vCant').innerText = '0';
+            
+        } catch (e) { 
+            alert("❌ Error de conexión al guardar la ruta. Verifique su internet."); 
+        } finally { 
+            btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> CONFIRMAR Y GUARDAR`; 
+            btnConf.disabled = false; 
+        }
+    }
+</script>
+</body>
+</html>

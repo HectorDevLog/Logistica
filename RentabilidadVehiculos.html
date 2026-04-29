@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FlexNet - Auditoría de Vehículos</title>
+    <style>
+        :root { 
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
+            --blue-600: #2563eb; --blue-50: #eff6ff;
+            --emerald-600: #059669; --emerald-50: #ecfdf5;
+            --red-600: #dc2626; --red-50: #fef2f2;
+            --amber-500: #f59e0b; --amber-50: #fffbeb;
+            --purple-600: #7c3aed; --purple-50: #f5f3ff;
+        }
+        
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
+        
+        /* NAVBAR CORPORATIVO */
+        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); }
+        
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+
+        .container { max-width: 1400px; margin: 25px auto; padding: 0 20px; }
+
+        /* TARJETAS SUPERIORES (KPIs) */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .stat-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); position: relative; overflow: hidden; }
+        .stat-title { font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 8px; }
+        .stat-value { font-size: 2.2em; font-weight: 800; color: var(--slate-900); }
+        
+        /* Decoración de las tarjetas */
+        .stat-box::after { content: ''; position: absolute; right: -20px; bottom: -20px; width: 100px; height: 100px; border-radius: 50%; opacity: 0.1; }
+        .box-ingreso::after { background: var(--blue-600); }
+        .box-ingreso .stat-value { color: var(--blue-600); }
+        .box-costo::after { background: var(--red-600); }
+        .box-costo .stat-value { color: var(--red-600); }
+        .box-rent::after { background: var(--emerald-600); }
+        .box-rent .stat-value { color: var(--emerald-600); }
+        .box-rent-negativo::after { background: var(--red-600); }
+        .box-rent-negativo .stat-value { color: var(--red-600); }
+
+        /* PANEL DE CONTROLES Y LEYENDA */
+        .controls { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        .control-group label { font-weight: 600; font-size: 0.9em; color: var(--slate-700); }
+        .control-group input, .control-group select { padding: 10px; border: 1px solid var(--slate-200); border-radius: 6px; width: 180px; font-family: inherit; color: var(--slate-700); font-weight: 500; }
+        .control-group input:focus, .control-group select:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+        
+        .legend-box { margin-left: auto; font-size: 0.85em; background: var(--slate-50); padding: 12px 15px; border: 1px dashed var(--slate-200); border-radius: 8px; color: var(--slate-700); line-height: 1.6; }
+
+        /* TABLA Y SCROLL */
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid var(--slate-200); }
+        
+        /* Personalización de barra de desplazamiento */
+        .table-wrapper::-webkit-scrollbar { height: 12px; }
+        .table-wrapper::-webkit-scrollbar-track { background: var(--slate-50); border-radius: 0 0 8px 8px; border-top: 1px solid var(--slate-200); }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid var(--slate-50); }
+        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { border-bottom: 1px solid var(--slate-200); border-right: 1px solid var(--slate-100); padding: 12px 10px; text-align: right; }
+        th { background: var(--slate-50); color: var(--slate-900); font-weight: 700; border-bottom: 2px solid var(--slate-200); }
+        
+        /* Congelar Placa y Ciudad */
+        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: white; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.05); font-weight: 700; color: var(--slate-900); border-right: 1px solid var(--slate-200); }
+        th:nth-child(2), td:nth-child(2) { text-align: center; position: sticky; left: 130px; background: white; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.05); color: var(--slate-700); border-right: 2px solid var(--slate-200); }
+        th:first-child, th:nth-child(2) { background: var(--slate-50); z-index: 3; }
+        
+        /* Fila Especial Vehículos Externos */
+        .row-separador td { background: var(--purple-600) !important; color: white !important; font-weight: 700; border: none; padding: 10px 15px; }
+        
+        /* Fila Totales */
+        .row-total { background: var(--slate-900); color: white; font-weight: 700; }
+        .row-total td { color: white !important; border-color: rgba(255,255,255,0.1); }
+        .row-total td:first-child, .row-total td:nth-child(2) { background: var(--slate-900); border-right: 2px solid rgba(255,255,255,0.2); } 
+
+        .th-days { background: var(--slate-100); color: var(--slate-700); text-align: center; min-width: 110px; }
+        
+        /* Desglose Diario P/I/C/R */
+        .cell-dia { line-height: 1.6; font-size: 0.85em; text-align: right; padding: 8px 10px; }
+        .p-val { color: var(--amber-500); font-weight: 700; }
+        .i-val { color: var(--blue-600); font-weight: 600; }
+        .c-val { color: var(--red-600); font-weight: 600; }
+        .r-pos { color: var(--emerald-600); font-weight: 700;}
+        .r-neg { color: var(--red-600); font-weight: 700;}
+        
+        /* Colores pastel para fila total oscura */
+        .p-tot { color: #fcd34d; font-weight: 700; }
+        .i-tot { color: #93c5fd; }
+        .c-tot { color: #fca5a5; }
+        .r-tot-pos { color: #86efac; font-weight: 700; }
+        .r-tot-neg { color: #f87171; font-weight: 700; }
+
+        /* Loader */
+        .loader-msg { text-align:center; padding:50px; color: var(--slate-500); font-size: 1.2em; font-weight: 600;}
+    </style>
+    <script src="config.js"></script>
+</head>
+<body>
+
+    <div class="navbar" id="navbar">
+        <div class="navbar-brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+            Auditoría de Vehículos
+        </div>
+        
+        <div class="nav-links">
+            <a href="Inicio.html">&larr; Menú Principal</a>
+            <a href="Simulador.html">🏠 Simulador</a>
+            <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
+            <a href="Rentabilidad.html">📊 Rentabilidad</a>
+            <a href="Reportes.html">📈 Dashboard</a>
+            <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+        </div>
+
+        <div class="user-info" id="infoUsuario"></div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-box box-ingreso">
+                <div class="stat-title">Total Ingresos Facturados</div>
+                <div class="stat-value" id="boxIngresos">$0.00</div>
+            </div>
+            <div class="stat-box box-costo">
+                <div class="stat-title">Total Costos Operativos</div>
+                <div class="stat-value" id="boxCostos">$0.00</div>
+            </div>
+            <div class="stat-box box-rent" id="cardRent">
+                <div class="stat-title">Rentabilidad Neta</div>
+                <div class="stat-value" id="boxRentabilidad">$0.00</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>📅 Filtrar por Mes:</label>
+                <input type="month" id="monthSelector" onchange="renderTodo()">
+            </div>
+            <div class="control-group">
+                <label>🌎 Filtrar por Ciudad:</label>
+                <select id="ciudadSelector" onchange="actualizarFiltroVehiculos(); renderTodo();"></select>
+            </div>
+            <div class="control-group">
+                <label>🚛 Filtrar por Vehículo:</label>
+                <select id="vehiculoSelector" onchange="renderTodo()">
+                    <option value="TODOS">Todos los Vehículos</option>
+                </select>
+            </div>
+            
+            <div class="legend-box">
+                <strong style="display:block; margin-bottom:5px; color:var(--slate-900);">Leyenda Diaria:</strong>
+                <span style="color:var(--amber-500); font-weight:700;">P:</span> Pedidos | 
+                <span style="color:var(--blue-600); font-weight:700;">I:</span> Ingreso | 
+                <span style="color:var(--red-600); font-weight:700;">C:</span> Costo | 
+                <span style="color:var(--emerald-600); font-weight:700;">R:</span> Rentabilidad
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="tblVehiculos">
+                <thead id="theadVehiculos">
+                    <tr><th>Cargando estructura...</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="loader-msg">⏳ Descargando registros vehiculares desde la nube...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+
+    let datosCompletos = [];
+    window.dTarifasGlobal = []; 
+
+    window.onload = async function() {
+        const hoy = new Date();
+        document.getElementById('monthSelector').value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+        
+        document.getElementById('infoUsuario').innerHTML = `
+            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+
+        if (sesion.rol !== 'Administrador') {
+            document.getElementById('linkRegistro').style.display = 'none';
+        }
+
+        try {
+            const [resDB, resTarifas] = await Promise.all([
+                fetch(SCRIPT_URL),
+                fetch(`${SCRIPT_URL}?action=getTarifas`)
+            ]);
+
+            let rawData = await resDB.json();
+            window.dTarifasGlobal = await resTarifas.json();
+            
+            if (sesion.rol !== 'Administrador') {
+                rawData = rawData.filter(d => d.ciudad === sesion.ciudad);
+            }
+            datosCompletos = rawData;
+
+            const cSel = document.getElementById('ciudadSelector');
+            if (sesion.rol === 'Administrador') {
+                const ciudadesUnicas = [...new Set(datosCompletos.map(d => d.ciudad))].filter(c => c && c !== "GENERAL");
+                cSel.innerHTML = `<option value="TODAS">Todas las Ciudades</option>`;
+                ciudadesUnicas.forEach(c => cSel.innerHTML += `<option value="${c}">${c}</option>`);
+            } else {
+                cSel.innerHTML = `<option value="${sesion.ciudad}">${sesion.ciudad}</option>`;
+            }
+
+            actualizarFiltroVehiculos();
+            renderTodo();
+        } catch (e) {
+            document.querySelector('#tblVehiculos tbody').innerHTML = `<tr><td class="loader-msg" style="color:var(--red-600);">❌ Error al conectar con Google Sheets.</td></tr>`;
+        }
+    };
+
+    function actualizarFiltroVehiculos() {
+        const ciudadFiltro = document.getElementById('ciudadSelector').value;
+        let datosParaFiltrar = datosCompletos;
+        if (ciudadFiltro !== "TODAS") datosParaFiltrar = datosParaFiltrar.filter(d => d.ciudad === ciudadFiltro);
+
+        const placas = [...new Set(datosParaFiltrar.map(d => d.placa).filter(p => p && p !== "DESCONOCIDO"))].sort();
+        const sel = document.getElementById('vehiculoSelector');
+        
+        sel.innerHTML = '<option value="TODOS">Todos los Vehículos</option>';
+        placas.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
+    }
+
+    function formatMoney(num) { 
+        if(num === 0) return '$ -';
+        return '$ ' + parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2}); 
+    }
+
+    function renderTodo() {
+        const mesFiltro = document.getElementById('monthSelector').value;
+        const ciudadFiltro = document.getElementById('ciudadSelector').value;
+        const vehFiltro = document.getElementById('vehiculoSelector').value;
+        
+        const tbody = document.querySelector('#tblVehiculos tbody');
+        const thead = document.getElementById('theadVehiculos');
+        
+        if(!mesFiltro) return;
+
+        let filtrados = datosCompletos.filter(d => d.fecha && d.fecha.startsWith(mesFiltro));
+        if (ciudadFiltro !== "TODAS") filtrados = filtrados.filter(d => d.ciudad === ciudadFiltro);
+        if (vehFiltro !== "TODOS") filtrados = filtrados.filter(d => d.placa === vehFiltro);
+
+        let sumIngresos = 0, sumCostos = 0;
+        filtrados.forEach(row => {
+            sumIngresos += Number(row.ingresos) || 0;
+            sumCostos += (Number(row.cBase)||0) + (Number(row.cAyudantes)||0) + (Number(row.cExc)||0) + (Number(row.cHE)||0);
+        });
+        let sumRentabilidad = sumIngresos - sumCostos;
+
+        document.getElementById('boxIngresos').innerText = formatMoney(sumIngresos);
+        document.getElementById('boxCostos').innerText = formatMoney(sumCostos);
+        document.getElementById('boxRentabilidad').innerText = formatMoney(sumRentabilidad);
+        
+        const cardRent = document.getElementById('cardRent');
+        if (sumRentabilidad < 0) {
+            cardRent.classList.remove('box-rent');
+            cardRent.classList.add('box-rent-negativo');
+        } else {
+            cardRent.classList.remove('box-rent-negativo');
+            cardRent.classList.add('box-rent');
+        }
+
+        const [year, month] = mesFiltro.split('-');
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        let theadHTML = `<tr>
+            <th style="min-width:130px;">Placa (Vehículo)</th>
+            <th style="min-width:100px;">Ciudad</th>
+            <th>Pedidos</th>
+            <th>Total Ingresos</th>
+            <th>Total Costos</th>
+            <th>Rentabilidad</th>
+            <th>Margen (%)</th>`;
+        
+        for(let i = 1; i <= daysInMonth; i++) {
+            theadHTML += `<th class="th-days">${String(i).padStart(2, '0')}/${month}</th>`;
+        }
+        theadHTML += `</tr>`;
+        thead.innerHTML = theadHTML;
+
+        let agrupado = {};
+        filtrados.forEach(row => {
+            let placa = row.placa || "DESCONOCIDO";
+            if (!agrupado[placa]) {
+                agrupado[placa] = { 
+                    ciudad: row.ciudad || "GENERAL",
+                    pedidos: 0, ingresos: 0, costos: 0, 
+                    dias: Array.from({length: daysInMonth}, () => ({ped: 0, ing: 0, cos: 0, rent: 0}))
+                };
+            }
+            
+            let ped = Number(row.pedidos) || 0;
+            let ing = Number(row.ingresos) || 0;
+            let cTot = (Number(row.cBase)||0) + (Number(row.cAyudantes)||0) + (Number(row.cExc)||0) + (Number(row.cHE)||0);
+            
+            agrupado[placa].pedidos += ped;
+            agrupado[placa].ingresos += ing;
+            agrupado[placa].costos += cTot;
+
+            let parts = row.fecha.split('-');
+            if(parts.length === 3) {
+                let dayIndex = parseInt(parts[2]) - 1; 
+                if(dayIndex >= 0 && dayIndex < daysInMonth) {
+                    agrupado[placa].dias[dayIndex].ped += ped;
+                    agrupado[placa].dias[dayIndex].ing += ing;
+                    agrupado[placa].dias[dayIndex].cos += cTot;
+                    agrupado[placa].dias[dayIndex].rent += (ing - cTot);
+                }
+            }
+        });
+
+        let vehiculosConocidos = window.dTarifasGlobal ? window.dTarifasGlobal.map(t => String(t.PLACA || t.PLACAS).trim().toUpperCase()) : [];
+        const placasTotales = Object.keys(agrupado);
+        
+        const placasOficiales = placasTotales.filter(p => vehiculosConocidos.includes(p.toUpperCase())).sort();
+        const placasExternas = placasTotales.filter(p => !vehiculosConocidos.includes(p.toUpperCase())).sort();
+
+        let tbodyHTML = '';
+        let totPed = 0;
+        let totDias = Array.from({length: daysInMonth}, () => ({ped: 0, ing: 0, cos: 0, rent: 0})); 
+
+        if (placasTotales.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${7 + daysInMonth}" class="loader-msg">No hay rutas registradas con los filtros seleccionados.</td></tr>`;
+            return;
+        }
+
+        function generarHTMLFila(placa, data) {
+            let rentabilidad = data.ingresos - data.costos;
+            let porcentaje = data.ingresos > 0 ? (rentabilidad / data.ingresos) * 100 : 0;
+            let claseColor = rentabilidad >= 0 ? 'r-pos' : 'r-neg';
+            totPed += data.pedidos;
+
+            let diasHTML = "";
+            for(let i = 0; i < daysInMonth; i++) {
+                let dData = data.dias[i];
+                totDias[i].ped += dData.ped;
+                totDias[i].ing += dData.ing;
+                totDias[i].cos += dData.cos;
+                totDias[i].rent += dData.rent;
+                
+                if(dData.ped === 0 && dData.ing === 0 && dData.cos === 0) {
+                    diasHTML += `<td style="text-align:center; color:var(--slate-300);">-</td>`;
+                } else {
+                    let colR = dData.rent >= 0 ? 'r-pos' : 'r-neg';
+                    diasHTML += `
+                        <td class="cell-dia">
+                            <span class="p-val">P: ${dData.ped}</span><br>
+                            <span class="i-val">I: ${formatMoney(dData.ing)}</span><br>
+                            <span class="c-val">C: ${formatMoney(dData.cos)}</span><br>
+                            <span class="${colR}">R: ${formatMoney(dData.rent)}</span>
+                        </td>`;
+                }
+            }
+
+            return `
+                <tr>
+                    <td>${placa}</td>
+                    <td>${data.ciudad}</td>
+                    <td>${data.pedidos}</td>
+                    <td class="i-val">${formatMoney(data.ingresos)}</td>
+                    <td class="c-val">${formatMoney(data.costos)}</td>
+                    <td class="${claseColor}">${formatMoney(rentabilidad)}</td>
+                    <td class="${claseColor}">${porcentaje.toFixed(1)}%</td>
+                    ${diasHTML}
+                </tr>
+            `;
+        }
+
+        placasOficiales.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
+
+        if (placasExternas.length > 0) {
+            tbodyHTML += `
+                <tr class="row-separador">
+                    <td style="position:sticky; left:0; z-index:4;">⚠️ VEHÍCULOS EXTERNOS</td>
+                    <td style="position:sticky; left:130px; z-index:4;">-</td>
+                    <td colspan="${5 + daysInMonth}" style="text-align:left; font-weight:normal;">(Vehículos no registrados en el Tarifario Maestro)</td>
+                </tr>
+            `;
+            placasExternas.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
+        }
+
+        let porcGeneral = sumIngresos > 0 ? (sumRentabilidad / sumIngresos) * 100 : 0;
+        let totDiasHTML = "";
+        for(let i = 0; i < daysInMonth; i++) {
+            let tD = totDias[i];
+            if(tD.ped === 0 && tD.ing === 0 && tD.cos === 0) {
+                totDiasHTML += `<td style="text-align:center; border-color:rgba(255,255,255,0.1);">-</td>`;
+            } else {
+                let colR = tD.rent >= 0 ? 'r-tot-pos' : 'r-tot-neg';
+                totDiasHTML += `
+                    <td class="cell-dia" style="border-color:rgba(255,255,255,0.1);">
+                        <span class="p-tot">P: ${tD.ped}</span><br>
+                        <span class="i-tot">I: ${formatMoney(tD.ing)}</span><br>
+                        <span class="c-tot">C: ${formatMoney(tD.cos)}</span><br>
+                        <span class="${colR}">R: ${formatMoney(tD.rent)}</span>
+                    </td>`;
+            }
+        }
+
+        tbodyHTML += `
+            <tr class="row-total">
+                <td>TOTALES GLOBALES</td>
+                <td>-</td>
+                <td>${totPed}</td>
+                <td style="color:#93c5fd !important;">${formatMoney(sumIngresos)}</td>
+                <td style="color:#fca5a5 !important;">${formatMoney(sumCostos)}</td>
+                <td>${formatMoney(sumRentabilidad)}</td>
+                <td>${porcGeneral.toFixed(1)}%</td>
+                ${totDiasHTML}
+            </tr>
+        `;
+        
+        tbody.innerHTML = tbodyHTML;
+    }
+    
+    function cerrarSesion() {
+        localStorage.removeItem('sesionActiva');
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>

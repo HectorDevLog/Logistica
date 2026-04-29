@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FlexNet - Auditor y Despacho Masivo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { 
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
+            --blue-600: #2563eb; --blue-50: #eff6ff;
+            --emerald-600: #059669; --emerald-50: #ecfdf5;
+            --red-600: #dc2626; --red-50: #fef2f2;
+            --amber-600: #d97706; --amber-50: #fffbeb;
+            --purple-600: #7c3aed;
+        }
+        
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
+        
+        /* NAVBAR CORPORATIVO */
+        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); }
+        
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+
+        /* GRID PRINCIPAL (Layout lateral) */
+        .wrapper { max-width: 1600px; margin: 25px auto; display: grid; grid-template-columns: 380px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
+        
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
+        .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
+
+        /* ESTADO DEL SISTEMA (Status) */
+        .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
+        .status-ready { color: var(--emerald-600); background: var(--emerald-50); border-color: #a7f3d0; }
+        .status-error { color: var(--red-600); background: var(--red-50); border-color: #fecaca; }
+        .status-loading { color: var(--blue-600); }
+        
+        .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* CONTROLES (Aside) */
+        .btn-excel { 
+            width: 100%; padding: 15px; background: var(--slate-50); color: var(--slate-700); 
+            border: 2px dashed var(--slate-300); border-radius: 8px; font-weight: 700; cursor: pointer; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s;
+        }
+        .btn-excel:hover { border-color: var(--blue-600); background: var(--blue-50); color: var(--blue-600); }
+        .btn-excel svg { width: 32px; height: 32px; color: currentColor; }
+
+        .alert-info { background: var(--blue-50); color: var(--blue-600); padding: 12px; border-radius: 6px; font-size: 0.85em; margin-top: 15px; border-left: 4px solid var(--blue-600); line-height: 1.5; font-weight: 500;}
+
+        label { display: block; font-weight: 600; margin: 20px 0 8px; font-size: 0.9em; color: var(--slate-700); }
+        textarea { width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; transition: border-color 0.2s; background: var(--slate-50); }
+        textarea:focus { outline: none; border-color: var(--amber-600); box-shadow: 0 0 0 3px var(--amber-50); background: white; }
+        
+        button { width: 100%; padding: 14px; border: none; font-weight: 700; cursor: pointer; border-radius: 6px; font-size: 1em; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button:disabled { background: var(--slate-300); color: white; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        
+        .btn-calc { background: var(--amber-600); color: white; margin-top: 20px; }
+        .btn-calc:hover:not(:disabled) { background: #b45309; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(217, 119, 6, 0.3); }
+        
+        .btn-save { background: var(--emerald-600); color: white; margin-top: 10px; }
+        .btn-save:hover:not(:disabled) { background: #047857; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(5, 150, 105, 0.3); }
+
+        /* KPIs SUPERIORES (Main) */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); position: relative; overflow: hidden; border-left: 5px solid transparent; }
+        .stat-box h4 { margin: 0 0 8px 0; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .stat-box span { font-size: 2.2em; font-weight: 800; color: var(--slate-900); display: block; }
+        
+        .box-ing { border-left-color: var(--blue-600); }
+        .box-ing span { color: var(--blue-600); }
+        .box-ped { border-left-color: var(--amber-600); }
+        .box-ped span { color: var(--amber-600); }
+
+        /* TABLA DE RESULTADOS */
+        #msgLimit { padding: 12px; background: var(--amber-50); color: var(--amber-600); font-size: 0.9em; font-weight: 600; text-align: center; border-bottom: 1px solid #fde68a; display: none; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; max-height: 600px; border-radius: 0 0 12px 12px; }
+        .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
+        .table-wrapper::-webkit-scrollbar-track { background: var(--slate-50); border-radius: 0 0 12px 12px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; white-space: nowrap; }
+        th { background: var(--slate-50); padding: 12px 15px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10; }
+        td { padding: 10px 15px; border-bottom: 1px solid var(--slate-200); }
+        
+        .col-tarifa { color: #64748b; font-size: 0.9em; }
+        .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); }
+        
+        .badge-vehiculo { background: var(--slate-100); padding: 4px 8px; border-radius: 4px; font-weight: 600; border: 1px solid var(--slate-200); }
+        .col-tachada { text-decoration: line-through; color: #94a3b8 !important; background: transparent !important; font-weight: normal; }
+    </style>
+    
+    <script src="config.js"></script>
+    <script src="motorTarifas.js"></script>
+</head>
+<body>
+
+<div class="navbar" id="navbar">
+    <div class="navbar-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path></svg>
+        Auditor y Despacho Masivo
+    </div>
+    
+    <div class="nav-links">
+        <a href="Inicio.html">&larr; Menú Principal</a>
+        <a href="Simulador.html">🏠 Simulador</a>
+        <a href="Rentabilidad.html">📊 Rentabilidad</a>
+        <a href="RentabilidadVehiculos.html">🚛 Vehículos</a>
+        <a href="Reportes.html">📈 Dashboard</a>
+        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    </div>
+
+    <div class="user-info" id="infoUsuario"></div>
+</div>
+
+<div class="wrapper">
+    <aside>
+        <div class="card" style="border-top: 4px solid var(--purple-600); padding: 20px;">
+            <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
+            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Descargando Tarifario Nube...</div>
+            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Sincronizando Monitor PC...</div>
+        </div>
+
+        <div class="card">
+            <h3>⚙️ Inyección de Datos</h3>
+            
+            <button class="btn-excel" onclick="document.getElementById('fileInput').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                <span>Subir Matriz Excel (.xlsx)</span>
+            </button>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none;" onchange="procesarExcel(event)">
+            
+            <div class="alert-info">
+                El archivo Excel debe contener al menos dos columnas llamadas exactamente:<br><br>
+                <b>idpedido</b> y <b>FechaDespacho</b>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <label>O pegue los datos manualmente:</label>
+                <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--amber-600); margin-bottom:8px;">0 filas cargadas</span>
+            </div>
+            <textarea id="txtPedidos" rows="8" placeholder="idpedido [TAB] Fecha..." oninput="contarPedidos()"></textarea>
+
+            <button id="btnCalc" class="btn-calc" onclick="ejecutar()" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                CALCULAR AUDITORÍA
+            </button>
+            <button id="btnSave" class="btn-save" onclick="guardarMasivo()" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                INYECCIÓN RÁPIDA EN NUBE
+            </button>
+        </div>
+    </aside>
+
+    <main>
+        <div class="stats-grid">
+            <div class="stat-box box-ing">
+                <h4>Proyección de Ingresos (Nuevos)</h4>
+                <span id="vIng">$0.00</span>
+            </div>
+            <div class="stat-box box-ped">
+                <h4>Total Pedidos Procesados</h4>
+                <span id="vCant">0</span>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <h3 style="margin:0; padding:20px 25px 15px; border-bottom:none;">📋 Matriz de Resultados</h3>
+            
+            <div id="msgLimit">
+                ⚠️ Carga masiva exitosa. Se están mostrando solo los primeros 300 registros para evitar lentitud visual, pero todos están listos para inyección.
+            </div>
+            
+            <div class="table-wrapper" style="margin:0;">
+                <table id="tblD">
+                    <thead>
+                        <tr>
+                            <th>ID Pedido</th>
+                            <th style="color:var(--blue-600);">Fecha Despacho</th>
+                            <th>Operación</th>
+                            <th>Servicio</th>
+                            <th>Placa Asignada</th>
+                            <th>Cliente</th>
+                            <th>Trayecto Base</th>
+                            <th>Peso (Kg)</th>
+                            <th class="col-tarifa">Tfa. Peso</th>
+                            <th class="col-tarifa">Tfa. Pedido</th>
+                            <th class="col-tarifa">Tfa. Rango</th>
+                            <th class="col-tarifa">Tfa. Medida</th>
+                            <th class="col-total" style="background:var(--slate-50);">Tarifa Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="13" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Suba un archivo Excel para comenzar el análisis.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+
+    let dMonitor = [], dTarifas = [];
+    let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
+    let pedidosHistoricos = new Set();
+    let cloudLista = false, monitorListo = false;
+    let datosParaGuardar = [];
+
+    // --- FUNCIONES DE SÚPER MEMORIA (IndexedDB) ---
+    const dbName = "SimuladorDB";
+    const storeName = "MonitorStore";
+
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: "id" }); }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function guardarDatoDB(id, data) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put({ id: id, data: data });
+        return new Promise(resolve => tx.oncomplete = resolve);
+    }
+
+    async function obtenerDatoDB(id) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readonly");
+        const request = tx.objectStore(storeName).get(id);
+        return new Promise(resolve => {
+            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    window.onload = async function() {
+        document.getElementById('infoUsuario').innerHTML = `
+            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+        if (sesion.rol !== 'Administrador') { document.getElementById('linkRegistro').style.display = 'none'; }
+
+        try {
+            const cacheTarifas = await obtenerDatoDB("tarifasCargadas");
+            if (cacheTarifas) {
+                dTarifas = cacheTarifas.dTarifas || []; tfaPesoDB = cacheTarifas.tfaPesoDB || []; tfaPedidoDB = cacheTarifas.tfaPedidoDB || [];
+                tfaRangoDB = cacheTarifas.tfaRangoDB || []; tfaMedidaDB = cacheTarifas.tfaMedidaDB || []; trayectoDB = cacheTarifas.trayectoDB || [];
+                pedidosHistoricos = new Set(cacheTarifas.pedidosHistoricos || []);
+                
+                let box = document.getElementById('statusNube');
+                box.className = "status-box status-ready";
+                box.innerHTML = `✅ Tarifas en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span></span>`;
+                cloudLista = true;
+            }
+
+            const cacheMonitor = await obtenerDatoDB("monitorCargado");
+            if (cacheMonitor && cacheMonitor.length > 0) {
+                dMonitor = cacheMonitor;
+                let box = document.getElementById('statusMonitor');
+                box.className = "status-box status-ready";
+                box.innerHTML = `✅ Monitor en Memoria (${dMonitor.length}) <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span></span>`;
+                monitorListo = true;
+            }
+            checkReady();
+        } catch(e) { console.error(e); }
+
+        actualizarDesdeNube();
+    };
+
+    async function actualizarDesdeNube() {
+        try {
+            const resAll = await fetch(`${SCRIPT_URL}?action=getAllTarifas`);
+            const allData = await resAll.json();
+            
+            dTarifas = allData.tarifas || []; tfaPesoDB = allData.peso || []; tfaPedidoDB = allData.pedido || [];
+            tfaRangoDB = allData.rango || []; tfaMedidaDB = allData.medida || []; trayectoDB = allData.trayecto || [];
+            
+            pedidosHistoricos.clear();
+            if(allData.db) allData.db.forEach(row => { if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); });
+
+            await guardarDatoDB("tarifasCargadas", { dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, pedidosHistoricos: Array.from(pedidosHistoricos) });
+
+            let box = document.getElementById('statusNube');
+            box.className = "status-box status-ready";
+            box.innerHTML = "✅ Tarifario Nube: Sincronizado";
+            cloudLista = true; checkReady();
+        } catch (e) {
+            let box = document.getElementById('statusNube');
+            box.className = "status-box status-ready";
+            box.innerHTML = "✅ Tarifas Rápidas: Listas (Modo Offline)";
+        }
+
+        try {
+            const resExcel = await fetch(`${SCRIPT_URL}?action=getMonitorExcel`);
+            const base64Data = await resExcel.text();
+            if(!base64Data.startsWith('[') && !base64Data.startsWith('{')) {
+                const binaryData = atob(base64Data);
+                const uint8Array = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) { uint8Array[i] = binaryData.charCodeAt(i); }
+                const workbook = XLSX.read(uint8Array, {type: 'array'});
+                dMonitor = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: false});
+                await guardarDatoDB("monitorCargado", dMonitor);
+            }
+            let box = document.getElementById('statusMonitor');
+            box.className = "status-box status-ready";
+            box.innerHTML = `✅ Monitor Nube: Sincronizado (${dMonitor.length})`;
+            monitorListo = true; checkReady();
+        } catch (e) {
+            let box = document.getElementById('statusMonitor');
+            box.className = "status-box status-ready";
+            box.innerHTML = `✅ Monitor Rápido: Listo (Modo Offline)`;
+        }
+    }
+
+    function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
+
+    // --- TRADUCTOR MATEMÁTICO DE FECHAS EXCEL ---
+    function formatearFechaExcel(fecha) {
+        if (!fecha) return '-';
+        if (!isNaN(fecha) && Number(fecha) > 10000) {
+            let fechaNum = Number(fecha);
+            let jsDate = new Date((fechaNum - 25569) * 86400 * 1000); 
+            let d = jsDate.getUTCDate();
+            let m = jsDate.getUTCMonth() + 1; 
+            let y = jsDate.getUTCFullYear();
+            return d + "/" + m + "/" + y;
+        }
+        return String(fecha).trim();
+    }
+
+    function procesarExcel(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: true }); 
+
+            let textoFinal = "";
+            json.forEach(row => {
+                let id = row.idpedido || row.IDPEDIDO || row.Pedido || row.pedidoID || row['id pedido'];
+                let fechaRaw = row.FechaDespacho || row.Fecha || row.fecha_despacho || row.FECHA_DESPACHO || row['Fecha Despacho'];
+                
+                if(id && fechaRaw) {
+                    let fechaLimpia = formatearFechaExcel(fechaRaw);
+                    textoFinal += `${id}\t${fechaLimpia}\n`;
+                }
+            });
+            document.getElementById('txtPedidos').value = textoFinal;
+            contarPedidos();
+            document.getElementById('fileInput').value = ''; 
+            alert("✅ Archivo Excel procesado correctamente. Verifique las fechas y presione 'Calcular Auditoría'.");
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function contarPedidos() { document.getElementById('lblCant').innerText = document.getElementById('txtPedidos').value.split('\n').filter(x => x.trim()).length + " filas cargadas"; }
+
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
+        return parseFloat(String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.')) || 0;
+    }
+
+    function extraerVehiculo(p) { return String(p['Vehiculo'] || p['VEHICULO'] || p['Vehículo'] || 'SIN ASIGNAR').trim(); }
+    
+    function obtenerDatosVehiculoBase(placaMonitor) {
+        let cleanMonitor = placaMonitor.toUpperCase().trim();
+        let match = dTarifas.find(v => {
+            let placaDB = String(v.PLACA || v.PLACAS || '').toUpperCase().trim();
+            return placaDB && (cleanMonitor.includes(placaDB) || placaDB.includes(cleanMonitor));
+        });
+        return match ? { costo: parseDinero(match['Precio Base Dia']), ciudad: String(match.CIUDAD).toUpperCase() } : { costo: 0, ciudad: sesion.ciudad };
+    }
+
+    function ejecutar() {
+        let lineas = document.getElementById('txtPedidos').value.split('\n').filter(x => x.trim());
+        if (lineas.length === 0) return alert("Ingrese o suba datos primero.");
+
+        const tbody = document.querySelector('#tblD tbody');
+        tbody.innerHTML = '';
+        datosParaGuardar = [];
+        let tIngresosValidos = 0;
+        
+        lineas.forEach((line, index) => {
+            let partes = line.split('\t');
+            let id = partes[0].trim();
+            let fecha = partes.length > 1 ? partes[1].trim() : '-';
+
+            const p = dMonitor.find(x => String(x['PEDIDOID']) === id || String(x['idpedido']) === id);
+            
+            if(p) {
+                let cp = String(p['CP'] || '').toUpperCase();
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia']).toUpperCase() === cp);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).toUpperCase() : String(p['TipoTrayecto']).toUpperCase();
+
+                let vehiculoDisp = extraerVehiculo(p);
+                
+                // LLAMADA AL ARCHIVO motorTarifas.js
+                let calc = calcularTarifasAutomaticas(p);
+                
+                let cobradoAntes = pedidosHistoricos.has(id);
+                let cobroReal = cobradoAntes ? 0 : calc.total;
+                tIngresosValidos += cobroReal;
+
+                datosParaGuardar.push({
+                    id, fecha, placa: vehiculoDisp, 
+                    ingreso: cobroReal, totalFull: calc.total, redespacho: cobradoAntes,
+                    p_completo: p, calc_detalles: calc
+                });
+
+                if(index < 300) {
+                    let classTotal = cobradoAntes ? "col-total col-tachada" : "col-total";
+                    tbody.innerHTML += `<tr>
+                        <td><strong>${id}</strong></td>
+                        <td style="color:var(--blue-600); font-weight:600;">${fecha}</td>
+                        <td style="font-size:0.85em;">${p.Tipo_Operacion || '-'}</td>
+                        <td style="font-size:0.85em;">${p.Tipo_Servicio || '-'}</td>
+                        <td><span class="badge-vehiculo">${vehiculoDisp}</span></td>
+                        <td style="font-size:0.85em;">${p.Cliente || '-'}</td>
+                        <td style="font-size:0.85em;">${calc.trayUsado}</td>
+                        <td style="text-align:center;">${calc.pesoUsado.toFixed(2)}</td>
+                        <td class="col-tarifa">$${calc.tfaPeso.toFixed(2)}</td>
+                        <td class="col-tarifa">$${calc.tfaPedido.toFixed(2)}</td>
+                        <td class="col-tarifa">$${calc.tfaRango.toFixed(2)}</td>
+                        <td class="col-tarifa">$${calc.tfaMedida.toFixed(2)}</td>
+                        <td class="${classTotal}">$${calc.total.toFixed(2)}</td>
+                    </tr>`;
+                }
+            }
+        });
+
+        document.getElementById('msgLimit').style.display = lineas.length > 300 ? 'block' : 'none';
+        document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        document.getElementById('vCant').innerText = lineas.length.toLocaleString('en-US');
+        document.getElementById('btnSave').disabled = false;
+    }
+
+    async function guardarMasivo() {
+        if(!datosParaGuardar.length) return;
+        
+        let grupos = {}; 
+        datosParaGuardar.forEach(d => {
+            let key = d.fecha + "|" + d.placa;
+            if(!grupos[key]) grupos[key] = { fecha: d.fecha, placa: d.placa, ids: [], ingresos: 0 };
+            grupos[key].ids.push(d.id);
+            grupos[key].ingresos += d.ingreso;
+        });
+
+        const keys = Object.keys(grupos);
+        const btn = document.getElementById('btnSave');
+        btn.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> INYECTANDO ${keys.length} RUTAS...`;
+        btn.disabled = true;
+
+        try {
+            let arregloMasivo = []; 
+            for(let key of keys) {
+                let g = grupos[key];
+                let veh = obtenerDatosVehiculoBase(g.placa);
+                arregloMasivo.push({
+                    fecha: g.fecha, ciudad: veh.ciudad, pedidos: g.ids.length,
+                    ingresos: parseFloat(g.ingresos.toFixed(2)),
+                    cBase: veh.costo, cAyudantes: 0, cExc: 0, cHE: 0,
+                    placa: g.placa, listaIds: g.ids.join(',')
+                });
+            }
+
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { "Content-Type": "text/plain" }, body: JSON.stringify(arregloMasivo) });
+            alert(`⚡ ¡INYECCIÓN EXITOSA! Se enviaron ${keys.length} rutas consolidadas a la base de datos central.`);
+            location.reload();
+        } catch (e) { 
+            alert("❌ Error de red al intentar inyectar los datos. Comprueba tu conexión a internet."); 
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> INYECCIÓN RÁPIDA EN NUBE`; 
+            btn.disabled = false; 
+        }
+    }
+
+    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>
