@@ -38,3 +38,27 @@ document.onmousemove = resetearTemporizador;
 document.onkeypress = resetearTemporizador;
 document.onclick = resetearTemporizador;
 document.onscroll = resetearTemporizador;
+
+/* =========================================
+   3. FIRMA DEL DESARROLLADOR (Marca de agua)
+   ========================================= */
+document.addEventListener('DOMContentLoaded', function() {
+    // Creamos el texto
+    const firma = document.createElement('div');
+    firma.textContent = "Elaborado por: Hector Torres";
+    
+    // Le damos estilo (Esquina inferior izquierda, casi invisible)
+    firma.style.position = 'fixed';
+    firma.style.bottom = '10px';
+    firma.style.left = '10px';
+    firma.style.fontSize = '11px';
+    firma.style.color = '#64748b'; // Color gris sutil
+    firma.style.opacity = '0.3';   // 30% de visibilidad (Apenas visible)
+    firma.style.zIndex = '9999';   // Para que siempre esté por encima del fondo
+    firma.style.pointerEvents = 'none'; // Para que no estorbe si alguien hace clic ahí
+    firma.style.fontFamily = 'Arial, sans-serif';
+    firma.style.userSelect = 'none'; // Evita que la gente lo seleccione con el mouse
+    
+    // Lo pegamos en la pantalla
+    document.body.appendChild(firma);
+});
