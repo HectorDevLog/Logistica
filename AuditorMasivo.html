@@ -78,7 +78,7 @@
         .box-ped { border-left-color: var(--amber-600); }
         .box-ped span { color: var(--amber-600); }
 
-        /* TABLA DE RESULTADOS */
+        /* TABLA DE RESULTADOS Y REDESPACHOS */
         #msgLimit { padding: 12px; background: var(--amber-50); color: var(--amber-600); font-size: 0.9em; font-weight: 600; text-align: center; border-bottom: 1px solid #fde68a; display: none; }
         
         .table-wrapper { width: 100%; overflow-x: auto; background: white; max-height: 600px; border-radius: 0 0 12px 12px; }
@@ -88,13 +88,27 @@
         
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; white-space: nowrap; }
         th { background: var(--slate-50); padding: 12px 15px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10; }
-        td { padding: 10px 15px; border-bottom: 1px solid var(--slate-200); }
+        td { padding: 10px 15px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
         
         .col-tarifa { color: #64748b; font-size: 0.9em; }
         .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); }
         
         .badge-vehiculo { background: var(--slate-100); padding: 4px 8px; border-radius: 4px; font-weight: 600; border: 1px solid var(--slate-200); }
         .col-tachada { text-decoration: line-through; color: #94a3b8 !important; background: transparent !important; font-weight: normal; }
+        
+        /* Estilos del Badge Redespacho (Igual a la imagen) */
+        .badge-redespacho { 
+            background: #ffe4e6; 
+            color: #e11d48; 
+            font-size: 0.7em; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            border: 1px solid #fda4af; 
+            font-weight: 700; 
+            display: inline-block; 
+            margin-top: 4px; 
+            letter-spacing: 0.5px;
+        }
     </style>
     
     <script src="config.js"></script>
@@ -183,11 +197,12 @@
                     <thead>
                         <tr>
                             <th>ID Pedido</th>
+                            <th>Cliente</th>
+                            <th style="text-align:center;">Intentos</th>
                             <th style="color:var(--blue-600);">Fecha Despacho</th>
                             <th>Operación</th>
                             <th>Servicio</th>
                             <th>Placa Asignada</th>
-                            <th>Cliente</th>
                             <th>Trayecto Base</th>
                             <th>Peso (Kg)</th>
                             <th class="col-tarifa">Tfa. Peso</th>
@@ -198,7 +213,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="13" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Suba un archivo Excel para comenzar el análisis.</td></tr>
+                        <tr><td colspan="14" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Suba un archivo Excel para comenzar el análisis.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -207,7 +222,7 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
@@ -331,7 +346,6 @@
 
     function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
 
-    // --- TRADUCTOR MATEMÁTICO DE FECHAS EXCEL ---
     function formatearFechaExcel(fecha) {
         if (!fecha) return '-';
         if (!isNaN(fecha) && Number(fecha) > 10000) {
@@ -414,28 +428,40 @@
 
                 let vehiculoDisp = extraerVehiculo(p);
                 
-                // LLAMADA AL ARCHIVO motorTarifas.js
-                let calc = calcularTarifasAutomaticas(p);
+                // --- LÓGICA CORREGIDA DE INTENTOS Y REDESPACHO ---
+                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
+                let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 
-                let cobradoAntes = pedidosHistoricos.has(id);
-                let cobroReal = cobradoAntes ? 0 : calc.total;
+                let cobradoAntes = pedidosHistoricos.has(String(id).trim());
+                let esRedespacho = cobradoAntes || intentosNum > 1;
+                let numVisual = esRedespacho ? (intentosNum > 1 ? intentosNum : 2) : intentosNum;
+
+                // CÁLCULO
+                let calc = calcularTarifasAutomaticas(p);
+                let cobroReal = esRedespacho ? 0 : calc.total;
                 tIngresosValidos += cobroReal;
 
                 datosParaGuardar.push({
                     id, fecha, placa: vehiculoDisp, 
-                    ingreso: cobroReal, totalFull: calc.total, redespacho: cobradoAntes,
+                    ingreso: cobroReal, totalFull: calc.total, redespacho: esRedespacho,
                     p_completo: p, calc_detalles: calc
                 });
 
                 if(index < 300) {
-                    let classTotal = cobradoAntes ? "col-total col-tachada" : "col-total";
+                    let classTotal = esRedespacho ? "col-total col-tachada" : "col-total";
+                    let celdaIntentos = `<td style="text-align:center; font-weight:700;">
+                        ${numVisual}
+                        ${esRedespacho ? '<br><span class="badge-redespacho">REDESPACHO</span>' : ''}
+                    </td>`;
+
                     tbody.innerHTML += `<tr>
                         <td><strong>${id}</strong></td>
+                        <td style="font-size:0.85em;">${p.Cliente || '-'}</td>
+                        ${celdaIntentos}
                         <td style="color:var(--blue-600); font-weight:600;">${fecha}</td>
                         <td style="font-size:0.85em;">${p.Tipo_Operacion || '-'}</td>
                         <td style="font-size:0.85em;">${p.Tipo_Servicio || '-'}</td>
                         <td><span class="badge-vehiculo">${vehiculoDisp}</span></td>
-                        <td style="font-size:0.85em;">${p.Cliente || '-'}</td>
                         <td style="font-size:0.85em;">${calc.trayUsado}</td>
                         <td style="text-align:center;">${calc.pesoUsado.toFixed(2)}</td>
                         <td class="col-tarifa">$${calc.tfaPeso.toFixed(2)}</td>
