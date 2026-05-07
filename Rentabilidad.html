@@ -47,10 +47,14 @@
 
         /* PANEL DE CONTROLES */
         .controls { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .control-group { display: flex; align-items: center; gap: 15px; }
-        .control-group label { font-weight: 600; color: var(--slate-700); font-size: 1.05em; }
-        .control-group input[type="month"] { padding: 10px; border: 1px solid var(--slate-200); border-radius: 6px; font-family: inherit; color: var(--slate-700); font-weight: 600; }
+        .filtros-wrapper { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+        .control-group { display: flex; align-items: center; gap: 10px; }
+        .control-group label { font-weight: 700; color: var(--slate-700); font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.5px;}
+        .control-group input[type="date"], .control-group input[type="month"], .control-group select { padding: 9px 12px; border: 1px solid var(--slate-200); border-radius: 6px; font-family: inherit; color: var(--slate-700); font-weight: 600; background-color: var(--slate-50); outline: none; transition: border-color 0.2s;}
+        .control-group input:focus, .control-group select:focus { border-color: var(--blue-600); background-color: white; }
         
+        .divider { width: 1px; height: 35px; background-color: var(--slate-200); margin: 0 5px; }
+
         .btn-calc { padding: 10px 20px; background: var(--blue-600); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; font-size: 1em; }
         .btn-calc:hover { background: #1d4ed8; }
         .btn-calc:disabled { background: #94a3b8; cursor: not-allowed; }
@@ -124,23 +128,48 @@
                 <div class="stat-value" id="boxCostos">$0.00</div>
             </div>
             <div class="stat-box box-rent" id="cardRent">
-                <div class="stat-title">Utilidad Neta del Mes</div>
+                <div class="stat-title">Utilidad Neta del Rango</div>
                 <div class="stat-value" id="boxRentabilidad">$0.00</div>
             </div>
         </div>
 
         <div class="controls">
-            <div class="control-group">
-                <label>📅 Mes a Visualizar:</label>
-                <input type="month" id="monthSelector" onchange="renderDashboard()">
+            <div class="filtros-wrapper">
+                <div class="control-group">
+                    <label>📅 Mes Rápido:</label>
+                    <input type="month" id="monthSelector" onchange="seleccionarMesRapido()">
+                </div>
+                
+                <div class="divider"></div>
+
+                <div class="control-group">
+                    <label>Desde:</label>
+                    <input type="date" id="dateStart" onchange="renderDashboard()">
+                </div>
+                <div class="control-group">
+                    <label>Hasta:</label>
+                    <input type="date" id="dateEnd" onchange="renderDashboard()">
+                </div>
+                
+                <div class="divider" id="divRegion"></div>
+
+                <div class="control-group" id="boxFiltroRegion">
+                    <label>📍 Región:</label>
+                    <select id="regionSelector" onchange="renderDashboard()">
+                        <option value="TODAS">Todas las Regiones</option>
+                        <option value="QUITO">Quito</option>
+                        <option value="GUAYAQUIL">Guayaquil</option>
+                        <option value="CUENCA">Cuenca</option>
+                    </select>
+                </div>
             </div>
             
-            <div style="text-align: right;">
+            <div style="text-align: right; margin-top: 10px;">
                 <button id="btnProcesar" class="btn-calc" onclick="procesarHistoricoNube()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                     Sincronizar Datos Nube
                 </button>
-                <div style="font-size: 0.8em; color: #94a3b8; margin-top: 5px;">Lee desde el 'Monitor' y 'Tarifario' de Sheets</div>
+                <div style="font-size: 0.8em; color: #94a3b8; margin-top: 5px;">Lee desde el 'Monitor' de Sheets</div>
             </div>
         </div>
 
@@ -151,7 +180,7 @@
     let rawData = [];
     window.dTarifasGlobal = []; 
 
-    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
@@ -160,9 +189,22 @@
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
+        
         if (sesion.rol !== 'Administrador') {
             document.getElementById('linkRegistro').style.display = 'none';
+            document.getElementById('boxFiltroRegion').style.display = 'none';
+            document.getElementById('divRegion').style.display = 'none';
         }
+
+        // Setear el mes y fechas iniciales al mes actual
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        
+        document.getElementById('monthSelector').value = `${yyyy}-${mm}`;
+        document.getElementById('dateStart').value = `${yyyy}-${mm}-01`;
+        document.getElementById('dateEnd').value = `${yyyy}-${mm}-${dd}`; // Hasta el día de hoy
 
         try {
             document.getElementById('tablasContainer').innerHTML = "<h3 style='text-align:center; padding: 40px; color:#64748b;'>⏳ Descargando histórico y validando vehículos desde la nube...</h3>";
@@ -175,15 +217,29 @@
             rawData = await resDB.json();
             window.dTarifasGlobal = await resTarifas.json();
             
-            const hoy = new Date();
-            const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
-            document.getElementById('monthSelector').value = mesActual;
-            
             renderDashboard();
         } catch (e) {
             document.getElementById('tablasContainer').innerHTML = "<h3 style='text-align:center; color:var(--red-600); padding: 40px;'>❌ Error de conexión. Verifique su internet o la URL del script.</h3>";
         }
     };
+
+    // Función para el nuevo botón "Mes Rápido"
+    function seleccionarMesRapido() {
+        const monthVal = document.getElementById('monthSelector').value;
+        if(!monthVal) return;
+        
+        const [y, m] = monthVal.split('-');
+        
+        // Calcula automáticamente cuántos días tiene ese mes (28, 30 o 31)
+        const ultimoDia = new Date(y, m, 0).getDate();
+        
+        // Rellena los inputs de fecha (Desde - Hasta)
+        document.getElementById('dateStart').value = `${y}-${m}-01`;
+        document.getElementById('dateEnd').value = `${y}-${m}-${String(ultimoDia).padStart(2, '0')}`;
+        
+        // Pinta la tabla de nuevo
+        renderDashboard();
+    }
 
     function cerrarSesion() {
         localStorage.removeItem('sesionActiva');
@@ -278,8 +334,6 @@
             });
 
             if(nuevosAgregados > 0) {
-                let ultimaFecha = rawData[rawData.length - 1].fecha;
-                document.getElementById('monthSelector').value = ultimaFecha.substring(0, 7);
                 renderDashboard();
                 alert(`✅ Sincronización exitosa. Se procesaron ${nuevosAgregados} rutas vehiculares.`);
             }
@@ -298,11 +352,44 @@
     }
 
     function renderDashboard() {
-        const monthVal = document.getElementById('monthSelector').value;
-        if(!monthVal) return;
+        const dateStart = document.getElementById('dateStart').value;
+        const dateEnd = document.getElementById('dateEnd').value;
+        const regionSel = document.getElementById('regionSelector').value;
+        
+        if(!dateStart || !dateEnd) return;
+        if(dateStart > dateEnd) {
+            alert("La Fecha de Inicio no puede ser mayor a la Fecha de Fin.");
+            return;
+        }
 
-        let dataMes = rawData.filter(d => d.fecha && d.fecha.startsWith(monthVal));
-        if (sesion.rol !== 'Administrador') { dataMes = dataMes.filter(d => d.ciudad === sesion.ciudad); }
+        let dateList = [];
+        let dCur = new Date(dateStart + "T00:00:00");
+        let dEnd = new Date(dateEnd + "T00:00:00");
+        
+        let timeDiff = dEnd.getTime() - dCur.getTime();
+        let daysDiff = timeDiff / (1000 * 3600 * 24);
+        if(daysDiff > 60) {
+            alert("Para mantener el rendimiento, por favor selecciona un rango máximo de 2 meses (60 días).");
+            return;
+        }
+
+        while (dCur <= dEnd) {
+            let y = dCur.getFullYear();
+            let m = String(dCur.getMonth() + 1).padStart(2, '0');
+            let d = String(dCur.getDate()).padStart(2, '0');
+            dateList.push(`${y}-${m}-${d}`);
+            dCur.setDate(dCur.getDate() + 1);
+        }
+
+        let totalDias = dateList.length;
+
+        let dataMes = rawData.filter(d => d.fecha >= dateStart && d.fecha <= dateEnd);
+        
+        if (sesion.rol !== 'Administrador') { 
+            dataMes = dataMes.filter(d => d.ciudad === sesion.ciudad); 
+        } else if (regionSel !== 'TODAS') {
+            dataMes = dataMes.filter(d => d.ciudad === regionSel);
+        }
 
         let sumIngresos = 0, sumCostos = 0;
         dataMes.forEach(row => {
@@ -315,23 +402,18 @@
         document.getElementById('boxCostos').innerText = formatMoney(sumCostos);
         document.getElementById('boxRentabilidad').innerText = formatMoney(sumRentabilidad);
         
-        // Cambiar estilo de tarjeta si es negativo
         const cardRent = document.getElementById('cardRent');
         if (sumRentabilidad < 0) {
-            cardRent.classList.remove('box-rent');
-            cardRent.classList.add('box-rent-negativo');
+            cardRent.classList.remove('box-rent'); cardRent.classList.add('box-rent-negativo');
         } else {
-            cardRent.classList.remove('box-rent-negativo');
-            cardRent.classList.add('box-rent');
+            cardRent.classList.remove('box-rent-negativo'); cardRent.classList.add('box-rent');
         }
 
-        const [year, month] = monthVal.split('-');
-        const daysInMonth = new Date(year, month, 0).getDate();
-        
         let theadHTML = `<tr><th>Concepto Financiero</th><th style="background:var(--slate-900); color:white; text-align:center;">Acumulado</th>`;
-        for(let i = 1; i <= daysInMonth; i++) {
-            theadHTML += `<th class="th-days">${String(i).padStart(2, '0')}/${month}</th>`;
-        }
+        dateList.forEach(fechaStr => {
+            let parts = fechaStr.split('-');
+            theadHTML += `<th class="th-days">${parts[2]}/${parts[1]}</th>`;
+        });
         theadHTML += `</tr>`;
 
         const container = document.getElementById('tablasContainer');
@@ -341,13 +423,20 @@
 
         let zonas = [];
         if (sesion.rol === 'Administrador') {
-            zonas = [
-                { id: 'QUITO', clase: 'bg-quito', titulo: '📍 Región QUITO', filterFn: d => d.ciudad === 'QUITO' },
-                { id: 'GUAYAQUIL', clase: 'bg-guayaquil', titulo: '📍 Región GUAYAQUIL', filterFn: d => d.ciudad === 'GUAYAQUIL' },
-                { id: 'CUENCA', clase: 'bg-cuenca', titulo: '📍 Región CUENCA', filterFn: d => d.ciudad === 'CUENCA' },
-                { id: 'SIN_TARIFARIO', clase: 'bg-sin-tarifa', titulo: '⚠️ ALERTA: Vehículos no registrados en Tarifario Base', filterFn: d => d.placa && !vehiculosConocidos.includes(String(d.placa).trim().toUpperCase()) },
-                { id: 'GENERAL', clase: 'bg-general', titulo: '🌎 RENTABILIDAD GLOBAL ACUMULADA', filterFn: d => true }
-            ];
+            if (regionSel === 'TODAS') {
+                zonas = [
+                    { id: 'QUITO', clase: 'bg-quito', titulo: '📍 Región QUITO', filterFn: d => d.ciudad === 'QUITO' },
+                    { id: 'GUAYAQUIL', clase: 'bg-guayaquil', titulo: '📍 Región GUAYAQUIL', filterFn: d => d.ciudad === 'GUAYAQUIL' },
+                    { id: 'CUENCA', clase: 'bg-cuenca', titulo: '📍 Región CUENCA', filterFn: d => d.ciudad === 'CUENCA' },
+                    { id: 'SIN_TARIFARIO', clase: 'bg-sin-tarifa', titulo: '⚠️ ALERTA: Vehículos no registrados en Tarifario Base', filterFn: d => d.placa && !vehiculosConocidos.includes(String(d.placa).trim().toUpperCase()) },
+                    { id: 'GENERAL', clase: 'bg-general', titulo: '🌎 RENTABILIDAD GLOBAL ACUMULADA', filterFn: d => true }
+                ];
+            } else {
+                let colors = { 'QUITO': 'bg-quito', 'GUAYAQUIL': 'bg-guayaquil', 'CUENCA': 'bg-cuenca' };
+                zonas = [
+                    { id: regionSel, clase: colors[regionSel], titulo: `📍 Región ${regionSel} (Vista Filtrada)`, filterFn: d => d.ciudad === regionSel }
+                ];
+            }
         } else {
             let colorClase = sesion.ciudad === 'QUITO' ? 'bg-quito' : (sesion.ciudad === 'GUAYAQUIL' ? 'bg-guayaquil' : 'bg-cuenca');
             zonas = [
@@ -360,23 +449,20 @@
             let dataZona = dataMes.filter(zona.filterFn); 
 
             let totales = {
-                ingresos: Array(daysInMonth).fill(0), cBase: Array(daysInMonth).fill(0),
-                pedidos: Array(daysInMonth).fill(0), cAyudantes: Array(daysInMonth).fill(0),
-                cExc: Array(daysInMonth).fill(0), cHE: Array(daysInMonth).fill(0)
+                ingresos: Array(totalDias).fill(0), cBase: Array(totalDias).fill(0),
+                pedidos: Array(totalDias).fill(0), cAyudantes: Array(totalDias).fill(0),
+                cExc: Array(totalDias).fill(0), cHE: Array(totalDias).fill(0)
             };
 
             dataZona.forEach(ruta => {
-                let parts = ruta.fecha.split('-');
-                if(parts.length === 3) {
-                    let dayIndex = parseInt(parts[2]) - 1;
-                    if(dayIndex >= 0 && dayIndex < daysInMonth) {
-                        totales.ingresos[dayIndex] += ruta.ingresos || 0;
-                        totales.cBase[dayIndex] += ruta.cBase || 0;
-                        totales.pedidos[dayIndex] += ruta.pedidos || 0;
-                        totales.cAyudantes[dayIndex] += ruta.cAyudantes || 0;
-                        totales.cExc[dayIndex] += ruta.cExc || 0;
-                        totales.cHE[dayIndex] += ruta.cHE || 0;
-                    }
+                let dayIndex = dateList.indexOf(ruta.fecha);
+                if(dayIndex !== -1) {
+                    totales.ingresos[dayIndex] += ruta.ingresos || 0;
+                    totales.cBase[dayIndex] += ruta.cBase || 0;
+                    totales.pedidos[dayIndex] += ruta.pedidos || 0;
+                    totales.cAyudantes[dayIndex] += ruta.cAyudantes || 0;
+                    totales.cExc[dayIndex] += ruta.cExc || 0;
+                    totales.cHE[dayIndex] += ruta.cHE || 0;
                 }
             });
 
@@ -400,7 +486,7 @@
             }
 
             let cTotalArr = [], rBrutaArr = [], rPorcArr = [];
-            for(let i=0; i<daysInMonth; i++) {
+            for(let i=0; i<totalDias; i++) {
                 let c = totales.cBase[i] + totales.cAyudantes[i] + totales.cExc[i] + totales.cHE[i];
                 let r = totales.ingresos[i] - c;
                 cTotalArr.push(c); rBrutaArr.push(r);
@@ -418,7 +504,7 @@
                                 ${crearFila('(+) Ingresos Facturados', totales.ingresos, 'row-ingreso')}
                                 ${crearFila('(-) Costo Vehículos Base', totales.cBase, 'row-costo')}
                                 ${crearFila('(&nbsp;&nbsp;) Cantidad Pedidos', totales.pedidos, 'row-pedidos', false)}
-                                <tr class="row-vacia"><td colspan="${daysInMonth + 2}"></td></tr>
+                                <tr class="row-vacia"><td colspan="${totalDias + 2}"></td></tr>
                                 ${crearFila('(-) Costo Ayudantes / Estibas', totales.cAyudantes, 'row-costo')}
                                 ${crearFila('(-) Costo Servicio Exclusivo', totales.cExc, 'row-costo')}
                                 ${crearFila('(-) Costo Horas Extras', totales.cHE, 'row-costo')}
@@ -433,7 +519,7 @@
         });
 
         if (container.innerHTML === '') {
-            container.innerHTML = `<div style='text-align:center; padding:50px; background:white; border-radius:12px; border:1px solid var(--slate-200);'><h3 style='color:var(--slate-700);'>No hay actividad operativa registrada</h3><p style='color:#94a3b8;'>No se encontraron datos para el mes de ${monthVal}.</p></div>`;
+            container.innerHTML = `<div style='text-align:center; padding:50px; background:white; border-radius:12px; border:1px solid var(--slate-200);'><h3 style='color:var(--slate-700);'>No hay actividad operativa registrada</h3><p style='color:#94a3b8;'>No se encontraron datos entre el ${dateStart} y ${dateEnd}.</p></div>`;
         }
     }
 </script>

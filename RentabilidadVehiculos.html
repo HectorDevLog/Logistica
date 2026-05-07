@@ -48,12 +48,15 @@
 
         /* PANEL DE CONTROLES Y LEYENDA */
         .controls { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+        .filtros-wrapper { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; flex: 1; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-weight: 600; font-size: 0.9em; color: var(--slate-700); }
-        .control-group input, .control-group select { padding: 10px; border: 1px solid var(--slate-200); border-radius: 6px; width: 180px; font-family: inherit; color: var(--slate-700); font-weight: 500; }
-        .control-group input:focus, .control-group select:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+        .control-group input, .control-group select { padding: 9px 12px; border: 1px solid var(--slate-200); border-radius: 6px; min-width: 150px; font-family: inherit; color: var(--slate-700); font-weight: 600; background-color: var(--slate-50); outline: none; transition: border-color 0.2s;}
+        .control-group input:focus, .control-group select:focus { border-color: var(--blue-600); background-color: white; }
         
-        .legend-box { margin-left: auto; font-size: 0.85em; background: var(--slate-50); padding: 12px 15px; border: 1px dashed var(--slate-200); border-radius: 8px; color: var(--slate-700); line-height: 1.6; }
+        .divider { width: 1px; height: 40px; background-color: var(--slate-200); margin: 0 5px; align-self: center; }
+
+        .legend-box { font-size: 0.85em; background: var(--slate-50); padding: 12px 15px; border: 1px dashed var(--slate-200); border-radius: 8px; color: var(--slate-700); line-height: 1.6; min-width: 180px; }
 
         /* TABLA Y SCROLL */
         .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid var(--slate-200); }
@@ -134,25 +137,41 @@
                 <div class="stat-value" id="boxCostos">$0.00</div>
             </div>
             <div class="stat-box box-rent" id="cardRent">
-                <div class="stat-title">Rentabilidad Neta</div>
+                <div class="stat-title">Rentabilidad Neta (Rango)</div>
                 <div class="stat-value" id="boxRentabilidad">$0.00</div>
             </div>
         </div>
 
         <div class="controls">
-            <div class="control-group">
-                <label>📅 Filtrar por Mes:</label>
-                <input type="month" id="monthSelector" onchange="renderTodo()">
-            </div>
-            <div class="control-group">
-                <label>🌎 Filtrar por Ciudad:</label>
-                <select id="ciudadSelector" onchange="actualizarFiltroVehiculos(); renderTodo();"></select>
-            </div>
-            <div class="control-group">
-                <label>🚛 Filtrar por Vehículo:</label>
-                <select id="vehiculoSelector" onchange="renderTodo()">
-                    <option value="TODOS">Todos los Vehículos</option>
-                </select>
+            <div class="filtros-wrapper">
+                <div class="control-group">
+                    <label>📅 Mes Rápido:</label>
+                    <input type="month" id="monthSelector" onchange="seleccionarMesRapido()">
+                </div>
+                
+                <div class="divider"></div>
+
+                <div class="control-group">
+                    <label>Desde:</label>
+                    <input type="date" id="dateStart" onchange="renderTodo()">
+                </div>
+                <div class="control-group">
+                    <label>Hasta:</label>
+                    <input type="date" id="dateEnd" onchange="renderTodo()">
+                </div>
+
+                <div class="divider" id="divFiltrosAvanzados"></div>
+
+                <div class="control-group" id="boxCiudad">
+                    <label>🌎 Filtrar por Ciudad:</label>
+                    <select id="ciudadSelector" onchange="actualizarFiltroVehiculos(); renderTodo();"></select>
+                </div>
+                <div class="control-group">
+                    <label>🚛 Filtrar por Vehículo:</label>
+                    <select id="vehiculoSelector" onchange="renderTodo()">
+                        <option value="TODOS">Todos los Vehículos</option>
+                    </select>
+                </div>
             </div>
             
             <div class="legend-box">
@@ -177,7 +196,7 @@
     </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
@@ -185,9 +204,16 @@
     window.dTarifasGlobal = []; 
 
     window.onload = async function() {
+        // Setear Fechas Iniciales (Mes Actual)
         const hoy = new Date();
-        document.getElementById('monthSelector').value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
         
+        document.getElementById('monthSelector').value = `${yyyy}-${mm}`;
+        document.getElementById('dateStart').value = `${yyyy}-${mm}-01`;
+        document.getElementById('dateEnd').value = `${yyyy}-${mm}-${dd}`;
+
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
@@ -195,6 +221,8 @@
 
         if (sesion.rol !== 'Administrador') {
             document.getElementById('linkRegistro').style.display = 'none';
+            document.getElementById('boxCiudad').style.display = 'none';
+            document.getElementById('divFiltrosAvanzados').style.display = 'none';
         }
 
         try {
@@ -227,6 +255,20 @@
         }
     };
 
+    // Función "Mes Rápido"
+    function seleccionarMesRapido() {
+        const monthVal = document.getElementById('monthSelector').value;
+        if(!monthVal) return;
+        
+        const [y, m] = monthVal.split('-');
+        const ultimoDia = new Date(y, m, 0).getDate();
+        
+        document.getElementById('dateStart').value = `${y}-${m}-01`;
+        document.getElementById('dateEnd').value = `${y}-${m}-${String(ultimoDia).padStart(2, '0')}`;
+        
+        renderTodo();
+    }
+
     function actualizarFiltroVehiculos() {
         const ciudadFiltro = document.getElementById('ciudadSelector').value;
         let datosParaFiltrar = datosCompletos;
@@ -245,19 +287,47 @@
     }
 
     function renderTodo() {
-        const mesFiltro = document.getElementById('monthSelector').value;
+        const dateStart = document.getElementById('dateStart').value;
+        const dateEnd = document.getElementById('dateEnd').value;
         const ciudadFiltro = document.getElementById('ciudadSelector').value;
         const vehFiltro = document.getElementById('vehiculoSelector').value;
         
         const tbody = document.querySelector('#tblVehiculos tbody');
         const thead = document.getElementById('theadVehiculos');
         
-        if(!mesFiltro) return;
+        if(!dateStart || !dateEnd) return;
+        if(dateStart > dateEnd) {
+            alert("La Fecha de Inicio no puede ser mayor a la Fecha de Fin.");
+            return;
+        }
 
-        let filtrados = datosCompletos.filter(d => d.fecha && d.fecha.startsWith(mesFiltro));
+        // 1. Generar array de días exactos (Límite 60 días para seguridad)
+        let dateList = [];
+        let dCur = new Date(dateStart + "T00:00:00");
+        let dEnd = new Date(dateEnd + "T00:00:00");
+        
+        let timeDiff = dEnd.getTime() - dCur.getTime();
+        let daysDiff = timeDiff / (1000 * 3600 * 24);
+        if(daysDiff > 60) {
+            alert("Para mantener el rendimiento, por favor selecciona un rango máximo de 2 meses (60 días).");
+            return;
+        }
+
+        while (dCur <= dEnd) {
+            let y = dCur.getFullYear();
+            let m = String(dCur.getMonth() + 1).padStart(2, '0');
+            let d = String(dCur.getDate()).padStart(2, '0');
+            dateList.push(`${y}-${m}-${d}`);
+            dCur.setDate(dCur.getDate() + 1);
+        }
+        let totalDias = dateList.length;
+
+        // 2. Filtrar Datos Brutos
+        let filtrados = datosCompletos.filter(d => d.fecha >= dateStart && d.fecha <= dateEnd);
         if (ciudadFiltro !== "TODAS") filtrados = filtrados.filter(d => d.ciudad === ciudadFiltro);
         if (vehFiltro !== "TODOS") filtrados = filtrados.filter(d => d.placa === vehFiltro);
 
+        // 3. Totales KPI Generales
         let sumIngresos = 0, sumCostos = 0;
         filtrados.forEach(row => {
             sumIngresos += Number(row.ingresos) || 0;
@@ -271,16 +341,12 @@
         
         const cardRent = document.getElementById('cardRent');
         if (sumRentabilidad < 0) {
-            cardRent.classList.remove('box-rent');
-            cardRent.classList.add('box-rent-negativo');
+            cardRent.classList.remove('box-rent'); cardRent.classList.add('box-rent-negativo');
         } else {
-            cardRent.classList.remove('box-rent-negativo');
-            cardRent.classList.add('box-rent');
+            cardRent.classList.remove('box-rent-negativo'); cardRent.classList.add('box-rent');
         }
 
-        const [year, month] = mesFiltro.split('-');
-        const daysInMonth = new Date(year, month, 0).getDate();
-
+        // 4. Dibujar Cabecera de la Tabla
         let theadHTML = `<tr>
             <th style="min-width:130px;">Placa (Vehículo)</th>
             <th style="min-width:100px;">Ciudad</th>
@@ -290,12 +356,14 @@
             <th>Rentabilidad</th>
             <th>Margen (%)</th>`;
         
-        for(let i = 1; i <= daysInMonth; i++) {
-            theadHTML += `<th class="th-days">${String(i).padStart(2, '0')}/${month}</th>`;
-        }
+        dateList.forEach(fechaStr => {
+            let parts = fechaStr.split('-');
+            theadHTML += `<th class="th-days">${parts[2]}/${parts[1]}</th>`;
+        });
         theadHTML += `</tr>`;
         thead.innerHTML = theadHTML;
 
+        // 5. Agrupar la información por Placa y Días Dinámicos
         let agrupado = {};
         filtrados.forEach(row => {
             let placa = row.placa || "DESCONOCIDO";
@@ -303,7 +371,7 @@
                 agrupado[placa] = { 
                     ciudad: row.ciudad || "GENERAL",
                     pedidos: 0, ingresos: 0, costos: 0, 
-                    dias: Array.from({length: daysInMonth}, () => ({ped: 0, ing: 0, cos: 0, rent: 0}))
+                    dias: Array.from({length: totalDias}, () => ({ped: 0, ing: 0, cos: 0, rent: 0}))
                 };
             }
             
@@ -315,18 +383,17 @@
             agrupado[placa].ingresos += ing;
             agrupado[placa].costos += cTot;
 
-            let parts = row.fecha.split('-');
-            if(parts.length === 3) {
-                let dayIndex = parseInt(parts[2]) - 1; 
-                if(dayIndex >= 0 && dayIndex < daysInMonth) {
-                    agrupado[placa].dias[dayIndex].ped += ped;
-                    agrupado[placa].dias[dayIndex].ing += ing;
-                    agrupado[placa].dias[dayIndex].cos += cTot;
-                    agrupado[placa].dias[dayIndex].rent += (ing - cTot);
-                }
+            // En lugar de usar el día del mes, buscamos en qué posición (índice) está la fecha en nuestro array 'dateList'
+            let dayIndex = dateList.indexOf(row.fecha);
+            if(dayIndex !== -1) {
+                agrupado[placa].dias[dayIndex].ped += ped;
+                agrupado[placa].dias[dayIndex].ing += ing;
+                agrupado[placa].dias[dayIndex].cos += cTot;
+                agrupado[placa].dias[dayIndex].rent += (ing - cTot);
             }
         });
 
+        // 6. Preparar render de filas
         let vehiculosConocidos = window.dTarifasGlobal ? window.dTarifasGlobal.map(t => String(t.PLACA || t.PLACAS).trim().toUpperCase()) : [];
         const placasTotales = Object.keys(agrupado);
         
@@ -335,13 +402,14 @@
 
         let tbodyHTML = '';
         let totPed = 0;
-        let totDias = Array.from({length: daysInMonth}, () => ({ped: 0, ing: 0, cos: 0, rent: 0})); 
+        let totDias = Array.from({length: totalDias}, () => ({ped: 0, ing: 0, cos: 0, rent: 0})); 
 
         if (placasTotales.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${7 + daysInMonth}" class="loader-msg">No hay rutas registradas con los filtros seleccionados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${7 + totalDias}" class="loader-msg">No hay rutas registradas con los filtros seleccionados.</td></tr>`;
             return;
         }
 
+        // Función constructora de Fila
         function generarHTMLFila(placa, data) {
             let rentabilidad = data.ingresos - data.costos;
             let porcentaje = data.ingresos > 0 ? (rentabilidad / data.ingresos) * 100 : 0;
@@ -349,7 +417,7 @@
             totPed += data.pedidos;
 
             let diasHTML = "";
-            for(let i = 0; i < daysInMonth; i++) {
+            for(let i = 0; i < totalDias; i++) {
                 let dData = data.dias[i];
                 totDias[i].ped += dData.ped;
                 totDias[i].ing += dData.ing;
@@ -384,22 +452,25 @@
             `;
         }
 
+        // Imprimir Oficiales
         placasOficiales.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
 
+        // Imprimir Externos
         if (placasExternas.length > 0) {
             tbodyHTML += `
                 <tr class="row-separador">
                     <td style="position:sticky; left:0; z-index:4;">⚠️ VEHÍCULOS EXTERNOS</td>
                     <td style="position:sticky; left:130px; z-index:4;">-</td>
-                    <td colspan="${5 + daysInMonth}" style="text-align:left; font-weight:normal;">(Vehículos no registrados en el Tarifario Maestro)</td>
+                    <td colspan="${5 + totalDias}" style="text-align:left; font-weight:normal;">(Vehículos no registrados en el Tarifario Maestro)</td>
                 </tr>
             `;
             placasExternas.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
         }
 
+        // Imprimir Fila Total
         let porcGeneral = sumIngresos > 0 ? (sumRentabilidad / sumIngresos) * 100 : 0;
         let totDiasHTML = "";
-        for(let i = 0; i < daysInMonth; i++) {
+        for(let i = 0; i < totalDias; i++) {
             let tD = totDias[i];
             if(tD.ped === 0 && tD.ing === 0 && tD.cos === 0) {
                 totDiasHTML += `<td style="text-align:center; border-color:rgba(255,255,255,0.1);">-</td>`;
