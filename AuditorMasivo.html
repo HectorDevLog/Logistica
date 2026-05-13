@@ -505,7 +505,8 @@
                     fecha: g.fecha, ciudad: veh.ciudad, pedidos: g.ids.length,
                     ingresos: parseFloat(g.ingresos.toFixed(2)),
                     cBase: veh.costo, cAyudantes: 0, cExc: 0, cHE: 0,
-                    placa: g.placa, listaIds: g.ids.join(', ')
+                    placa: g.placa, listaIds: g.ids.join(', '),
+                    usuario: sesion.nombre
                 });
             }
 
