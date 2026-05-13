@@ -34,6 +34,7 @@
         .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
 
         /* FORMULARIOS (Aside) */
+        .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 600; margin: 15px 0 6px; font-size: 0.9em; color: var(--slate-700); }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
@@ -85,8 +86,8 @@
         .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); }
         .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
         
-        .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; }
-        .badge-cobrado { background: var(--amber-50); color: var(--amber-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fde68a; }
+        .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
     </style>
     
     <script src="config.js"></script>
@@ -216,7 +217,7 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
@@ -436,37 +437,43 @@
         ids.forEach(id => {
             const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             if(p) {
-                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
-                let intentos = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos']) || 1);
-                let cobradoAntes = pedidosHistoricos.has(String(id));
-                let esRedespacho = cobradoAntes || intentos > 1;
-
                 let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
                 let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
                 p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(p['TipoTrayecto'] || p['Tipo_Trayecto'] || p['Trayecto'] || '-').trim().toUpperCase();
 
                 // LLAMADA AL ARCHIVO motorTarifas.js
                 let calcNube = calcularTarifasAutomaticas(p);
-                
                 let tfaCalculada = calcNube.total > 0 ? calcNube.total : 0;
-                let cobroReal = esRedespacho ? 0 : tfaCalculada;
-                tIngresosValidos += cobroReal;
+
+                // --- LÓGICA DE COBRO INTELIGENTE (NUEVA REGLA DE ORO) ---
+                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
+                let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 
+                let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
+
+                let cobroReal = 0;
                 let htmlStatus = "";
                 let classTotal = "col-total";
-                
-                if (cobradoAntes) {
-                    htmlStatus = `<div class="badge-cobrado">YA COBRADO</div>`;
+
+                if (yaExisteEnFlexNet) {
+                    // REGLA A: Si FlexNet ya lo conoce, NO se vuelve a cobrar.
+                    cobroReal = 0;
                     classTotal += " col-tachada";
-                } else if (esRedespacho) {
-                    htmlStatus = `<div class="badge-redespacho">REDESPACHO</div>`;
-                    classTotal += " col-tachada";
+                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                } else {
+                    // REGLA B: Si es nuevo para FlexNet, SE COBRA SIEMPRE.
+                    cobroReal = tfaCalculada;
+                    if (intentosNum > 1) {
+                        htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+                    }
                 }
 
+                tIngresosValidos += cobroReal;
+                
                 tbody.innerHTML += `<tr>
                     <td><strong>${id}</strong></td>
                     <td>${p.Cliente || '-'}</td>
-                    <td style="text-align:center;"><b>${intentos}</b><br>${htmlStatus}</td>
+                    <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
                     <td style="color:var(--blue-600); font-weight:600;">${cp}</td>
                     <td style="color:var(--slate-500);">${calcNube.trayUsado}</td>
                     <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
