@@ -528,7 +528,7 @@
             cExc: document.getElementById('chkExc').checked ? parseFloat(opt.dataset.ex) : 0,
             cHE: (parseFloat(document.getElementById('numHE').value) || 0) * parseFloat(opt.dataset.he),
             placa: placaVehiculo,
-            listaIds: ids.join(',')
+            listaIds: ids.join(', ')
         };
 
         const btnConf = event.target;
