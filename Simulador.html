@@ -27,7 +27,7 @@
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
-        /* GRID PRINCIPAL (Layout lateral) */
+        /* GRID PRINCIPAL */
         .wrapper { max-width: 1500px; margin: 25px auto; display: grid; grid-template-columns: 360px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
         
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
@@ -40,18 +40,18 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
         .row-flex { display: flex; gap: 15px; }
         
-        .checkbox-label { display: flex; align-items: center; gap: 8px; margin-top: 15px; cursor: pointer; background: var(--slate-50); padding: 12px; border-radius: 6px; border: 1px solid var(--slate-200); }
-        .checkbox-label input { width: auto; margin: 0; }
-        
-        .exc-container { display: none; background: #fff1f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin-top: 10px; }
-        .exc-container label { color: #be123c; }
-        .exc-container input { border-color: #fca5a5; background: white; }
+        /* PANELES DINÁMICOS */
+        .panel-dinamico { background: var(--slate-50); padding: 15px; border-radius: 8px; border: 1px solid var(--slate-200); margin-top: 15px; }
+        .panel-dinamico label { color: var(--slate-900); font-size: 0.85em; margin-top: 10px; }
 
-        button { width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
+        /* AVISO DE CAMBIOS */
+        #alertaCambios { display: none; background: #fffbeb; color: #d97706; padding: 12px; border-radius: 6px; border: 1px solid #fcd34d; margin-top: 15px; font-size: 0.85em; font-weight: 700; text-align: center; }
+
+        button { width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 15px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
         button:hover { background: #1d4ed8; }
         button:disabled { background: #94a3b8; cursor: not-allowed; }
         .btn-success { background: var(--emerald-600); margin-top: 10px; }
-        .btn-success:hover { background: #047857; }
+        .btn-success:hover:not(:disabled) { background: #047857; }
 
         /* ESTADO DEL SISTEMA (Status) */
         .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
@@ -104,7 +104,6 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
         Simulador Operativo
     </div>
-    
     <div class="nav-links">
         <a href="Inicio.html">&larr; Menú Principal</a>
         <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
@@ -113,7 +112,6 @@
         <a id="linkReportes" href="Reportes.html">📈 Dashboard</a>
         <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
     </div>
-
     <div class="user-info" id="infoUsuario"></div>
 </div>
 
@@ -129,50 +127,75 @@
             <h3>⚙️ Configuración de Ruta</h3>
             
             <label>📅 Fecha de Despacho:</label>
-            <input type="date" id="fechaDespacho">
+            <input type="date" id="fechaDespacho" onchange="verificarVehiculoRepetido(); marcarCambios();">
             
             <label>🏢 Proveedor Logístico:</label>
-            <select id="selProv" onchange="actualizarVehiculos()"><option value="">Cargando proveedores...</option></select>
+            <select id="selProv" onchange="actualizarVehiculos(); marcarCambios();"><option value="">Cargando proveedores...</option></select>
             
             <label>🚛 Vehículo Asignado:</label>
-            <select id="selVehiculo"></select>
+            <select id="selVehiculo" onchange="verificarVehiculoRepetido(); marcarCambios();"></select>
 
-            <div class="row-flex">
-                <div style="flex:1">
-                    <label>Cant. Estibas:</label>
-                    <input type="number" id="numEstibas" value="0" min="0">
-                </div>
-                <div style="flex:1">
-                    <label>Horas Extra:</label>
-                    <input type="number" id="numHE" value="0" min="0">
+            <div id="msgVehiculoRepetido" style="display:none; background:#ecfdf5; color:#059669; padding:10px; border-radius:6px; border:1px solid #a7f3d0; margin-top:10px; font-size:0.85em; font-weight:600;">
+                ℹ️ Este vehículo ya registró una salida hoy. El Costo Base Día será $0.00.
+            </div>
+
+            <div id="panelItsa" class="panel-dinamico" style="display:none;">
+                <label>⚙️ Tipo de Servicio (ITSACOURIER):</label>
+                <select id="tipoServicioItsa" onchange="marcarCambios()">
+                    <option value="NORMAL">Normal (Aplica Precio Base Día)</option>
+                    <option value="EXCLUSIVO HORARIO LABORAL">Exclusivo Horario Laboral</option>
+                    <option value="EXCLUSIVO FUERA HORARIO">Exclusivo Fuera Horario</option>
+                </select>
+                <div class="row-flex" style="margin-top:10px;">
+                    <div style="flex:1"><label>Cant. Estibas:</label><input type="number" id="estibasItsa" value="0" min="0" oninput="marcarCambios()"></div>
+                    <div style="flex:1"><label>Horas Extra:</label><input type="number" id="heItsa" value="0" min="0" step="0.5" oninput="marcarCambios()"></div>
                 </div>
             </div>
 
-            <label class="checkbox-label">
-                <input type="checkbox" id="chkExc" onchange="toggleExclusivo()">
-                <span>Servicio Exclusivo (Horario Laboral)</span>
-            </label>
-            
-            <div id="boxExclusivo" class="exc-container">
-                <label>💰 Costo Vehículo Exclusivo ($):</label>
-                <input type="number" id="costoExc" value="0" min="0" step="0.01" placeholder="Ej. 150.00">
-                
-                <label>📦 Valor Declarado Total de la Carga ($):</label>
-                <input type="number" id="valorDeclarado" value="0" min="0" step="0.01" placeholder="Ej. 5000.00">
-                <span style="font-size: 0.8em; color: #be123c;">* Requerido para cálculo de tarifa.</span>
+            <div id="panelOtros" class="panel-dinamico" style="display:none;">
+                <label>⚙️ Tipo de Servicio Especial:</label>
+                <select id="tipoServicioOtros" onchange="cambiarVistaOtros(); marcarCambios()">
+                    <option value="EXCLUSIVO">Exclusivo</option>
+                    <option value="POR RUTA">Por Ruta</option>
+                    <option value="POR PUNTO">Por Punto</option>
+                </select>
+
+                <div id="subPanelManual" style="margin-top:10px;">
+                    <div class="row-flex">
+                        <div style="flex:1"><label>Costo Acordado ($):</label><input type="number" id="costoManual" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
+                    </div>
+                    <div class="row-flex" style="margin-top:10px;">
+                        <div style="flex:1"><label>Cant. Estibas:</label><input type="number" id="estibasManual" value="0" min="0" oninput="marcarCambios()"></div>
+                        <div style="flex:1"><label>Costo x Estiba ($):</label><input type="number" id="precioEstibaManual" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
+                    </div>
+                </div>
+
+                <div id="subPanelPuntos" style="display:none; margin-top:10px;">
+                    <div class="row-flex">
+                        <div style="flex:1"><label>Cant. Puntos Base:</label><input type="number" id="cantPuntosBase" value="0" min="0" oninput="marcarCambios()"></div>
+                        <div style="flex:1"><label>Costo P. Base ($):</label><input type="number" id="precioPuntosBase" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
+                    </div>
+                    <div class="row-flex" style="margin-top:10px;">
+                        <div style="flex:1"><label>Costo P. Adicional ($):</label><input type="number" id="precioPuntoAdicional" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
+                    </div>
+                </div>
             </div>
             
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
                 <label>📦 Cargar IDs de Pedidos:</label>
                 <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--blue-600); margin-bottom:6px;">0 Únicos</span>
             </div>
-            <textarea id="txtPedidos" rows="6" oninput="contarPedidos()" placeholder="Pegue aquí el listado de IDs..."></textarea>
+            <textarea id="txtPedidos" rows="6" oninput="contarPedidos(); marcarCambios();" placeholder="Pegue aquí el listado de IDs..."></textarea>
+
+            <div id="alertaCambios">
+                ⚠️ Se detectaron cambios en la configuración. Haga clic en "CALCULAR SIMULACIÓN" para actualizar.
+            </div>
 
             <button id="btnCalc" onclick="ejecutar()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 CALCULAR SIMULACIÓN
             </button>
-            <button onclick="guardar()" class="btn-success">
+            <button id="btnSave" class="btn-success" onclick="guardar()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 CONFIRMAR Y GUARDAR
             </button>
@@ -188,7 +211,7 @@
             <div class="stat-box box-cos">
                 <h4>Costo Operativo</h4>
                 <span id="vCos">$0.00</span>
-                <div id="detallesCosto" class="stat-detail">Base: $0.00 | Estibas: $0.00 <br> Exc: $0.00 | H.E.: $0.00</div>
+                <div id="detallesCosto" class="stat-detail">Esperando simulación...</div>
             </div>
             <div id="boxR" class="stat-box box-ren">
                 <h4>Rentabilidad Neta</h4>
@@ -210,6 +233,7 @@
                             <th>ID Pedido</th>
                             <th>Cliente</th>
                             <th style="text-align:center;">Intentos</th>
+                            <th>Servicio Monitor</th>
                             <th>Localidad / CP</th>
                             <th>Trayecto Base</th>
                             <th style="text-align:center;">Peso (Kg)</th>
@@ -221,7 +245,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando datos para simulación...</td></tr>
+                        <tr><td colspan="12" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando datos para simulación...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -242,40 +266,22 @@
     let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
     let cloudLista = false, monitorListo = false;
     let pedidosHistoricos = new Set(); 
-    let monitorSincronizando = true; 
-    let tarifasSincronizando = true;
-
-    // --- FUNCIONES DE SÚPER MEMORIA (IndexedDB) ---
-    const dbName = "SimuladorDB";
-    const storeName = "MonitorStore";
-
-    function initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(dbName, 1);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: "id" }); }
-            };
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function guardarDatoDB(id, data) {
-        const db = await initDB();
-        const tx = db.transaction(storeName, "readwrite");
-        tx.objectStore(storeName).put({ id: id, data: data });
-        return new Promise(resolve => tx.oncomplete = resolve);
-    }
-
-    async function obtenerDatoDB(id) {
-        const db = await initDB();
-        const tx = db.transaction(storeName, "readonly");
-        const request = tx.objectStore(storeName).get(id);
-        return new Promise(resolve => {
-            request.onsuccess = () => resolve(request.result ? request.result.data : null);
-            request.onerror = () => resolve(null);
-        });
+    let rutasPorDiaYPlaca = {}; 
+    let calculoRealizado = false; // Bandera de seguridad
+    
+    function formatearFechaUniversal(val) {
+        if (!val) return "";
+        let str = String(val).trim();
+        if (str.charAt(0) === "'") str = str.substring(1);
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+        if (str.indexOf("/") > -1) {
+            let p = str.split(" ")[0].split("/");
+            if (p.length === 3) {
+               if(p[0].length === 4) return `${p[0]}-${("0"+p[1]).slice(-2)}-${("0"+p[2]).slice(-2)}`;
+               return `${p[2]}-${("0"+p[1]).slice(-2)}-${("0"+p[0]).slice(-2)}`;
+            }
+        }
+        return str;
     }
 
     window.onload = async function() {
@@ -285,22 +291,9 @@
         `;
         document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
 
-        // 1. CARGA INTELIGENTE DE TARIFAS
+        // 1. CARGA INTELIGENTE DE TARIFAS Y RUTAS
         let promesaTarifas = (async () => {
             try {
-                const cacheTarifas = await obtenerDatoDB("tarifasCargadas");
-                if (cacheTarifas) {
-                    dTarifas = cacheTarifas.dTarifas || []; tfaPesoDB = cacheTarifas.tfaPesoDB || [];
-                    tfaPedidoDB = cacheTarifas.tfaPedidoDB || []; tfaRangoDB = cacheTarifas.tfaRangoDB || [];
-                    tfaMedidaDB = cacheTarifas.tfaMedidaDB || []; trayectoDB = cacheTarifas.trayectoDB || [];
-                    pedidosHistoricos = new Set(cacheTarifas.pedidosHistoricos || []);
-
-                    let box = document.getElementById('statusNube');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = `✅ Tarifas en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span> Actualizando...</span>`;
-                    cloudLista = true; cargarProveedores(); checkReady();
-                }
-
                 const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
                     fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
                     fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
@@ -313,38 +306,29 @@
                 tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
 
                 pedidosHistoricos.clear();
-                dbData.forEach(row => { if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); });
-
-                await guardarDatoDB("tarifasCargadas", { dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, pedidosHistoricos: Array.from(pedidosHistoricos) });
-                tarifasSincronizando = false;
+                rutasPorDiaYPlaca = {};
+                
+                dbData.forEach(row => { 
+                    if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
+                    if (row.fecha && row.placa) {
+                        let fLimpia = formatearFechaUniversal(row.fecha);
+                        let pLimpia = String(row.placa).trim().toUpperCase();
+                        rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+                    }
+                });
 
                 let box = document.getElementById('statusNube');
                 box.className = "status-box status-ready";
                 box.innerHTML = "✅ Tarifario Nube: Sincronizado";
                 cloudLista = true; cargarProveedores(); checkReady();
             } catch (e) {
-                tarifasSincronizando = false;
-                let box = document.getElementById('statusNube');
-                if(!dTarifas.length) {
-                    box.className = "status-box status-error"; box.innerHTML = "❌ Error Tarifas: Revise conexión.";
-                } else {
-                    box.className = "status-box status-ready"; box.innerHTML = "✅ Tarifas (Modo Offline)";
-                }
+                document.getElementById('statusNube').innerHTML = "❌ Error Tarifas: Revise conexión.";
             }
         })();
 
         // 2. CARGA INTELIGENTE DEL MONITOR
         let promesaMonitor = (async () => {
             try {
-                const cache = await obtenerDatoDB("monitorCargado");
-                if (cache && cache.length > 0) {
-                    dMonitor = cache;
-                    let box = document.getElementById('statusMonitor');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = `✅ Monitor en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span> Actualizando...</span>`;
-                    monitorListo = true; checkReady();
-                }
-
                 const resExcel = await fetch(`${SCRIPT_URL}?action=getMonitorExcel`);
                 const base64Data = await resExcel.text();
                 if(base64Data.startsWith('[') || base64Data.startsWith('{')) throw new Error("Error de servidor.");
@@ -355,30 +339,25 @@
                 const workbook = XLSX.read(uint8Array, {type: 'array'});
                 
                 dMonitor = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: false});
-                await guardarDatoDB("monitorCargado", dMonitor);
-                monitorSincronizando = false;
 
                 let box = document.getElementById('statusMonitor');
                 box.className = "status-box status-ready";
                 box.innerHTML = `✅ Monitor Nube: Sincronizado (${dMonitor.length})`;
                 monitorListo = true; checkReady();
             } catch (e) {
-                monitorSincronizando = false;
-                let box = document.getElementById('statusMonitor');
-                if(!dMonitor.length) { 
-                    box.className = "status-box status-error"; box.innerHTML = `❌ Error Monitor: ${e.message}`;
-                } else { 
-                    box.className = "status-box status-ready"; box.innerHTML = `✅ Monitor (Modo Offline)`;
-                }
+                document.getElementById('statusMonitor').innerHTML = `❌ Error Monitor: ${e.message}`;
             }
         })();
-
-        await Promise.all([promesaTarifas, promesaMonitor]);
     };
 
     function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
-
     function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
+        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
 
     function cargarProveedores() {
         const provs = [...new Set(dTarifas.map(v => v.PROVEEDOR))];
@@ -394,29 +373,60 @@
     function actualizarVehiculos() {
         const p = document.getElementById('selProv').value;
         const c = document.getElementById('selVehiculo');
-        const valorActual = c.value;
+        
+        // Muestra el panel correcto según el proveedor
+        const isItsa = p.toUpperCase().includes('ITSACOURIER');
+        document.getElementById('panelItsa').style.display = isItsa ? 'block' : 'none';
+        document.getElementById('panelOtros').style.display = isItsa ? 'none' : 'block';
+        if (!isItsa) cambiarVistaOtros();
 
-        c.innerHTML = '';
+        c.innerHTML = '<option value="">Seleccione vehículo...</option>';
         dTarifas.filter(v => v.PROVEEDOR === p).forEach(v => {
             let ciudadVehiculo = String(v.CIUDAD).trim().toUpperCase();
             if (sesion.rol === 'Administrador' || ciudadVehiculo === sesion.ciudad) {
                 let baseClean = parseDinero(v['Precio Base Dia']);
-                let excClean = parseDinero(v['SERVICIO EXCLUSIVO HORARIO LABORAL']);
+                let excLabClean = parseDinero(v['EXCLUSIVO HORARIO LABORAL']);
+                let excFuerClean = parseDinero(v['EXCLUSIVO FUERA HORARIO']);
                 let heClean = parseDinero(v['HORAS EXTRAS']);
                 if (heClean === 0) heClean = 6.25;
-                c.innerHTML += `<option value="${baseClean}" data-ex="${excClean}" data-he="${heClean}">${v.PLACA || v.PLACAS} - ${v.CIUDAD}</option>`;
+                
+                c.innerHTML += `<option value="${baseClean}" data-exlab="${excLabClean}" data-exfuer="${excFuerClean}" data-he="${heClean}">${v.PLACA || v.PLACAS} - ${v.CIUDAD}</option>`;
             }
         });
-        if(valorActual && Array.from(c.options).some(opt => opt.value === valorActual)){ c.value = valorActual; }
+        verificarVehiculoRepetido();
     }
-    
-    function toggleExclusivo() {
-        const isChecked = document.getElementById('chkExc').checked;
-        const box = document.getElementById('boxExclusivo');
-        box.style.display = isChecked ? 'block' : 'none';
-        if (!isChecked) {
-            document.getElementById('costoExc').value = 0;
-            document.getElementById('valorDeclarado').value = 0;
+
+    function cambiarVistaOtros() {
+        const tipo = document.getElementById('tipoServicioOtros').value;
+        document.getElementById('subPanelManual').style.display = (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') ? 'block' : 'none';
+        document.getElementById('subPanelPuntos').style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
+    }
+
+    function verificarVehiculoRepetido() {
+        const fecha = document.getElementById('fechaDespacho').value;
+        const selV = document.getElementById('selVehiculo');
+        const msg = document.getElementById('msgVehiculoRepetido');
+        
+        if(!fecha || selV.selectedIndex <= 0) {
+            msg.style.display = 'none';
+            return;
+        }
+
+        const placaVehiculo = selV.options[selV.selectedIndex].text.split(' - ')[0].trim().toUpperCase();
+        let keyBusqueda = `${fecha}|${placaVehiculo}`;
+        
+        if (rutasPorDiaYPlaca[keyBusqueda] === true) {
+            msg.style.display = 'block';
+        } else {
+            msg.style.display = 'none';
+        }
+    }
+
+    // ALERTA DE CAMBIOS NO GUARDADOS
+    function marcarCambios() {
+        if (calculoRealizado) {
+            document.getElementById('alertaCambios').style.display = 'block';
+            document.getElementById('btnSave').disabled = true;
         }
     }
 
@@ -425,35 +435,13 @@
         document.getElementById('lblCant').innerText = ids.length + " Únicos";
     }
 
-    function parseDinero(valorExcel) {
-        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-' || String(valorExcel).trim() === '$ -') return 0;
-        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
-        return parseFloat(limpio) || 0;
-    }
-
     function ejecutar() {
         const fecha = document.getElementById('fechaDespacho').value;
         const prov = document.getElementById('selProv').value;
         const selV = document.getElementById('selVehiculo');
-        const estibas = document.getElementById('numEstibas').value;
-        const horasExtra = document.getElementById('numHE').value;
-        
-        const isExclusivo = document.getElementById('chkExc').checked;
-        const costoExc = document.getElementById('costoExc').value;
-        const valorDeclarado = document.getElementById('valorDeclarado').value;
 
-        if (!fecha || !prov || selV.selectedIndex === -1 || !selV.value || estibas === "" || estibas < 0 || horasExtra === "" || horasExtra < 0) {
-            return alert("⚠️ Faltan campos por llenar o datos inválidos en la configuración de la ruta.");
-        }
-        
-        // --- VALIDACIÓN ESTRICTA EXCLUSIVO ---
-        if (isExclusivo) {
-            if (valorDeclarado <= 0) {
-                return alert("⛔ ERROR: Ha marcado 'Servicio Exclusivo'. El Valor Declarado de la carga es OBLIGATORIO y debe ser mayor a 0 para poder calcular la tarifa.");
-            }
-            if (costoExc < 0) {
-                return alert("⚠️ ERROR: El Costo del Vehículo Exclusivo no puede ser negativo.");
-            }
+        if (!fecha || !prov || selV.selectedIndex <= 0) {
+            return alert("⚠️ Seleccione Fecha, Proveedor y Vehículo para calcular.");
         }
 
         const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').map(x => x.trim()).filter(x => x))];
@@ -462,73 +450,66 @@
         for (let id of ids) {
             if (!/^\d{7}$/.test(id)) return alert(`⚠️ El ID (${id}) es incorrecto. Deben ser 7 dígitos numéricos.`);
             const existe = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
-            if (!existe) {
-                let msg = `❌ PEDIDO NO EXISTE (${id}).`;
-                if(monitorSincronizando) msg += `\n\n⏳ El sistema aún está descargando datos nuevos en segundo plano. Espera unos segundos e intenta de nuevo.`;
-                return alert(msg);
+            if (!existe) return alert(`❌ PEDIDO NO EXISTE (${id}).`);
+        }
+
+        const opt = selV.options[selV.selectedIndex];
+        const isItsa = prov.toUpperCase().includes('ITSACOURIER');
+        const placaVehiculo = opt.text.split(' - ')[0].trim().toUpperCase();
+        const yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placaVehiculo}`] === true;
+
+        // Variables de Costo
+        let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
+        let detalleCostoText = "";
+
+        if (isItsa) {
+            const tipoItsa = document.getElementById('tipoServicioItsa').value;
+            const cantEstibas = parseFloat(document.getElementById('estibasItsa').value) || 0;
+            const cantHE = parseFloat(document.getElementById('heItsa').value) || 0;
+            
+            cEstibas = cantEstibas * 30; // Precio fijo
+            cHE = cantHE * parseFloat(opt.dataset.he);
+
+            if (tipoItsa === 'NORMAL') {
+                cBase = yaSalioHoy ? 0 : parseFloat(opt.value);
+                detalleCostoText = `Base: $${cBase} (Ya Salió: ${yaSalioHoy ? 'Sí' : 'No'}) | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
+            } else if (tipoItsa === 'EXCLUSIVO HORARIO LABORAL') {
+                cBase = 0; 
+                cExc = parseFloat(opt.dataset.exlab);
+                detalleCostoText = `Exc Lab: $${cExc} | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
+            } else if (tipoItsa === 'EXCLUSIVO FUERA HORARIO') {
+                cBase = 0;
+                cExc = parseFloat(opt.dataset.exfuer);
+                detalleCostoText = `Exc Fuera: $${cExc} | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
+            }
+        } else {
+            const tipoOtros = document.getElementById('tipoServicioOtros').value;
+            if (tipoOtros === 'EXCLUSIVO' || tipoOtros === 'POR RUTA') {
+                cExc = parseFloat(document.getElementById('costoManual').value) || 0;
+                let cantEstibas = parseFloat(document.getElementById('estibasManual').value) || 0;
+                let preEstiba = parseFloat(document.getElementById('precioEstibaManual').value) || 0;
+                cEstibas = cantEstibas * preEstiba;
+                detalleCostoText = `${tipoOtros}: $${cExc} | Estibas: $${cEstibas}`;
+            } else if (tipoOtros === 'POR PUNTO') {
+                let pBase = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+                let cantBase = parseFloat(document.getElementById('cantPuntosBase').value) || 0;
+                let pAdicional = parseFloat(document.getElementById('precioPuntoAdicional').value) || 0;
+                
+                let puntosTotales = ids.length;
+                if (puntosTotales <= cantBase) {
+                    cExc = pBase;
+                } else {
+                    cExc = pBase + ((puntosTotales - cantBase) * pAdicional);
+                }
+                detalleCostoText = `Por Punto: $${cExc} (${puntosTotales} pts)`;
             }
         }
 
         const tbody = document.querySelector('#tblD tbody');
-        const opt = selV.options[selV.selectedIndex];
         tbody.innerHTML = '';
         let tIngresosValidos = 0;
         
-        // --- LÓGICA DE CÁLCULO EXCLUSIVO ---
-        if (isExclusivo) {
-            let tarifaExclusivo = parseFloat(valorDeclarado) * 0.05; // Regla de negocio: 5% del valor declarado
-            
-            ids.forEach(id => {
-                const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
-                if(p) {
-                    let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-                    let pesoUsado = parseFloat(p['Peso_Fisico'] || 0);
-                    
-                    // Si hay varios pedidos en un exclusivo, dividimos el cobro o le asignamos todo al primero. 
-                    // Para simplificar, le asignamos el cobro total al primer pedido válido que encuentre.
-                    let cobroReal = tIngresosValidos === 0 ? tarifaExclusivo : 0; 
-                    tIngresosValidos += cobroReal;
-                    
-                    tbody.innerHTML += `<tr>
-                        <td><strong>${id}</strong></td>
-                        <td>${p.Cliente || '-'}</td>
-                        <td style="text-align:center;"><b>1</b></td>
-                        <td style="color:var(--blue-600); font-weight:600;">${cp}</td>
-                        <td style="color:var(--slate-500);">-</td>
-                        <td style="text-align:center;">${pesoUsado.toFixed(2)}</td>
-                        <td class="col-tarifa">-</td>
-                        <td class="col-tarifa">-</td>
-                        <td class="col-tarifa">-</td>
-                        <td class="col-tarifa">-</td>
-                        <td class="col-total">$${cobroReal.toFixed(2)}</td>
-                    </tr>`;
-                }
-            });
-            
-            // Costos Exclusivos
-            const cEstibas = (parseFloat(estibas) || 0) * 30;
-            const cTotal = parseFloat(costoExc) + cEstibas;
-            const util = tIngresosValidos - cTotal;
-            
-            document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
-            document.getElementById('vCos').innerText = `$${cTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
-            document.getElementById('vRent').innerText = `$${util.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
-            document.getElementById('vCant').innerText = ids.length;
-            
-            const boxR = document.getElementById('boxR');
-            if (util < 0) {
-                boxR.style.borderLeftColor = 'var(--red-600)';
-                document.getElementById('vRent').style.color = 'var(--red-600)';
-            } else {
-                boxR.style.borderLeftColor = 'var(--emerald-600)';
-                document.getElementById('vRent').style.color = 'var(--emerald-600)';
-            }
-
-            document.getElementById('detallesCosto').innerHTML = `Base Exc: $${parseFloat(costoExc).toFixed(2)} | Est: $${cEstibas}<br>(Exclusivo no aplica Base Regular ni HE)`;
-            return; // Termina la función aquí si es exclusivo
-        }
-        
-        // --- LÓGICA DE CÁLCULO NORMAL (Ruta Regular) ---
+        // --- CALCULAR INGRESOS DE PEDIDOS ---
         ids.forEach(id => {
             const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             if(p) {
@@ -536,7 +517,6 @@
                 let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
                 p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(p['TipoTrayecto'] || p['Tipo_Trayecto'] || p['Trayecto'] || '-').trim().toUpperCase();
 
-                // LLAMADA AL ARCHIVO motorTarifas.js
                 let calcNube = calcularTarifasAutomaticas(p);
                 let tfaCalculada = calcNube.total > 0 ? calcNube.total : 0;
 
@@ -544,29 +524,25 @@
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
 
-                let cobroReal = 0;
-                let htmlStatus = "";
-                let classTotal = "col-total";
+                let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
 
                 if (yaExisteEnFlexNet) {
-                    cobroReal = 0;
-                    classTotal += " col-tachada";
-                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                    cobroReal = 0; classTotal += " col-tachada"; htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
                 } else {
                     cobroReal = tfaCalculada;
-                    if (intentosNum > 1) {
-                        htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
-                    }
+                    if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
                 }
 
                 tIngresosValidos += cobroReal;
+                let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
                 
                 tbody.innerHTML += `<tr>
                     <td><strong>${id}</strong></td>
-                    <td>${p.Cliente || '-'}</td>
+                    <td style="font-size:0.85em;">${p.Cliente || '-'}</td>
                     <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
-                    <td style="color:var(--blue-600); font-weight:600;">${cp}</td>
-                    <td style="color:var(--slate-500);">${calcNube.trayUsado}</td>
+                    <td style="font-size:0.8em; color:var(--slate-500);">${servicioMonitor}</td>
+                    <td style="color:var(--blue-600); font-weight:600; font-size:0.85em;">${cp}</td>
+                    <td style="color:var(--slate-500); font-size:0.85em;">${calcNube.trayUsado}</td>
                     <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
                     <td class="col-tarifa">$${calcNube.tfaPeso.toFixed(2)}</td>
                     <td class="col-tarifa">$${calcNube.tfaPedido.toFixed(2)}</td>
@@ -577,10 +553,7 @@
             }
         });
         
-        const cBase = parseFloat(selV.value) || 0;
-        const cEstibas = (parseFloat(estibas) || 0) * 30;
-        const cHE = (parseFloat(horasExtra) || 0) * parseFloat(opt.dataset.he);
-        const cTotal = cBase + cEstibas + cHE;
+        const cTotal = cBase + cEstibas + cExc + cHE;
         const util = tIngresosValidos - cTotal;
         
         document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
@@ -590,44 +563,46 @@
         
         const boxR = document.getElementById('boxR');
         if (util < 0) {
-            boxR.style.borderLeftColor = 'var(--red-600)';
-            document.getElementById('vRent').style.color = 'var(--red-600)';
+            boxR.style.borderLeftColor = 'var(--red-600)'; document.getElementById('vRent').style.color = 'var(--red-600)';
         } else {
-            boxR.style.borderLeftColor = 'var(--emerald-600)';
-            document.getElementById('vRent').style.color = 'var(--emerald-600)';
+            boxR.style.borderLeftColor = 'var(--emerald-600)'; document.getElementById('vRent').style.color = 'var(--emerald-600)';
         }
 
-        document.getElementById('detallesCosto').innerHTML = `Base: $${cBase} | Est: $${cEstibas}<br>Exc: $0.00 | HE: $${cHE.toFixed(2)}`;
+        document.getElementById('detallesCosto').innerHTML = detalleCostoText;
+        
+        // Habilitamos guardar y limpiamos alertas
+        window.tempDataGuardar = { cBase, cEstibas, cExc, cHE };
+        calculoRealizado = true;
+        document.getElementById('alertaCambios').style.display = 'none';
+        document.getElementById('btnSave').disabled = false;
     }
 
     async function guardar() {
         const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').map(x => x.trim()).filter(x => x))];
         if(ids.length === 0) return alert("No hay pedidos procesados para guardar.");
+        if(!window.tempDataGuardar) return alert("Debe calcular primero antes de guardar.");
         
         const selV = document.getElementById('selVehiculo');
-        const opt = selV.options[selV.selectedIndex];
-        const textV = opt.text; 
-        const ciudad = textV.split('- ')[1] || "GENERAL";
-        const placaVehiculo = textV.split(' - ')[0].trim();
+        const prov = document.getElementById('selProv').value;
+        const ciudad = selV.options[selV.selectedIndex].text.split('- ')[1] || "GENERAL";
+        const placaVehiculo = selV.options[selV.selectedIndex].text.split(' - ')[0].trim();
         const fechaElegida = document.getElementById('fechaDespacho').value;
-        
-        const isExclusivo = document.getElementById('chkExc').checked;
-        const costoExc = parseFloat(document.getElementById('costoExc').value) || 0;
 
-        let costoBaseAGuardar = isExclusivo ? 0 : (parseFloat(selV.value) || 0);
-        let costoExclusivoAGuardar = isExclusivo ? costoExc : 0;
-        let costoHEAGuardar = isExclusivo ? 0 : ((parseFloat(document.getElementById('numHE').value) || 0) * parseFloat(opt.dataset.he));
+        // Determinar el Tipo de Servicio Realizado
+        let tipoRutaFinal = prov.toUpperCase().includes('ITSACOURIER') ? document.getElementById('tipoServicioItsa').value : document.getElementById('tipoServicioOtros').value;
 
         const rutaData = {
             fecha: fechaElegida, ciudad: ciudad.trim().toUpperCase(), pedidos: ids.length,
             ingresos: parseFloat(document.getElementById('vIng').innerText.replace(/[$,]/g,'')),
-            cBase: costoBaseAGuardar, 
-            cAyudantes: (parseFloat(document.getElementById('numEstibas').value) || 0) * 30,
-            cExc: costoExclusivoAGuardar,
-            cHE: costoHEAGuardar,
+            cBase: window.tempDataGuardar.cBase, 
+            cAyudantes: window.tempDataGuardar.cEstibas,
+            cExc: window.tempDataGuardar.cExc,
+            cHE: window.tempDataGuardar.cHE,
             placa: placaVehiculo,
             listaIds: ids.join(', '),
-            usuario: sesion.nombre
+            usuario: sesion.nombre,
+            proveedor: prov,
+            tipoRuta: tipoRutaFinal
         };
 
         const btnConf = event.target;
@@ -639,25 +614,26 @@
             alert("✅ Ruta guardada con éxito en la base de datos.");
             
             ids.forEach(id => pedidosHistoricos.add(String(id)));
+            // Añadimos a la memoria que este vehículo ya salió hoy
+            rutasPorDiaYPlaca[`${fechaElegida}|${placaVehiculo}`] = true;
+            verificarVehiculoRepetido(); // Refresca el mensaje amarillo
             
             document.getElementById('txtPedidos').value = '';
             document.getElementById('lblCant').innerText = "0 Únicos";
-            document.querySelector('#tblD tbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando nueva ruta...</td></tr>`;
+            document.querySelector('#tblD tbody').innerHTML = `<tr><td colspan="12" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Esperando nueva ruta...</td></tr>`;
             
             ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
             document.getElementById('vCant').innerText = '0';
+            document.getElementById('detallesCosto').innerHTML = 'Esperando simulación...';
             
-            // Limpiar si era exclusivo
-            if (isExclusivo) {
-                document.getElementById('chkExc').checked = false;
-                toggleExclusivo();
-            }
+            window.tempDataGuardar = null;
+            calculoRealizado = false;
             
         } catch (e) { 
             alert("❌ Error de conexión al guardar la ruta. Verifique su internet."); 
         } finally { 
             btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> CONFIRMAR Y GUARDAR`; 
-            btnConf.disabled = false; 
+            btnConf.disabled = true; // Se queda deshabilitado hasta que calculen otra ruta
         }
     }
 </script>

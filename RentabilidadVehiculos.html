@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>FlexNet - Auditoría de Vehículos</title>
+    <title>FlexNet - Rentabilidad por Vehículo</title>
     <script src="seguridad.js"></script>
     <style>
         :root { 
@@ -10,8 +10,7 @@
             --blue-600: #2563eb; --blue-50: #eff6ff;
             --emerald-600: #059669; --emerald-50: #ecfdf5;
             --red-600: #dc2626; --red-50: #fef2f2;
-            --amber-500: #f59e0b; --amber-50: #fffbeb;
-            --purple-600: #7c3aed; --purple-50: #f5f3ff;
+            --amber-600: #d97706; --purple-600: #7c3aed;
         }
         
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
@@ -22,490 +21,384 @@
         .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
         .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        
         .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
-        .container { max-width: 1400px; margin: 25px auto; padding: 0 20px; }
+        .container { max-width: 1600px; margin: 30px auto; padding: 0 20px; }
+        
+        /* TARJETAS KPI */
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+        .kpi-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; overflow: hidden; border: 1px solid var(--slate-200); }
+        .kpi-box h4 { margin: 0 0 10px 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate-500); }
+        .kpi-box span { font-size: 2.2em; font-weight: 800; display: block; }
+        
+        .kpi-ing span { color: var(--blue-600); }
+        .kpi-cos span { color: var(--red-600); }
+        .kpi-ren span { color: var(--emerald-600); }
+        .kpi-ren.negativo span { color: var(--red-600); }
 
-        /* TARJETAS SUPERIORES (KPIs) */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); position: relative; overflow: hidden; }
-        .stat-title { font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 8px; }
-        .stat-value { font-size: 2.2em; font-weight: 800; color: var(--slate-900); }
+        /* CONTROLES (Filtros) */
+        .controls-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; border: 1px solid var(--slate-200); }
+        .control-group { flex: 1; min-width: 160px; }
+        .control-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9em; color: var(--slate-700); }
+        .control-group input, .control-group select { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 0.95em; box-sizing: border-box; }
         
-        /* Decoración de las tarjetas */
-        .stat-box::after { content: ''; position: absolute; right: -20px; bottom: -20px; width: 100px; height: 100px; border-radius: 50%; opacity: 0.1; }
-        .box-ingreso::after { background: var(--blue-600); }
-        .box-ingreso .stat-value { color: var(--blue-600); }
-        .box-costo::after { background: var(--red-600); }
-        .box-costo .stat-value { color: var(--red-600); }
-        .box-rent::after { background: var(--emerald-600); }
-        .box-rent .stat-value { color: var(--emerald-600); }
-        .box-rent-negativo::after { background: var(--red-600); }
-        .box-rent-negativo .stat-value { color: var(--red-600); }
+        .legend-box { background: var(--slate-50); padding: 12px 15px; border-radius: 8px; font-size: 0.8em; border: 1px solid var(--slate-200); min-width: 250px;}
+        .legend-box strong { display: block; margin-bottom: 5px; color: var(--slate-900); }
 
-        /* PANEL DE CONTROLES Y LEYENDA */
-        .controls { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
-        .filtros-wrapper { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; flex: 1; }
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        .control-group label { font-weight: 600; font-size: 0.9em; color: var(--slate-700); }
-        .control-group input, .control-group select { padding: 9px 12px; border: 1px solid var(--slate-200); border-radius: 6px; min-width: 150px; font-family: inherit; color: var(--slate-700); font-weight: 600; background-color: var(--slate-50); outline: none; transition: border-color 0.2s;}
-        .control-group input:focus, .control-group select:focus { border-color: var(--blue-600); background-color: white; }
+        /* TABLA MATRIZ (Estilos Sticky) */
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); overflow-x: auto; max-height: 70vh; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85em; white-space: nowrap; }
         
-        .divider { width: 1px; height: 40px; background-color: var(--slate-200); margin: 0 5px; align-self: center; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid var(--slate-200); border-right: 1px solid var(--slate-100); text-align: center; }
+        th { background: var(--slate-50); color: var(--slate-900); font-weight: 700; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--slate-200); }
+        
+        /* CONGELAR COLUMNAS IZQUIERDAS (8 Columnas Fijas) */
+        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 20; background: white; border-right: 1px solid var(--slate-200); text-align: left; min-width: 130px; }
+        th:nth-child(2), td:nth-child(2) { position: sticky; left: 161px; z-index: 20; background: white; min-width: 120px; }
+        th:nth-child(3), td:nth-child(3) { position: sticky; left: 312px; z-index: 20; background: white; min-width: 80px; }
+        th:nth-child(4), td:nth-child(4) { position: sticky; left: 423px; z-index: 20; background: white; font-weight: bold; min-width: 60px;}
+        th:nth-child(5), td:nth-child(5) { position: sticky; left: 514px; z-index: 20; background: white; font-weight: bold; color: var(--blue-600); min-width: 90px;}
+        th:nth-child(6), td:nth-child(6) { position: sticky; left: 635px; z-index: 20; background: white; font-weight: bold; color: var(--red-600); min-width: 90px;}
+        th:nth-child(7), td:nth-child(7) { position: sticky; left: 756px; z-index: 20; background: var(--slate-50); font-weight: bold; min-width: 90px;}
+        th:nth-child(8), td:nth-child(8) { position: sticky; left: 877px; z-index: 20; background: var(--slate-50); font-weight: bold; border-right: 3px solid var(--slate-300); min-width: 70px;}
+        
+        /* Z-index superior para los títulos de las columnas congeladas */
+        th:nth-child(1), th:nth-child(2), th:nth-child(3), th:nth-child(4), th:nth-child(5), th:nth-child(6), th:nth-child(7), th:nth-child(8) { z-index: 30; background: var(--slate-100); }
 
-        .legend-box { font-size: 0.85em; background: var(--slate-50); padding: 12px 15px; border: 1px dashed var(--slate-200); border-radius: 8px; color: var(--slate-700); line-height: 1.6; min-width: 180px; }
+        tbody tr:hover td:nth-child(-n+8) { background-color: var(--slate-50); }
 
-        /* TABLA Y SCROLL */
-        .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid var(--slate-200); }
-        
-        /* Personalización de barra de desplazamiento */
-        .table-wrapper::-webkit-scrollbar { height: 12px; }
-        .table-wrapper::-webkit-scrollbar-track { background: var(--slate-50); border-radius: 0 0 8px 8px; border-top: 1px solid var(--slate-200); }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid var(--slate-50); }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .cell-data { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; }
+        .cell-p { color: var(--amber-600); font-weight: 600; }
+        .cell-i { color: var(--blue-600); }
+        .cell-c { color: var(--red-600); }
+        .cell-r { font-weight: 700; border-top: 1px dashed var(--slate-200); padding-top: 3px; }
+        .val-pos { color: var(--emerald-600); }
+        .val-neg { color: var(--red-600); }
 
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-        th, td { border-bottom: 1px solid var(--slate-200); border-right: 1px solid var(--slate-100); padding: 12px 10px; text-align: right; }
-        th { background: var(--slate-50); color: var(--slate-900); font-weight: 700; border-bottom: 2px solid var(--slate-200); }
-        
-        /* Congelar Placa y Ciudad */
-        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: white; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.05); font-weight: 700; color: var(--slate-900); border-right: 1px solid var(--slate-200); }
-        th:nth-child(2), td:nth-child(2) { text-align: center; position: sticky; left: 130px; background: white; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.05); color: var(--slate-700); border-right: 2px solid var(--slate-200); }
-        th:first-child, th:nth-child(2) { background: var(--slate-50); z-index: 3; }
-        
-        /* Fila Especial Vehículos Externos */
-        .row-separador td { background: var(--purple-600) !important; color: white !important; font-weight: 700; border: none; padding: 10px 15px; }
-        
-        /* Fila Totales */
-        .row-total { background: var(--slate-900); color: white; font-weight: 700; }
-        .row-total td { color: white !important; border-color: rgba(255,255,255,0.1); }
-        .row-total td:first-child, .row-total td:nth-child(2) { background: var(--slate-900); border-right: 2px solid rgba(255,255,255,0.2); } 
+        .row-total { background: var(--slate-900) !important; color: white !important; font-weight: bold; }
+        .row-total td { background: var(--slate-900) !important; color: white !important; border-top: 2px solid var(--slate-700); border-right: none;}
+        .row-total td:nth-child(-n+8) { background: var(--slate-900) !important; }
 
-        .th-days { background: var(--slate-100); color: var(--slate-700); text-align: center; min-width: 110px; }
+        .loader-container { padding: 40px; text-align: center; color: var(--blue-600); font-weight: 600; font-size: 1.1em; }
         
-        /* Desglose Diario P/I/C/R */
-        .cell-dia { line-height: 1.6; font-size: 0.85em; text-align: right; padding: 8px 10px; }
-        .p-val { color: var(--amber-500); font-weight: 700; }
-        .i-val { color: var(--blue-600); font-weight: 600; }
-        .c-val { color: var(--red-600); font-weight: 600; }
-        .r-pos { color: var(--emerald-600); font-weight: 700;}
-        .r-neg { color: var(--red-600); font-weight: 700;}
-        
-        /* Colores pastel para fila total oscura */
-        .p-tot { color: #fcd34d; font-weight: 700; }
-        .i-tot { color: #93c5fd; }
-        .c-tot { color: #fca5a5; }
-        .r-tot-pos { color: #86efac; font-weight: 700; }
-        .r-tot-neg { color: #f87171; font-weight: 700; }
-
-        /* Loader */
-        .loader-msg { text-align:center; padding:50px; color: var(--slate-500); font-size: 1.2em; font-weight: 600;}
+        .badge-prov { font-size: 0.75em; font-weight: 700; color: white; background: var(--slate-400); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; letter-spacing: 0.5px;}
+        .badge-itsa { background: var(--blue-600); }
     </style>
     <script src="config.js"></script>
 </head>
 <body>
 
-    <div class="navbar" id="navbar">
-        <div class="navbar-brand">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-            Auditoría de Vehículos
+<div class="navbar" id="navbar">
+    <div class="navbar-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+        Rentabilidad por Vehículo
+    </div>
+    <div class="nav-links">
+        <a href="Inicio.html">&larr; Menú Principal</a>
+        <a href="Simulador.html">🏠 Simulador</a>
+        <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
+        <a href="Rentabilidad.html">📊 Rentabilidad Total</a>
+        <a id="linkReportes" href="Reportes.html">📈 Dashboard</a>
+        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    </div>
+    <div class="user-info" id="infoUsuario"></div>
+</div>
+
+<div class="container">
+    <div class="kpi-grid">
+        <div class="kpi-box kpi-ing">
+            <h4>Total Ingresos Facturados</h4>
+            <span id="kpiIngresos">$0.00</span>
+        </div>
+        <div class="kpi-box kpi-cos">
+            <h4>Total Costos Operativos</h4>
+            <span id="kpiCostos">$0.00</span>
+        </div>
+        <div id="boxKpiRen" class="kpi-box kpi-ren">
+            <h4>Rentabilidad Neta (Rango)</h4>
+            <span id="kpiRentabilidad">$0.00</span>
+        </div>
+    </div>
+
+    <div class="controls-card">
+        <div class="control-group">
+            <label>📅 Mes Rápido:</label>
+            <input type="month" id="mesFiltro" onchange="seleccionarMes()">
+        </div>
+        <div class="control-group">
+            <label>Desde:</label>
+            <input type="date" id="fechaInicio" onchange="procesarMatriz()">
+        </div>
+        <div class="control-group">
+            <label>Hasta:</label>
+            <input type="date" id="fechaFin" onchange="procesarMatriz()">
+        </div>
+        <div class="control-group">
+            <label>🌎 Ciudad:</label>
+            <select id="filtroCiudad" onchange="procesarMatriz()"></select>
+        </div>
+        <div class="control-group">
+            <label>🏢 Proveedor:</label>
+            <select id="filtroProv" onchange="procesarMatriz()"></select>
+        </div>
+        <div class="control-group">
+            <label>🚛 Vehículo:</label>
+            <select id="filtroVehiculo" onchange="procesarMatriz()"></select>
         </div>
         
-        <div class="nav-links">
-            <a href="Inicio.html">&larr; Menú Principal</a>
-            <a href="Simulador.html">🏠 Simulador</a>
-            <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
-            <a href="Rentabilidad.html">📊 Rentabilidad</a>
-            <a href="Reportes.html">📈 Dashboard</a>
-            <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
-        </div>
-
-        <div class="user-info" id="infoUsuario"></div>
-    </div>
-
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-box box-ingreso">
-                <div class="stat-title">Total Ingresos Facturados</div>
-                <div class="stat-value" id="boxIngresos">$0.00</div>
-            </div>
-            <div class="stat-box box-costo">
-                <div class="stat-title">Total Costos Operativos</div>
-                <div class="stat-value" id="boxCostos">$0.00</div>
-            </div>
-            <div class="stat-box box-rent" id="cardRent">
-                <div class="stat-title">Rentabilidad Neta (Rango)</div>
-                <div class="stat-value" id="boxRentabilidad">$0.00</div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <div class="filtros-wrapper">
-                <div class="control-group">
-                    <label>📅 Mes Rápido:</label>
-                    <input type="month" id="monthSelector" onchange="seleccionarMesRapido()">
-                </div>
-                
-                <div class="divider"></div>
-
-                <div class="control-group">
-                    <label>Desde:</label>
-                    <input type="date" id="dateStart" onchange="renderTodo()">
-                </div>
-                <div class="control-group">
-                    <label>Hasta:</label>
-                    <input type="date" id="dateEnd" onchange="renderTodo()">
-                </div>
-
-                <div class="divider" id="divFiltrosAvanzados"></div>
-
-                <div class="control-group" id="boxCiudad">
-                    <label>🌎 Filtrar por Ciudad:</label>
-                    <select id="ciudadSelector" onchange="actualizarFiltroVehiculos(); renderTodo();"></select>
-                </div>
-                <div class="control-group">
-                    <label>🚛 Filtrar por Vehículo:</label>
-                    <select id="vehiculoSelector" onchange="renderTodo()">
-                        <option value="TODOS">Todos los Vehículos</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="legend-box">
-                <strong style="display:block; margin-bottom:5px; color:var(--slate-900);">Leyenda Diaria:</strong>
-                <span style="color:var(--amber-500); font-weight:700;">P:</span> Pedidos | 
-                <span style="color:var(--blue-600); font-weight:700;">I:</span> Ingreso | 
-                <span style="color:var(--red-600); font-weight:700;">C:</span> Costo | 
-                <span style="color:var(--emerald-600); font-weight:700;">R:</span> Rentabilidad
-            </div>
-        </div>
-
-        <div class="table-wrapper">
-            <table id="tblVehiculos">
-                <thead id="theadVehiculos">
-                    <tr><th>Cargando estructura...</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td class="loader-msg">⏳ Descargando registros vehiculares desde la nube...</td></tr>
-                </tbody>
-            </table>
+        <div class="legend-box">
+            <strong>Leyenda Diaria:</strong>
+            <span class="cell-p">P:</span> Pedidos | <span class="cell-i">I:</span> Ingreso | <span class="cell-c">C:</span> Costo | <span class="cell-r" style="border:none; padding:0;">R:</span> Rentabilidad
         </div>
     </div>
+
+    <div class="table-container" id="contenedorTabla">
+        <div class="loader-container">⏳ Descargando registros de la nube...</div>
+    </div>
+</div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        document.getElementById('linkRegistro').style.display = 'none';
+        document.getElementById('linkReportes').style.display = 'none';
+    }
 
-    let datosCompletos = [];
-    window.dTarifasGlobal = []; 
+    let dbGlobal = [];
 
     window.onload = async function() {
-        // Setear Fechas Iniciales (Mes Actual)
-        const hoy = new Date();
-        const yyyy = hoy.getFullYear();
-        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-        const dd = String(hoy.getDate()).padStart(2, '0');
-        
-        document.getElementById('monthSelector').value = `${yyyy}-${mm}`;
-        document.getElementById('dateStart').value = `${yyyy}-${mm}-01`;
-        document.getElementById('dateEnd').value = `${yyyy}-${mm}-${dd}`;
-
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
-
-        if (sesion.rol !== 'Administrador') {
-            document.getElementById('linkRegistro').style.display = 'none';
-            document.getElementById('boxCiudad').style.display = 'none';
-            document.getElementById('divFiltrosAvanzados').style.display = 'none';
-        }
+        
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        document.getElementById('mesFiltro').value = `${yyyy}-${mm}`;
+        seleccionarMes();
 
         try {
-            const [resDB, resTarifas] = await Promise.all([
-                fetch(SCRIPT_URL),
-                fetch(`${SCRIPT_URL}?action=getTarifas`)
-            ]);
-
-            let rawData = await resDB.json();
-            window.dTarifasGlobal = await resTarifas.json();
+            const res = await fetch(SCRIPT_URL);
+            dbGlobal = await res.json();
             
-            if (sesion.rol !== 'Administrador') {
-                rawData = rawData.filter(d => d.ciudad === sesion.ciudad);
-            }
-            datosCompletos = rawData;
-
-            const cSel = document.getElementById('ciudadSelector');
-            if (sesion.rol === 'Administrador') {
-                const ciudadesUnicas = [...new Set(datosCompletos.map(d => d.ciudad))].filter(c => c && c !== "GENERAL");
-                cSel.innerHTML = `<option value="TODAS">Todas las Ciudades</option>`;
-                ciudadesUnicas.forEach(c => cSel.innerHTML += `<option value="${c}">${c}</option>`);
-            } else {
-                cSel.innerHTML = `<option value="${sesion.ciudad}">${sesion.ciudad}</option>`;
-            }
-
-            actualizarFiltroVehiculos();
-            renderTodo();
-        } catch (e) {
-            document.querySelector('#tblVehiculos tbody').innerHTML = `<tr><td class="loader-msg" style="color:var(--red-600);">❌ Error al conectar con Google Sheets.</td></tr>`;
+            cargarFiltros();
+            procesarMatriz();
+        } catch (error) {
+            document.getElementById('contenedorTabla').innerHTML = `<div class="loader-container" style="color:var(--red-600);">❌ Error cargando los datos.</div>`;
         }
     };
 
-    // Función "Mes Rápido"
-    function seleccionarMesRapido() {
-        const monthVal = document.getElementById('monthSelector').value;
-        if(!monthVal) return;
+    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function seleccionarMes() {
+        const mesVal = document.getElementById('mesFiltro').value;
+        if(!mesVal) return;
+        const [y, m] = mesVal.split('-');
+        const primerDia = new Date(y, m - 1, 1);
+        const ultimoDia = new Date(y, m, 0);
         
-        const [y, m] = monthVal.split('-');
-        const ultimoDia = new Date(y, m, 0).getDate();
+        document.getElementById('fechaInicio').value = primerDia.toISOString().split('T')[0];
+        document.getElementById('fechaFin').value = ultimoDia.toISOString().split('T')[0];
         
-        document.getElementById('dateStart').value = `${y}-${m}-01`;
-        document.getElementById('dateEnd').value = `${y}-${m}-${String(ultimoDia).padStart(2, '0')}`;
-        
-        renderTodo();
+        if(dbGlobal.length > 0) procesarMatriz();
     }
 
-    function actualizarFiltroVehiculos() {
-        const ciudadFiltro = document.getElementById('ciudadSelector').value;
-        let datosParaFiltrar = datosCompletos;
-        if (ciudadFiltro !== "TODAS") datosParaFiltrar = datosParaFiltrar.filter(d => d.ciudad === ciudadFiltro);
+    function cargarFiltros() {
+        const ciudades = [...new Set(dbGlobal.map(r => r.ciudad))].filter(Boolean).sort();
+        const vehiculos = [...new Set(dbGlobal.map(r => r.placa))].filter(Boolean).sort();
+        const proveedores = [...new Set(dbGlobal.map(r => r.proveedor || "GENERAL"))].filter(Boolean).sort();
 
-        const placas = [...new Set(datosParaFiltrar.map(d => d.placa).filter(p => p && p !== "DESCONOCIDO"))].sort();
-        const sel = document.getElementById('vehiculoSelector');
-        
-        sel.innerHTML = '<option value="TODOS">Todos los Vehículos</option>';
-        placas.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
-    }
-
-    function formatMoney(num) { 
-        if(num === 0) return '$ -';
-        return '$ ' + parseFloat(num).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2}); 
-    }
-
-    function renderTodo() {
-        const dateStart = document.getElementById('dateStart').value;
-        const dateEnd = document.getElementById('dateEnd').value;
-        const ciudadFiltro = document.getElementById('ciudadSelector').value;
-        const vehFiltro = document.getElementById('vehiculoSelector').value;
-        
-        const tbody = document.querySelector('#tblVehiculos tbody');
-        const thead = document.getElementById('theadVehiculos');
-        
-        if(!dateStart || !dateEnd) return;
-        if(dateStart > dateEnd) {
-            alert("La Fecha de Inicio no puede ser mayor a la Fecha de Fin.");
-            return;
-        }
-
-        // 1. Generar array de días exactos (Límite 60 días para seguridad)
-        let dateList = [];
-        let dCur = new Date(dateStart + "T00:00:00");
-        let dEnd = new Date(dateEnd + "T00:00:00");
-        
-        let timeDiff = dEnd.getTime() - dCur.getTime();
-        let daysDiff = timeDiff / (1000 * 3600 * 24);
-        if(daysDiff > 60) {
-            alert("Para mantener el rendimiento, por favor selecciona un rango máximo de 2 meses (60 días).");
-            return;
-        }
-
-        while (dCur <= dEnd) {
-            let y = dCur.getFullYear();
-            let m = String(dCur.getMonth() + 1).padStart(2, '0');
-            let d = String(dCur.getDate()).padStart(2, '0');
-            dateList.push(`${y}-${m}-${d}`);
-            dCur.setDate(dCur.getDate() + 1);
-        }
-        let totalDias = dateList.length;
-
-        // 2. Filtrar Datos Brutos
-        let filtrados = datosCompletos.filter(d => d.fecha >= dateStart && d.fecha <= dateEnd);
-        if (ciudadFiltro !== "TODAS") filtrados = filtrados.filter(d => d.ciudad === ciudadFiltro);
-        if (vehFiltro !== "TODOS") filtrados = filtrados.filter(d => d.placa === vehFiltro);
-
-        // 3. Totales KPI Generales
-        let sumIngresos = 0, sumCostos = 0;
-        filtrados.forEach(row => {
-            sumIngresos += Number(row.ingresos) || 0;
-            sumCostos += (Number(row.cBase)||0) + (Number(row.cAyudantes)||0) + (Number(row.cExc)||0) + (Number(row.cHE)||0);
+        const selC = document.getElementById('filtroCiudad');
+        selC.innerHTML = '<option value="ALL">Todas las Ciudades</option>';
+        ciudades.forEach(c => {
+            if (sesion.rol === 'Administrador' || c === sesion.ciudad) {
+                selC.innerHTML += `<option value="${c}">${c}</option>`;
+            }
         });
-        let sumRentabilidad = sumIngresos - sumCostos;
+        if (sesion.rol !== 'Administrador') { selC.value = sesion.ciudad; selC.disabled = true; }
 
-        document.getElementById('boxIngresos').innerText = formatMoney(sumIngresos);
-        document.getElementById('boxCostos').innerText = formatMoney(sumCostos);
-        document.getElementById('boxRentabilidad').innerText = formatMoney(sumRentabilidad);
+        const selV = document.getElementById('filtroVehiculo');
+        selV.innerHTML = '<option value="ALL">Todos los Vehículos</option>';
+        vehiculos.forEach(v => selV.innerHTML += `<option value="${v}">${v}</option>`);
         
-        const cardRent = document.getElementById('cardRent');
-        if (sumRentabilidad < 0) {
-            cardRent.classList.remove('box-rent'); cardRent.classList.add('box-rent-negativo');
-        } else {
-            cardRent.classList.remove('box-rent-negativo'); cardRent.classList.add('box-rent');
-        }
+        const selP = document.getElementById('filtroProv');
+        selP.innerHTML = '<option value="ALL">Todos los Proveedores</option>';
+        proveedores.forEach(p => selP.innerHTML += `<option value="${p}">${p}</option>`);
+    }
 
-        // 4. Dibujar Cabecera de la Tabla
-        let theadHTML = `<tr>
-            <th style="min-width:130px;">Placa (Vehículo)</th>
-            <th style="min-width:100px;">Ciudad</th>
+    function formatearFechaEcuador(fechaISO) {
+        if(!fechaISO) return null;
+        let [y, m, d] = fechaISO.split('-');
+        return new Date(y, m - 1, d);
+    }
+
+    function getFechasEnRango(fInicio, fFin) {
+        let fechas = [];
+        let cur = new Date(fInicio);
+        let end = new Date(fFin);
+        while (cur <= end) {
+            fechas.push(new Date(cur));
+            cur.setDate(cur.getDate() + 1);
+        }
+        return fechas;
+    }
+
+    function formatearMoneda(val) { return `$ ${parseFloat(val || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`; }
+
+    function procesarMatriz() {
+        const fIniStr = document.getElementById('fechaInicio').value;
+        const fFinStr = document.getElementById('fechaFin').value;
+        const fCiudad = document.getElementById('filtroCiudad').value;
+        const fVehiculo = document.getElementById('filtroVehiculo').value;
+        const fProv = document.getElementById('filtroProv').value;
+
+        if(!fIniStr || !fFinStr) return;
+
+        const dIni = formatearFechaEcuador(fIniStr);
+        const dFin = formatearFechaEcuador(fFinStr);
+        const diasDelRango = getFechasEnRango(dIni, dFin);
+
+        // FILTRADO DE DATOS
+        let datosFiltrados = dbGlobal.filter(r => {
+            if(!r.fecha) return false;
+            let fr = formatearFechaEcuador(r.fecha);
+            if(fr < dIni || fr > dFin) return false;
+            if(fCiudad !== 'ALL' && r.ciudad !== fCiudad) return false;
+            if(fVehiculo !== 'ALL' && r.placa !== fVehiculo) return false;
+            if(fProv !== 'ALL' && (r.proveedor || "GENERAL") !== fProv) return false;
+            return true;
+        });
+
+        // AGRUPACIÓN POR VEHÍCULO
+        let matriz = {};
+        datosFiltrados.forEach(r => {
+            let p = r.placa;
+            if(!matriz[p]) {
+                matriz[p] = { 
+                    ciudad: r.ciudad, 
+                    proveedor: r.proveedor || "GENERAL",
+                    totPed: 0, totIng: 0, totCos: 0, 
+                    dias: {} 
+                };
+            }
+            
+            let costoFila = (r.cBase||0) + (r.cAyudantes||0) + (r.cExc||0) + (r.cHE||0);
+            
+            matriz[p].totPed += (r.pedidos||0);
+            matriz[p].totIng += (r.ingresos||0);
+            matriz[p].totCos += costoFila;
+
+            if(!matriz[p].dias[r.fecha]) {
+                matriz[p].dias[r.fecha] = { ped:0, ing:0, cos:0 };
+            }
+            matriz[p].dias[r.fecha].ped += (r.pedidos||0);
+            matriz[p].dias[r.fecha].ing += (r.ingresos||0);
+            matriz[p].dias[r.fecha].cos += costoFila;
+        });
+
+        dibujarMatriz(matriz, diasDelRango);
+    }
+
+    function dibujarMatriz(matriz, diasArray) {
+        let thead = `<tr>
+            <th>Placa (Vehículo)</th>
+            <th>Proveedor</th>
+            <th>Ciudad</th>
             <th>Pedidos</th>
             <th>Total Ingresos</th>
             <th>Total Costos</th>
             <th>Rentabilidad</th>
             <th>Margen (%)</th>`;
         
-        dateList.forEach(fechaStr => {
-            let parts = fechaStr.split('-');
-            theadHTML += `<th class="th-days">${parts[2]}/${parts[1]}</th>`;
+        diasArray.forEach(d => {
+            let dia = String(d.getDate()).padStart(2, '0');
+            let mes = String(d.getMonth() + 1).padStart(2, '0');
+            thead += `<th>${dia}/${mes}</th>`;
         });
-        theadHTML += `</tr>`;
-        thead.innerHTML = theadHTML;
+        thead += `</tr>`;
 
-        // 5. Agrupar la información por Placa y Días Dinámicos
-        let agrupado = {};
-        filtrados.forEach(row => {
-            let placa = row.placa || "DESCONOCIDO";
-            if (!agrupado[placa]) {
-                agrupado[placa] = { 
-                    ciudad: row.ciudad || "GENERAL",
-                    pedidos: 0, ingresos: 0, costos: 0, 
-                    dias: Array.from({length: totalDias}, () => ({ped: 0, ing: 0, cos: 0, rent: 0}))
-                };
-            }
+        let tbody = "";
+        let sumaGlobalPed = 0, sumaGlobalIng = 0, sumaGlobalCos = 0;
+
+        const placasOrdenadas = Object.keys(matriz).sort();
+
+        placasOrdenadas.forEach(p => {
+            let v = matriz[p];
+            let renTotal = v.totIng - v.totCos;
+            let marTotal = v.totIng > 0 ? (renTotal / v.totIng) * 100 : 0;
             
-            let ped = Number(row.pedidos) || 0;
-            let ing = Number(row.ingresos) || 0;
-            let cTot = (Number(row.cBase)||0) + (Number(row.cAyudantes)||0) + (Number(row.cExc)||0) + (Number(row.cHE)||0);
-            
-            agrupado[placa].pedidos += ped;
-            agrupado[placa].ingresos += ing;
-            agrupado[placa].costos += cTot;
+            sumaGlobalPed += v.totPed;
+            sumaGlobalIng += v.totIng;
+            sumaGlobalCos += v.totCos;
 
-            // En lugar de usar el día del mes, buscamos en qué posición (índice) está la fecha en nuestro array 'dateList'
-            let dayIndex = dateList.indexOf(row.fecha);
-            if(dayIndex !== -1) {
-                agrupado[placa].dias[dayIndex].ped += ped;
-                agrupado[placa].dias[dayIndex].ing += ing;
-                agrupado[placa].dias[dayIndex].cos += cTot;
-                agrupado[placa].dias[dayIndex].rent += (ing - cTot);
-            }
-        });
+            let isItsa = v.proveedor.toUpperCase().includes('ITSACOURIER');
+            let badgeClass = isItsa ? 'badge-prov badge-itsa' : 'badge-prov';
 
-        // 6. Preparar render de filas
-        let vehiculosConocidos = window.dTarifasGlobal ? window.dTarifasGlobal.map(t => String(t.PLACA || t.PLACAS).trim().toUpperCase()) : [];
-        const placasTotales = Object.keys(agrupado);
-        
-        const placasOficiales = placasTotales.filter(p => vehiculosConocidos.includes(p.toUpperCase())).sort();
-        const placasExternas = placasTotales.filter(p => !vehiculosConocidos.includes(p.toUpperCase())).sort();
+            let row = `<tr>
+                <td style="font-weight:800; color:var(--slate-900); font-size:1.05em;">${p}<br><span class="${badgeClass}">${v.proveedor}</span></td>
+                <td style="font-size:0.85em; color:var(--slate-500); font-weight:600;">${v.proveedor}</td>
+                <td style="font-weight:600;">${v.ciudad}</td>
+                <td style="font-weight:700; font-size:1.1em;">${v.totPed}</td>
+                <td class="cell-i" style="font-weight:bold; font-size:1.05em;">${formatearMoneda(v.totIng)}</td>
+                <td class="cell-c" style="font-weight:bold; font-size:1.05em;">${formatearMoneda(v.totCos)}</td>
+                <td class="${renTotal >= 0 ? 'val-pos' : 'val-neg'}" style="font-weight:bold; font-size:1.05em;">${formatearMoneda(renTotal)}</td>
+                <td class="${marTotal >= 0 ? 'val-pos' : 'val-neg'}" style="font-weight:bold;">${marTotal.toFixed(1)}%</td>`;
 
-        let tbodyHTML = '';
-        let totPed = 0;
-        let totDias = Array.from({length: totalDias}, () => ({ped: 0, ing: 0, cos: 0, rent: 0})); 
-
-        if (placasTotales.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${7 + totalDias}" class="loader-msg">No hay rutas registradas con los filtros seleccionados.</td></tr>`;
-            return;
-        }
-
-        // Función constructora de Fila
-        function generarHTMLFila(placa, data) {
-            let rentabilidad = data.ingresos - data.costos;
-            let porcentaje = data.ingresos > 0 ? (rentabilidad / data.ingresos) * 100 : 0;
-            let claseColor = rentabilidad >= 0 ? 'r-pos' : 'r-neg';
-            totPed += data.pedidos;
-
-            let diasHTML = "";
-            for(let i = 0; i < totalDias; i++) {
-                let dData = data.dias[i];
-                totDias[i].ped += dData.ped;
-                totDias[i].ing += dData.ing;
-                totDias[i].cos += dData.cos;
-                totDias[i].rent += dData.rent;
+            diasArray.forEach(d => {
+                let fechaISO = d.toISOString().split('T')[0];
+                let datosDia = v.dias[fechaISO];
                 
-                if(dData.ped === 0 && dData.ing === 0 && dData.cos === 0) {
-                    diasHTML += `<td style="text-align:center; color:var(--slate-300);">-</td>`;
-                } else {
-                    let colR = dData.rent >= 0 ? 'r-pos' : 'r-neg';
-                    diasHTML += `
-                        <td class="cell-dia">
-                            <span class="p-val">P: ${dData.ped}</span><br>
-                            <span class="i-val">I: ${formatMoney(dData.ing)}</span><br>
-                            <span class="c-val">C: ${formatMoney(dData.cos)}</span><br>
-                            <span class="${colR}">R: ${formatMoney(dData.rent)}</span>
-                        </td>`;
-                }
-            }
-
-            return `
-                <tr>
-                    <td>${placa}</td>
-                    <td>${data.ciudad}</td>
-                    <td>${data.pedidos}</td>
-                    <td class="i-val">${formatMoney(data.ingresos)}</td>
-                    <td class="c-val">${formatMoney(data.costos)}</td>
-                    <td class="${claseColor}">${formatMoney(rentabilidad)}</td>
-                    <td class="${claseColor}">${porcentaje.toFixed(1)}%</td>
-                    ${diasHTML}
-                </tr>
-            `;
-        }
-
-        // Imprimir Oficiales
-        placasOficiales.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
-
-        // Imprimir Externos
-        if (placasExternas.length > 0) {
-            tbodyHTML += `
-                <tr class="row-separador">
-                    <td style="position:sticky; left:0; z-index:4;">⚠️ VEHÍCULOS EXTERNOS</td>
-                    <td style="position:sticky; left:130px; z-index:4;">-</td>
-                    <td colspan="${5 + totalDias}" style="text-align:left; font-weight:normal;">(Vehículos no registrados en el Tarifario Maestro)</td>
-                </tr>
-            `;
-            placasExternas.forEach(placa => { tbodyHTML += generarHTMLFila(placa, agrupado[placa]); });
-        }
-
-        // Imprimir Fila Total
-        let porcGeneral = sumIngresos > 0 ? (sumRentabilidad / sumIngresos) * 100 : 0;
-        let totDiasHTML = "";
-        for(let i = 0; i < totalDias; i++) {
-            let tD = totDias[i];
-            if(tD.ped === 0 && tD.ing === 0 && tD.cos === 0) {
-                totDiasHTML += `<td style="text-align:center; border-color:rgba(255,255,255,0.1);">-</td>`;
-            } else {
-                let colR = tD.rent >= 0 ? 'r-tot-pos' : 'r-tot-neg';
-                totDiasHTML += `
-                    <td class="cell-dia" style="border-color:rgba(255,255,255,0.1);">
-                        <span class="p-tot">P: ${tD.ped}</span><br>
-                        <span class="i-tot">I: ${formatMoney(tD.ing)}</span><br>
-                        <span class="c-tot">C: ${formatMoney(tD.cos)}</span><br>
-                        <span class="${colR}">R: ${formatMoney(tD.rent)}</span>
+                if(datosDia) {
+                    let rDia = datosDia.ing - datosDia.cos;
+                    let clsR = rDia >= 0 ? 'val-pos' : 'val-neg';
+                    row += `<td>
+                        <div class="cell-data">
+                            <span class="cell-p">P: ${datosDia.ped}</span>
+                            <span class="cell-i">I: ${formatearMoneda(datosDia.ing)}</span>
+                            <span class="cell-c">C: ${formatearMoneda(datosDia.cos)}</span>
+                            <span class="cell-r ${clsR}">R: ${formatearMoneda(rDia)}</span>
+                        </div>
                     </td>`;
-            }
-        }
+                } else {
+                    row += `<td style="color:var(--slate-300); background:#fdfdfd;">-</td>`;
+                }
+            });
+            row += `</tr>`;
+            tbody += row;
+        });
 
-        tbodyHTML += `
-            <tr class="row-total">
-                <td>TOTALES GLOBALES</td>
-                <td>-</td>
-                <td>${totPed}</td>
-                <td style="color:#93c5fd !important;">${formatMoney(sumIngresos)}</td>
-                <td style="color:#fca5a5 !important;">${formatMoney(sumCostos)}</td>
-                <td>${formatMoney(sumRentabilidad)}</td>
-                <td>${porcGeneral.toFixed(1)}%</td>
-                ${totDiasHTML}
-            </tr>
+        // FILA DE TOTALES GLOBALES
+        let renGlobal = sumaGlobalIng - sumaGlobalCos;
+        let marGlobal = sumaGlobalIng > 0 ? (renGlobal / sumaGlobalIng) * 100 : 0;
+
+        tbody += `<tr class="row-total">
+            <td>TOTALES GLOBALES</td>
+            <td>-</td>
+            <td>-</td>
+            <td style="font-size:1.2em;">${sumaGlobalPed}</td>
+            <td style="font-size:1.1em;">${formatearMoneda(sumaGlobalIng)}</td>
+            <td style="font-size:1.1em;">${formatearMoneda(sumaGlobalCos)}</td>
+            <td class="${renGlobal >= 0 ? 'val-pos' : 'val-neg'}" style="font-size:1.1em;">${formatearMoneda(renGlobal)}</td>
+            <td class="${marGlobal >= 0 ? 'val-pos' : 'val-neg'}">${marGlobal.toFixed(1)}%</td>
         `;
+        diasArray.forEach(() => { tbody += `<td>-</td>`; });
+        tbody += `</tr>`;
+
+        document.getElementById('contenedorTabla').innerHTML = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+
+        // ACTUALIZAR KPIs
+        document.getElementById('kpiIngresos').innerText = formatearMoneda(sumaGlobalIng);
+        document.getElementById('kpiCostos').innerText = formatearMoneda(sumaGlobalCos);
+        document.getElementById('kpiRentabilidad').innerText = formatearMoneda(renGlobal);
         
-        tbody.innerHTML = tbodyHTML;
-    }
-    
-    function cerrarSesion() {
-        localStorage.removeItem('sesionActiva');
-        window.location.href = 'index.html';
+        let boxRen = document.getElementById('boxKpiRen');
+        if(renGlobal < 0) { boxRen.classList.add('negativo'); } else { boxRen.classList.remove('negativo'); }
     }
 </script>
+
 </body>
 </html>

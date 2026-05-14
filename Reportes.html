@@ -18,9 +18,10 @@
             --red-600: #dc2626; --red-50: #fef2f2;
             --amber-600: #d97706; --amber-50: #fffbeb;
             --teal-600: #0d9488; --teal-50: #f0fdfa;
+            --purple-600: #7c3aed;
         }
         
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; color: var(--slate-700); font-size: 14px; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; color: var(--slate-700); font-size: 13px; }
         
         /* NAVBAR CORPORATIVO */
         .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -28,30 +29,29 @@
         .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
         .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        
         .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
-        .container { max-width: 1400px; margin: 25px auto; padding: 0 20px; }
+        .container { max-width: 1500px; margin: 25px auto; padding: 0 20px; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
         
         /* CONTROLES (Filtros) */
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--slate-100); padding-bottom: 15px; }
         .card-header h3 { margin: 0; color: var(--slate-900); font-size: 1.2em; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: end; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         label { font-weight: 600; font-size: 0.9em; color: var(--slate-700); }
         input[type="date"], input[type="text"], select { width: 100%; padding: 10px 12px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: all 0.2s; color: var(--slate-900); }
         input:focus, select:focus { outline: none; border-color: var(--teal-600); box-shadow: 0 0 0 3px var(--teal-50); }
         
         .checkbox-group { display: flex; gap: 15px; background: var(--slate-50); padding: 10px 15px; border-radius: 6px; border: 1px solid var(--slate-200); }
-        .checkbox-group label { margin: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95em; color: var(--slate-700); font-weight: 500; }
+        .checkbox-group label { margin: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95em; color: var(--slate-700); font-weight: 600; }
         .checkbox-group input { width: auto; margin: 0; }
         
         .btn-action { padding: 10px 20px; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95em; transition: all 0.2s; }
-        .btn-filter { background: var(--teal-600); height: 42px; }
+        .btn-filter { background: var(--teal-600); height: 40px; }
         .btn-filter:hover { background: #0f766e; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(13, 148, 136, 0.2); }
         .btn-excel { background: var(--emerald-600); }
         .btn-excel:hover { background: #047857; transform: translateY(-1px); }
@@ -59,11 +59,12 @@
         .btn-pdf:hover { background: #b91c1c; transform: translateY(-1px); }
         
         /* KPIs SUPERIORES */
-        .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); border-left: 5px solid transparent; position: relative; overflow: hidden;}
-        .stat-card h4 { margin: 0 0 8px 0; color: #64748b; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
-        .stat-card span { font-size: 2.2em; font-weight: 800; color: var(--slate-900); display: block; }
+        .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); border-left: 5px solid transparent; position: relative; overflow: hidden;}
+        .stat-card h4 { margin: 0 0 8px 0; color: #64748b; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
+        .stat-card span { font-size: 2em; font-weight: 800; color: var(--slate-900); display: block; }
         
+        .box-rut { border-left-color: var(--purple-600); } .box-rut span { color: var(--purple-600); }
         .box-ing { border-left-color: var(--blue-600); } .box-ing span { color: var(--blue-600); }
         .box-cos { border-left-color: var(--red-600); } .box-cos span { color: var(--red-600); }
         .box-uti { border-left-color: var(--emerald-600); } .box-uti span { color: var(--emerald-600); }
@@ -71,21 +72,26 @@
 
         /* GRÁFICOS */
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .chart-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); }
-        .chart-box h4 { margin: 0 0 15px 0; color: var(--slate-900); font-size: 1.05em; font-weight: 700; border-bottom: 1px solid var(--slate-100); padding-bottom: 12px; display: flex; align-items: center; gap: 8px;}
+        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); }
+        .chart-box h4 { margin: 0 0 15px 0; color: var(--slate-900); font-size: 1.05em; font-weight: 700; border-bottom: 1px solid var(--slate-100); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;}
 
         /* TABLAS DE DETALLE */
-        .table-wrapper { width: 100%; overflow-x: auto; max-height: 450px; border-radius: 8px; border: 1px solid var(--slate-200); }
+        .table-wrapper { width: 100%; overflow-x: auto; max-height: 500px; border-radius: 8px; border: 1px solid var(--slate-200); }
         .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
         .table-wrapper::-webkit-scrollbar-track { background: var(--slate-50); border-radius: 0 0 8px 8px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 0.95em; white-space: nowrap; text-align: left; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; white-space: nowrap; text-align: left; }
         th, td { border-bottom: 1px solid var(--slate-200); padding: 12px 15px; }
         th { background: var(--slate-50); color: var(--slate-900); font-weight: 700; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--slate-200); }
-        
+        tbody tr:hover { background-color: var(--slate-50); }
+
         .utilidad-positiva { color: var(--emerald-600); font-weight: 700; }
         .utilidad-negativa { color: var(--red-600); font-weight: 700; }
+        
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; display: inline-block;}
+        .badge-prov { background: var(--slate-200); color: var(--slate-700); }
+        .badge-ruta { background: var(--blue-50); color: var(--blue-600); border: 1px solid #bfdbfe; }
         
         .section-title { color: var(--slate-900); font-size: 1.1em; font-weight: 700; border-bottom: 2px solid var(--teal-600); padding-bottom: 8px; margin-bottom: 20px; display: inline-block; }
 
@@ -121,9 +127,9 @@
                     Parámetros del Reporte
                 </h3>
                 <div class="checkbox-group">
-                    <strong style="color:var(--slate-900);">Mostrar Tablas:</strong>
-                    <label><input type="checkbox" id="chkGeneral" checked> Detalle Mensual</label>
-                    <label><input type="checkbox" id="chkVehiculos" checked> Rendimiento Vehículos</label>
+                    <strong style="color:var(--slate-900); font-weight:700;">Mostrar Tablas:</strong>
+                    <label><input type="checkbox" id="chkGeneral" checked> Detalle Operativo</label>
+                    <label><input type="checkbox" id="chkVehiculos" checked> Resumen Vehículos</label>
                 </div>
             </div>
 
@@ -139,15 +145,18 @@
                 <div class="form-group">
                     <label>Ciudad Operativa:</label>
                     <select id="filtroCiudad">
-                        <option value="TODAS">TODAS LAS CIUDADES</option>
-                        <option value="QUITO">QUITO</option>
-                        <option value="GUAYAQUIL">GUAYAQUIL</option>
-                        <option value="CUENCA">CUENCA</option>
+                        <option value="TODAS">Todas las Ciudades</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Proveedor:</label>
+                    <select id="filtroProv">
+                        <option value="TODOS">Todos los Proveedores</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Placa Vehículo:</label>
-                    <input type="text" id="filtroPlaca" placeholder="Dejar vacío para todos">
+                    <input type="text" id="filtroPlaca" placeholder="Ej. GTO9407">
                 </div>
                 <div class="form-group" style="justify-content: flex-end;">
                     <button class="btn-action btn-filter" onclick="aplicarFiltros()">
@@ -160,7 +169,7 @@
 
         <div id="loader" class="loader-msg">
             <div class="spinner"></div>
-            Analizando millones de datos en tiempo real...
+            Analizando base de datos en tiempo real...
         </div>
 
         <div id="panelResultados" style="display:none;">
@@ -177,6 +186,7 @@
             </div>
 
             <div class="summary-box">
+                <div class="stat-card box-rut"><h4>Total de Rutas (Viajes)</h4><span id="lblRutas">0</span></div>
                 <div class="stat-card box-ing"><h4>Ingresos Operativos</h4><span id="lblIngresos">$0.00</span></div>
                 <div class="stat-card box-cos"><h4>Costos Totales</h4><span id="lblCostos">$0.00</span></div>
                 <div class="stat-card box-uti" id="kpiUtilidad"><h4>Utilidad Neta</h4><span id="lblUtilidad">$0.00</span></div>
@@ -203,7 +213,7 @@
                 <div class="chart-box">
                     <h4>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple-600)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        Evolución: Ingresos vs Costos
+                        Evolución Diaria: Ingresos vs Costos
                     </h4>
                     <div style="position: relative; height: 250px; width: 100%;"><canvas id="graficoTendencia"></canvas></div>
                 </div>
@@ -218,10 +228,21 @@
             </div>
 
             <div class="card" id="seccionGeneral" style="padding-bottom: 0; overflow:hidden;">
-                <h3 class="section-title">Detalle Operativo Mensual</h3>
+                <h3 class="section-title">Detalle Operativo Mensual (Registro Histórico)</h3>
                 <div class="table-wrapper" style="border-radius: 0; border-left: none; border-right: none; border-bottom: none;">
                     <table id="tablaGeneral">
-                        <thead><tr><th>Fecha</th><th>Ciudad</th><th>Placa Asignada</th><th style="text-align:center;">Pedidos</th><th style="text-align:right;">Ingresos</th><th style="text-align:right;">Costos</th><th style="text-align:right;">Utilidad Neta</th><th style="text-align:right;">Margen</th></tr></thead>
+                        <thead><tr>
+                            <th>Fecha</th>
+                            <th>Ciudad</th>
+                            <th>Proveedor</th>
+                            <th>Placa Asignada</th>
+                            <th>Tipo de Ruta</th>
+                            <th style="text-align:center;">Pedidos</th>
+                            <th style="text-align:right;">Ingresos</th>
+                            <th style="text-align:right;">Costos</th>
+                            <th style="text-align:right;">Utilidad Neta</th>
+                            <th style="text-align:right;">Margen</th>
+                        </tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -231,7 +252,16 @@
                 <h3 class="section-title">Resumen Consolidado por Vehículo</h3>
                 <div class="table-wrapper" style="border-radius: 0; border-left: none; border-right: none; border-bottom: none;">
                     <table id="tablaVehiculos">
-                        <thead><tr><th>Placa del Vehículo</th><th style="text-align:center;">Viajes</th><th style="text-align:center;">Total Pedidos</th><th style="text-align:right;">Ingresos Acum.</th><th style="text-align:right;">Costos Acum.</th><th style="text-align:right;">Utilidad Neta</th><th style="text-align:right;">Margen Prom.</th></tr></thead>
+                        <thead><tr>
+                            <th>Placa del Vehículo</th>
+                            <th>Proveedor</th>
+                            <th style="text-align:center;">Viajes</th>
+                            <th style="text-align:center;">Total Pedidos</th>
+                            <th style="text-align:right;">Ingresos Acum.</th>
+                            <th style="text-align:right;">Costos Acum.</th>
+                            <th style="text-align:right;">Utilidad Neta</th>
+                            <th style="text-align:right;">Margen Prom.</th>
+                        </tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -241,9 +271,13 @@
     </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Redirigiendo a index.html)
+    // 🔒 VALIDACIÓN DE SESIÓN ESTRICTA
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        alert("⛔ Acceso denegado. Este módulo es de uso exclusivo para Administradores.");
+        window.location.href = 'Inicio.html'; 
+    }
 
     let dbOriginal = [];
     let dbFiltrada = [];
@@ -254,7 +288,7 @@
     let chartTendenciaInstance = null;
     let chartCostosInstance = null;
 
-    // Configuración global de Chart.js para que luzca "SaaS"
+    // Configuración global de Chart.js
     Chart.defaults.font.family = "'Segoe UI', -apple-system, sans-serif";
     Chart.defaults.color = "#64748b";
     Chart.defaults.animation = false; // Sin animación para exportación instantánea a PDF
@@ -264,7 +298,6 @@
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
-        if (sesion.rol !== 'Administrador') { document.getElementById('linkRegistro').style.display = 'none'; }
         
         const hoy = new Date();
         document.getElementById('filtroInicio').value = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
@@ -273,6 +306,9 @@
         try {
             const res = await fetch(`${SCRIPT_URL}?v=${new Date().getTime()}`);
             dbOriginal = await res.json();
+            
+            cargarFiltrosDinamicos();
+            
             document.getElementById('loader').style.display = 'none';
             document.getElementById('panelResultados').style.display = 'block';
             aplicarFiltros(); 
@@ -286,10 +322,22 @@
         window.location.href = 'index.html';
     }
 
+    function cargarFiltrosDinamicos() {
+        const ciudades = [...new Set(dbOriginal.map(r => r.ciudad))].filter(Boolean).sort();
+        const proveedores = [...new Set(dbOriginal.map(r => r.proveedor || "GENERAL"))].filter(Boolean).sort();
+
+        const selC = document.getElementById('filtroCiudad');
+        ciudades.forEach(c => { selC.innerHTML += `<option value="${c}">${c}</option>`; });
+        
+        const selP = document.getElementById('filtroProv');
+        proveedores.forEach(p => { selP.innerHTML += `<option value="${p}">${p}</option>`; });
+    }
+
     function aplicarFiltros() {
         const fInicio = document.getElementById('filtroInicio').value;
         const fFin = document.getElementById('filtroFin').value;
         const fCiudad = document.getElementById('filtroCiudad').value;
+        const fProv = document.getElementById('filtroProv').value;
         const fPlaca = document.getElementById('filtroPlaca').value.toUpperCase().trim();
         
         const verGeneral = document.getElementById('chkGeneral').checked;
@@ -302,7 +350,9 @@
             let pasaFecha = (!fInicio || fila.fecha >= fInicio) && (!fFin || fila.fecha <= fFin);
             let pasaCiudad = (fCiudad === "TODAS" || fila.ciudad === fCiudad);
             let pasaPlaca = (!fPlaca || (fila.placa && fila.placa.includes(fPlaca)));
-            return pasaFecha && pasaCiudad && pasaPlaca;
+            let pasaProv = (fProv === "TODOS" || (fila.proveedor || "GENERAL") === fProv);
+            
+            return pasaFecha && pasaCiudad && pasaPlaca && pasaProv;
         });
 
         procesarDatos();
@@ -314,13 +364,13 @@
         
         let objCiudades = {};
         let objVehiculos = {};
-        let objFechas = {}; 
+        let objFechas = {}; // Agrupación inteligente para gráfica de tendencia
 
         const tbodyGen = document.querySelector('#tablaGeneral tbody');
         tbodyGen.innerHTML = '';
 
         if(dbFiltrada.length === 0){
-            tbodyGen.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:40px; color:#94a3b8;">No hay registros operativos para los filtros seleccionados.</td></tr>`;
+            tbodyGen.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:40px; color:#94a3b8;">No hay registros operativos para los filtros seleccionados.</td></tr>`;
         }
 
         dbFiltrada.forEach(fila => {
@@ -335,7 +385,6 @@
 
             sumIngresos += ing;
             sumCostos += costos;
-            
             sumBase += cB; sumAyudantes += cA; sumExc += cE; sumHE += cH;
 
             let c = fila.ciudad || "OTRA";
@@ -343,12 +392,16 @@
             objCiudades[c] += uti;
 
             let p = fila.placa || "SIN PLACA";
-            if(!objVehiculos[p]) objVehiculos[p] = { placa: p, viajes: 0, pedidos: 0, ingresos: 0, costos: 0 };
+            let prov = fila.proveedor || "GENERAL";
+            let tipoRuta = fila.tipoRuta || "NORMAL";
+
+            if(!objVehiculos[p]) objVehiculos[p] = { placa: p, proveedor: prov, viajes: 0, pedidos: 0, ingresos: 0, costos: 0 };
             objVehiculos[p].viajes += 1;
             objVehiculos[p].pedidos += (Number(fila.pedidos) || 0);
             objVehiculos[p].ingresos += ing;
             objVehiculos[p].costos += costos;
 
+            // AGRUPACIÓN POR DÍA (Para gráfico de línea)
             let f = fila.fecha;
             if(!objFechas[f]) objFechas[f] = { ing: 0, cost: 0 };
             objFechas[f].ing += ing;
@@ -357,9 +410,11 @@
             let colorUti = uti >= 0 ? "utilidad-positiva" : "utilidad-negativa";
             tbodyGen.innerHTML += `
                 <tr>
-                    <td style="color:var(--blue-600); font-weight:600;">${fila.fecha}</td>
+                    <td style="color:var(--slate-900); font-weight:600;">${fila.fecha}</td>
                     <td>${c}</td>
-                    <td style="font-weight:600; color:var(--slate-900);">${p}</td>
+                    <td><span class="badge badge-prov">${prov}</span></td>
+                    <td style="font-weight:700; color:var(--slate-900);">${p}</td>
+                    <td><span class="badge badge-ruta">${tipoRuta}</span></td>
                     <td style="text-align:center;">${fila.pedidos}</td>
                     <td style="text-align:right;">$${ing.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
                     <td style="text-align:right; color:var(--red-600);">$${costos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
@@ -372,6 +427,7 @@
         let utiTotal = sumIngresos - sumCostos;
         let marTotal = sumIngresos > 0 ? (utiTotal / sumIngresos) * 100 : 0;
         
+        document.getElementById('lblRutas').innerText = dbFiltrada.length; // Conteo exacto de rutas
         document.getElementById('lblIngresos').innerText = `$${sumIngresos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
         document.getElementById('lblCostos').innerText = `$${sumCostos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
         document.getElementById('lblUtilidad').innerText = `$${utiTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
@@ -397,24 +453,25 @@
         tbodyVeh.innerHTML = '';
         
         if(resumenVehiculosArr.length === 0){
-             tbodyVeh.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:40px; color:#94a3b8;">No hay información vehicular para mostrar.</td></tr>`;
+             tbodyVeh.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:40px; color:#94a3b8;">No hay información vehicular para mostrar.</td></tr>`;
         }
         
         resumenVehiculosArr.forEach(v => {
             let colorUti = v.utilidad >= 0 ? "utilidad-positiva" : "utilidad-negativa";
             tbodyVeh.innerHTML += `
                 <tr>
-                    <td style="font-weight:700; color:var(--slate-900);">${v.placa}</td>
+                    <td style="font-weight:700; color:var(--slate-900); font-size: 1.05em;">${v.placa}</td>
+                    <td><span class="badge badge-prov">${v.proveedor}</span></td>
                     <td style="text-align:center;">${v.viajes}</td>
-                    <td style="text-align:center;">${v.pedidos}</td>
+                    <td style="text-align:center; font-weight:700;">${v.pedidos}</td>
                     <td style="text-align:right;">$${v.ingresos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
                     <td style="text-align:right; color:var(--red-600);">$${v.costos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
-                    <td class="${colorUti}" style="text-align:right;">$${v.utilidad.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
+                    <td class="${colorUti}" style="text-align:right; font-size: 1.05em;">$${v.utilidad.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
                     <td class="${colorUti}" style="text-align:right;">${v.margen.toFixed(1)}%</td>
                 </tr>`;
         });
 
-        // Preparar Datos para Gráficos
+        // Preparar Datos Consolidados para Gráficos
         let fechasOrdenadas = Object.keys(objFechas).sort();
         let arrFechas = [], arrIng = [], arrCos = [];
         fechasOrdenadas.forEach(fecha => {
@@ -428,7 +485,7 @@
 
     function actualizarGraficos(datosCiudad, datosVehiculos, datosTendencia, arrayCostos) {
         
-        // 1. Dona Ciudades (Colores Corporativos)
+        // 1. Dona Ciudades 
         if(chartCiudadInstance) chartCiudadInstance.destroy();
         chartCiudadInstance = new Chart(document.getElementById('graficoCiudad'), {
             type: 'doughnut',
@@ -464,15 +521,15 @@
             }
         });
 
-        // 3. Líneas Tendencia Ingresos vs Costos
+        // 3. Líneas Tendencia Diaria (AGRUPADA)
         if(chartTendenciaInstance) chartTendenciaInstance.destroy();
         chartTendenciaInstance = new Chart(document.getElementById('graficoTendencia'), {
             type: 'line',
             data: {
                 labels: datosTendencia.fechas,
                 datasets: [
-                    { label: 'Ingresos', data: datosTendencia.ingresos, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 0 },
-                    { label: 'Costos', data: datosTendencia.costos, borderColor: '#dc2626', backgroundColor: 'transparent', fill: false, tension: 0.4, borderWidth: 2, borderDash: [5,5], pointRadius: 0 }
+                    { label: 'Ingresos Diarios', data: datosTendencia.ingresos, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 2 },
+                    { label: 'Costos Diarios', data: datosTendencia.costos, borderColor: '#dc2626', backgroundColor: 'transparent', fill: false, tension: 0.4, borderWidth: 2, borderDash: [5,5], pointRadius: 2 }
                 ]
             },
             options: { 
@@ -487,7 +544,7 @@
         chartCostosInstance = new Chart(document.getElementById('graficoCostos'), {
             type: 'pie',
             data: {
-                labels: ['Costo Vehículo Base', 'Ayudantes/Estibas', 'Servicios Exclusivos', 'Horas Extras'],
+                labels: ['Costo Vehículo Base', 'Ayudantes/Estibas', 'Servicios Exclusivos/Especiales', 'Horas Extras'],
                 datasets: [{ 
                     data: arrayCostos, 
                     backgroundColor: ['#334155', '#d97706', '#dc2626', '#94a3b8'],
@@ -505,15 +562,21 @@
         if(document.getElementById('chkGeneral').checked) {
             let dataGen = dbFiltrada.map(f => {
                 let i = Number(f.ingresos)||0, c = (Number(f.cBase)||0)+(Number(f.cAyudantes)||0)+(Number(f.cExc)||0)+(Number(f.cHE)||0);
-                return { "Fecha": f.fecha, "Ciudad": f.ciudad, "Placa Vehículo": f.placa, "Cantidad Pedidos": f.pedidos, "Ingresos Operativos ($)": i, "Costo Operativo ($)": c, "Utilidad Neta ($)": i-c };
+                return { 
+                    "Fecha": f.fecha, "Ciudad": f.ciudad, "Proveedor": f.proveedor || "GENERAL", "Placa Vehículo": f.placa, 
+                    "Tipo de Ruta": f.tipoRuta || "NORMAL", "Cantidad Pedidos": f.pedidos, 
+                    "Ingresos Operativos ($)": i, "Costo Operativo ($)": c, "Utilidad Neta ($)": i-c 
+                };
             });
             XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(dataGen), "Detalle Operativo Mensual");
         }
         if(document.getElementById('chkVehiculos').checked) {
-            let dataVeh = resumenVehiculosArr.map(v => { return { "Placa": v.placa, "Total Viajes": v.viajes, "Total Pedidos": v.pedidos, "Ingresos Acumulados ($)": v.ingresos, "Costos Acumulados ($)": v.costos, "Utilidad Neta ($)": v.utilidad, "Margen Promedio (%)": v.margen }; });
+            let dataVeh = resumenVehiculosArr.map(v => { 
+                return { "Placa": v.placa, "Proveedor": v.proveedor, "Total Viajes (Rutas)": v.viajes, "Total Pedidos": v.pedidos, "Ingresos Acumulados ($)": v.ingresos, "Costos Acumulados ($)": v.costos, "Utilidad Neta ($)": v.utilidad, "Margen Promedio (%)": v.margen }; 
+            });
             XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(dataVeh), "Rendimiento por Vehículo");
         }
-        XLSX.writeFile(libro, `Dashboard_Ejecutivo_Logistica_${document.getElementById('filtroInicio').value}.xlsx`);
+        XLSX.writeFile(libro, `Dashboard_Ejecutivo_FlexNet_${document.getElementById('filtroInicio').value}.xlsx`);
     }
 
     function descargarPDF() {
@@ -523,7 +586,7 @@
 
         // Cabecera del PDF
         doc.setFontSize(22); doc.setTextColor(15, 23, 42); // Slate-900
-        doc.text("Reporte Ejecutivo de Resultados Financieros", 14, 20);
+        doc.text("FLEXNET: Reporte Ejecutivo de Rentabilidad", 14, 20);
         
         doc.setFontSize(10); doc.setTextColor(100, 116, 139); // Slate-500
         doc.text(`Período analizado: ${document.getElementById('filtroInicio').value} al ${document.getElementById('filtroFin').value}   |   Emitido el: ${new Date().toLocaleDateString()}`, 14, 28);
@@ -533,30 +596,42 @@
         doc.roundedRect(14, 34, 269, 18, 2, 2, 'F');
         doc.setFontSize(11); doc.setTextColor(51, 65, 85); // Slate-700
         doc.setFont('helvetica', 'bold');
-        let txtKPI = `Total Ingresos: ${document.getElementById('lblIngresos').innerText}     |     Costo Total: ${document.getElementById('lblCostos').innerText}     |     Utilidad Neta: ${document.getElementById('lblUtilidad').innerText}     |     Margen: ${document.getElementById('lblMargen').innerText}`;
+        let txtKPI = `Total Rutas: ${document.getElementById('lblRutas').innerText}    |    Total Ingresos: ${document.getElementById('lblIngresos').innerText}    |    Costo Total: ${document.getElementById('lblCostos').innerText}    |    Utilidad Neta: ${document.getElementById('lblUtilidad').innerText}    |    Margen: ${document.getElementById('lblMargen').innerText}`;
         doc.text(txtKPI, 20, 45);
 
         let finalY = 60;
 
         // --- INYECCIÓN DE GRÁFICOS ---
         try {
-            const imgCiudad = document.getElementById('graficoCiudad').toDataURL('image/png');
-            const imgVehiculos = document.getElementById('graficoVehiculos').toDataURL('image/png');
-            const imgTendencia = document.getElementById('graficoTendencia').toDataURL('image/png');
-            const imgCostos = document.getElementById('graficoCostos').toDataURL('image/png');
+            const canCiudad = document.getElementById('graficoCiudad');
+            const canVehiculos = document.getElementById('graficoVehiculos');
+            const canTendencia = document.getElementById('graficoTendencia');
+            const canCostos = document.getElementById('graficoCostos');
+
+            // 1. Definimos un ancho estándar para el PDF (130 puntos)
+            const anchoImg = 130; 
+            
+            // 2. Calculamos el alto matemáticamente para que no se deforme (Regla de 3)
+            const altoCiudad = (canCiudad.height / canCiudad.width) * anchoImg;
+            const altoVehiculos = (canVehiculos.height / canVehiculos.width) * anchoImg;
+            const altoTendencia = (canTendencia.height / canTendencia.width) * anchoImg;
+            const altoCostos = (canCostos.height / canCostos.width) * anchoImg;
 
             doc.setFontSize(14); doc.setTextColor(15, 23, 42);
             doc.text("Resumen Gráfico Operativo", 14, finalY);
             finalY += 8;
 
-            doc.addImage(imgCiudad, 'PNG', 14, finalY, 110, 55);
-            doc.addImage(imgVehiculos, 'PNG', 160, finalY, 110, 55);
-            finalY += 65;
+            // Fila 1 de Gráficos
+            doc.addImage(canCiudad.toDataURL('image/png'), 'PNG', 14, finalY, anchoImg, altoCiudad);
+            doc.addImage(canVehiculos.toDataURL('image/png'), 'PNG', 152, finalY, anchoImg, altoVehiculos);
+            finalY += Math.max(altoCiudad, altoVehiculos) + 10; // Bajamos el cursor según el gráfico más alto
             
-            doc.addImage(imgTendencia, 'PNG', 14, finalY, 110, 55);
-            doc.addImage(imgCostos, 'PNG', 160, finalY, 110, 55);
-            finalY += 65; 
-        } catch(e) { console.error("Error al inyectar gráficos en PDF"); }
+            // Fila 2 de Gráficos
+            doc.addImage(canTendencia.toDataURL('image/png'), 'PNG', 14, finalY, anchoImg, altoTendencia);
+            doc.addImage(canCostos.toDataURL('image/png'), 'PNG', 152, finalY, anchoImg, altoCostos);
+            finalY += Math.max(altoTendencia, altoCostos) + 15; 
+            
+        } catch(e) { console.error("Error al inyectar gráficos en PDF", e); }
 
         // --- TABLAS ---
         doc.addPage();
@@ -565,11 +640,11 @@
         if(document.getElementById('chkVehiculos').checked) {
             doc.setFontSize(14); doc.setTextColor(15, 23, 42);
             doc.text("Rendimiento Consolidado por Vehículo", 14, finalY);
-            let filasV = resumenVehiculosArr.map(v => [v.placa, v.viajes, v.pedidos, `$${v.ingresos.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${v.costos.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${v.utilidad.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `${v.margen.toFixed(1)}%`]);
+            let filasV = resumenVehiculosArr.map(v => [v.placa, v.proveedor, v.viajes, v.pedidos, `$${v.ingresos.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${v.costos.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${v.utilidad.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `${v.margen.toFixed(1)}%`]);
             
             doc.autoTable({ 
                 startY: finalY + 6, 
-                head: [["Placa", "Viajes", "Pedidos", "Ingresos", "Costos", "Utilidad Neta", "Margen"]], 
+                head: [["Placa", "Proveedor", "Viajes", "Pedidos", "Ingresos", "Costos", "Utilidad Neta", "Margen"]], 
                 body: filasV, 
                 theme: 'grid', 
                 headStyles: { fillColor: [5, 150, 105], textColor: [255,255,255] }, // Emerald-600
@@ -584,12 +659,12 @@
             doc.text("Detalle Operativo Diario (Rutas)", 14, finalY);
             let filasG = dbFiltrada.map(f => {
                 let i = Number(f.ingresos)||0, c = (Number(f.cBase)||0)+(Number(f.cAyudantes)||0)+(Number(f.cExc)||0)+(Number(f.cHE)||0);
-                return [f.fecha, f.ciudad, f.placa, f.pedidos, `$${i.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${c.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${(i-c).toLocaleString('en-US', {minimumFractionDigits: 2})}`];
+                return [f.fecha, f.ciudad, (f.proveedor||"GENERAL"), f.placa, (f.tipoRuta||"NORMAL"), f.pedidos, `$${i.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${c.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${(i-c).toLocaleString('en-US', {minimumFractionDigits: 2})}`];
             });
 
             doc.autoTable({ 
                 startY: finalY + 6, 
-                head: [["Fecha", "Ciudad", "Placa", "Pedidos", "Ingresos", "Costos", "Utilidad"]], 
+                head: [["Fecha", "Ciudad", "Proveedor", "Placa", "Tipo Ruta", "Pedidos", "Ingresos", "Costos", "Utilidad"]], 
                 body: filasG, 
                 theme: 'grid', 
                 headStyles: { fillColor: [15, 23, 42], textColor: [255,255,255] }, // Slate-900
@@ -597,7 +672,7 @@
             });
         }
 
-        doc.save(`Reporte_Directorio_Logistica_${document.getElementById('filtroInicio').value}.pdf`);
+        doc.save(`Reporte_FlexNet_Logistica_${document.getElementById('filtroInicio').value}.pdf`);
     }
 </script>
 
