@@ -42,6 +42,10 @@
         
         .checkbox-label { display: flex; align-items: center; gap: 8px; margin-top: 15px; cursor: pointer; background: var(--slate-50); padding: 12px; border-radius: 6px; border: 1px solid var(--slate-200); }
         .checkbox-label input { width: auto; margin: 0; }
+        
+        .exc-container { display: none; background: #fff1f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin-top: 10px; }
+        .exc-container label { color: #be123c; }
+        .exc-container input { border-color: #fca5a5; background: white; }
 
         button { width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
         button:hover { background: #1d4ed8; }
@@ -106,7 +110,7 @@
         <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
         <a href="Rentabilidad.html">📊 Rentabilidad</a>
         <a href="RentabilidadVehiculos.html">🚛 Vehículos</a>
-        <a href="Reportes.html">📈 Dashboard</a>
+        <a id="linkReportes" href="Reportes.html">📈 Dashboard</a>
         <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
     </div>
 
@@ -145,11 +149,20 @@
             </div>
 
             <label class="checkbox-label">
-                <input type="checkbox" id="chkExc">
+                <input type="checkbox" id="chkExc" onchange="toggleExclusivo()">
                 <span>Servicio Exclusivo (Horario Laboral)</span>
             </label>
             
-            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <div id="boxExclusivo" class="exc-container">
+                <label>💰 Costo Vehículo Exclusivo ($):</label>
+                <input type="number" id="costoExc" value="0" min="0" step="0.01" placeholder="Ej. 150.00">
+                
+                <label>📦 Valor Declarado Total de la Carga ($):</label>
+                <input type="number" id="valorDeclarado" value="0" min="0" step="0.01" placeholder="Ej. 5000.00">
+                <span style="font-size: 0.8em; color: #be123c;">* Requerido para cálculo de tarifa.</span>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:15px;">
                 <label>📦 Cargar IDs de Pedidos:</label>
                 <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--blue-600); margin-bottom:6px;">0 Únicos</span>
             </div>
@@ -220,6 +233,10 @@
     // 🔒 VALIDACIÓN DE SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        document.getElementById('linkRegistro').style.display = 'none';
+        document.getElementById('linkReportes').style.display = 'none';
+    }
 
     let dMonitor = [], dTarifas = [];
     let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
@@ -266,7 +283,6 @@
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
-        if (sesion.rol !== 'Administrador') { document.getElementById('linkRegistro').style.display = 'none'; }
         document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
 
         // 1. CARGA INTELIGENTE DE TARIFAS
@@ -393,6 +409,16 @@
         });
         if(valorActual && Array.from(c.options).some(opt => opt.value === valorActual)){ c.value = valorActual; }
     }
+    
+    function toggleExclusivo() {
+        const isChecked = document.getElementById('chkExc').checked;
+        const box = document.getElementById('boxExclusivo');
+        box.style.display = isChecked ? 'block' : 'none';
+        if (!isChecked) {
+            document.getElementById('costoExc').value = 0;
+            document.getElementById('valorDeclarado').value = 0;
+        }
+    }
 
     function contarPedidos() {
         const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').filter(x => x.trim()))];
@@ -411,9 +437,23 @@
         const selV = document.getElementById('selVehiculo');
         const estibas = document.getElementById('numEstibas').value;
         const horasExtra = document.getElementById('numHE').value;
+        
+        const isExclusivo = document.getElementById('chkExc').checked;
+        const costoExc = document.getElementById('costoExc').value;
+        const valorDeclarado = document.getElementById('valorDeclarado').value;
 
         if (!fecha || !prov || selV.selectedIndex === -1 || !selV.value || estibas === "" || estibas < 0 || horasExtra === "" || horasExtra < 0) {
             return alert("⚠️ Faltan campos por llenar o datos inválidos en la configuración de la ruta.");
+        }
+        
+        // --- VALIDACIÓN ESTRICTA EXCLUSIVO ---
+        if (isExclusivo) {
+            if (valorDeclarado <= 0) {
+                return alert("⛔ ERROR: Ha marcado 'Servicio Exclusivo'. El Valor Declarado de la carga es OBLIGATORIO y debe ser mayor a 0 para poder calcular la tarifa.");
+            }
+            if (costoExc < 0) {
+                return alert("⚠️ ERROR: El Costo del Vehículo Exclusivo no puede ser negativo.");
+            }
         }
 
         const ids = [...new Set(document.getElementById('txtPedidos').value.split('\n').map(x => x.trim()).filter(x => x))];
@@ -434,6 +474,61 @@
         tbody.innerHTML = '';
         let tIngresosValidos = 0;
         
+        // --- LÓGICA DE CÁLCULO EXCLUSIVO ---
+        if (isExclusivo) {
+            let tarifaExclusivo = parseFloat(valorDeclarado) * 0.05; // Regla de negocio: 5% del valor declarado
+            
+            ids.forEach(id => {
+                const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
+                if(p) {
+                    let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                    let pesoUsado = parseFloat(p['Peso_Fisico'] || 0);
+                    
+                    // Si hay varios pedidos en un exclusivo, dividimos el cobro o le asignamos todo al primero. 
+                    // Para simplificar, le asignamos el cobro total al primer pedido válido que encuentre.
+                    let cobroReal = tIngresosValidos === 0 ? tarifaExclusivo : 0; 
+                    tIngresosValidos += cobroReal;
+                    
+                    tbody.innerHTML += `<tr>
+                        <td><strong>${id}</strong></td>
+                        <td>${p.Cliente || '-'}</td>
+                        <td style="text-align:center;"><b>1</b></td>
+                        <td style="color:var(--blue-600); font-weight:600;">${cp}</td>
+                        <td style="color:var(--slate-500);">-</td>
+                        <td style="text-align:center;">${pesoUsado.toFixed(2)}</td>
+                        <td class="col-tarifa">-</td>
+                        <td class="col-tarifa">-</td>
+                        <td class="col-tarifa">-</td>
+                        <td class="col-tarifa">-</td>
+                        <td class="col-total">$${cobroReal.toFixed(2)}</td>
+                    </tr>`;
+                }
+            });
+            
+            // Costos Exclusivos
+            const cEstibas = (parseFloat(estibas) || 0) * 30;
+            const cTotal = parseFloat(costoExc) + cEstibas;
+            const util = tIngresosValidos - cTotal;
+            
+            document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+            document.getElementById('vCos').innerText = `$${cTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+            document.getElementById('vRent').innerText = `$${util.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+            document.getElementById('vCant').innerText = ids.length;
+            
+            const boxR = document.getElementById('boxR');
+            if (util < 0) {
+                boxR.style.borderLeftColor = 'var(--red-600)';
+                document.getElementById('vRent').style.color = 'var(--red-600)';
+            } else {
+                boxR.style.borderLeftColor = 'var(--emerald-600)';
+                document.getElementById('vRent').style.color = 'var(--emerald-600)';
+            }
+
+            document.getElementById('detallesCosto').innerHTML = `Base Exc: $${parseFloat(costoExc).toFixed(2)} | Est: $${cEstibas}<br>(Exclusivo no aplica Base Regular ni HE)`;
+            return; // Termina la función aquí si es exclusivo
+        }
+        
+        // --- LÓGICA DE CÁLCULO NORMAL (Ruta Regular) ---
         ids.forEach(id => {
             const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             if(p) {
@@ -445,10 +540,8 @@
                 let calcNube = calcularTarifasAutomaticas(p);
                 let tfaCalculada = calcNube.total > 0 ? calcNube.total : 0;
 
-                // --- LÓGICA DE COBRO INTELIGENTE (NUEVA REGLA DE ORO) ---
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-                
                 let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
 
                 let cobroReal = 0;
@@ -456,12 +549,10 @@
                 let classTotal = "col-total";
 
                 if (yaExisteEnFlexNet) {
-                    // REGLA A: Si FlexNet ya lo conoce, NO se vuelve a cobrar.
                     cobroReal = 0;
                     classTotal += " col-tachada";
                     htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
                 } else {
-                    // REGLA B: Si es nuevo para FlexNet, SE COBRA SIEMPRE.
                     cobroReal = tfaCalculada;
                     if (intentosNum > 1) {
                         htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -488,9 +579,8 @@
         
         const cBase = parseFloat(selV.value) || 0;
         const cEstibas = (parseFloat(estibas) || 0) * 30;
-        const cExc = document.getElementById('chkExc').checked ? parseFloat(opt.dataset.ex) : 0;
         const cHE = (parseFloat(horasExtra) || 0) * parseFloat(opt.dataset.he);
-        const cTotal = cBase + cEstibas + cExc + cHE;
+        const cTotal = cBase + cEstibas + cHE;
         const util = tIngresosValidos - cTotal;
         
         document.getElementById('vIng').innerText = `$${tIngresosValidos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
@@ -507,7 +597,7 @@
             document.getElementById('vRent').style.color = 'var(--emerald-600)';
         }
 
-        document.getElementById('detallesCosto').innerHTML = `Base: $${cBase} | Est: $${cEstibas}<br>Exc: $${cExc} | HE: $${cHE.toFixed(2)}`;
+        document.getElementById('detallesCosto').innerHTML = `Base: $${cBase} | Est: $${cEstibas}<br>Exc: $0.00 | HE: $${cHE.toFixed(2)}`;
     }
 
     async function guardar() {
@@ -520,13 +610,21 @@
         const ciudad = textV.split('- ')[1] || "GENERAL";
         const placaVehiculo = textV.split(' - ')[0].trim();
         const fechaElegida = document.getElementById('fechaDespacho').value;
+        
+        const isExclusivo = document.getElementById('chkExc').checked;
+        const costoExc = parseFloat(document.getElementById('costoExc').value) || 0;
+
+        let costoBaseAGuardar = isExclusivo ? 0 : (parseFloat(selV.value) || 0);
+        let costoExclusivoAGuardar = isExclusivo ? costoExc : 0;
+        let costoHEAGuardar = isExclusivo ? 0 : ((parseFloat(document.getElementById('numHE').value) || 0) * parseFloat(opt.dataset.he));
 
         const rutaData = {
             fecha: fechaElegida, ciudad: ciudad.trim().toUpperCase(), pedidos: ids.length,
             ingresos: parseFloat(document.getElementById('vIng').innerText.replace(/[$,]/g,'')),
-            cBase: parseFloat(selV.value) || 0, cAyudantes: (parseFloat(document.getElementById('numEstibas').value) || 0) * 30,
-            cExc: document.getElementById('chkExc').checked ? parseFloat(opt.dataset.ex) : 0,
-            cHE: (parseFloat(document.getElementById('numHE').value) || 0) * parseFloat(opt.dataset.he),
+            cBase: costoBaseAGuardar, 
+            cAyudantes: (parseFloat(document.getElementById('numEstibas').value) || 0) * 30,
+            cExc: costoExclusivoAGuardar,
+            cHE: costoHEAGuardar,
             placa: placaVehiculo,
             listaIds: ids.join(', '),
             usuario: sesion.nombre
@@ -549,20 +647,18 @@
             ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
             document.getElementById('vCant').innerText = '0';
             
+            // Limpiar si era exclusivo
+            if (isExclusivo) {
+                document.getElementById('chkExc').checked = false;
+                toggleExclusivo();
+            }
+            
         } catch (e) { 
             alert("❌ Error de conexión al guardar la ruta. Verifique su internet."); 
         } finally { 
             btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> CONFIRMAR Y GUARDAR`; 
             btnConf.disabled = false; 
         }
-
-        // 🔒 CANDADO DE SEGURIDAD ESTRICTA
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
-    else if (sesion.rol !== 'Administrador') {
-        alert("⛔ Acceso denegado. El Dashboard Gerencial es de uso exclusivo para Administradores.");
-        window.location.href = 'Inicio.html';
-    }
     }
 </script>
 </body>
