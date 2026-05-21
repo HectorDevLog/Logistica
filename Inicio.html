@@ -109,7 +109,7 @@
         .btn-save:hover { background: #1d4ed8; }
         .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        /* ================= TOAST NOTIFICATION (NUEVO) ================= */
+        /* ================= TOAST NOTIFICATION ================= */
         .toast-container {
             position: fixed; bottom: 30px; right: 30px;
             background: white; padding: 16px 24px; border-radius: 8px;
@@ -209,7 +209,7 @@
 
     <div id="toastCarga" class="toast-container">
         <div id="toastIcon" class="toast-spinner"></div>
-        <div id="toastText">Conectando a la nube...</div>
+        <div id="toastText">Conectando con Drive...</div>
     </div>
 
     <div class="modal-overlay" id="modalPerfil">
@@ -240,6 +240,9 @@
     if (!sesion) { window.location.href = 'index.html'; }
 
     window.onload = function() {
+        // 🔥 SOLUCIÓN ESTRICTA: Limpiar memoria antigua del caché al entrar al inicio
+        sessionStorage.removeItem('cacheTarifarioFull');
+
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad}</span>
             <span style="opacity:0.5;">|</span>
@@ -257,7 +260,7 @@
         }
 
         // =========================================================================
-        // 🚀 INICIO DEL MOTOR DE PRE-CARGA CON NOTIFICACIÓN INTELIGENTE
+        // 🚀 INICIO DEL MOTOR DE DESCARGA DIRECTA (SIEMPRE ACTUALIZADO)
         // =========================================================================
         const dbNamePreload = "SimuladorDB";
         const storeNamePreload = "MonitorStore";
@@ -281,108 +284,76 @@
             return new Promise(resolve => tx.oncomplete = resolve);
         }
 
-        async function obtenerDatoDBPreload(id) {
-            const db = await initDBPreload();
-            const tx = db.transaction(storeNamePreload, "readonly");
-            const request = tx.objectStore(storeNamePreload).get(id);
-            return new Promise(resolve => {
-                request.onsuccess = () => resolve(request.result ? request.result : null);
-                request.onerror = () => resolve(null);
-            });
-        }
-
-        // Arranca medio segundo después de cargar el menú
         setTimeout(async () => {
             try {
-                // Verificamos qué le falta al usuario
-                let necesitaTarifas = !sessionStorage.getItem('cacheTarifarioFull');
-                const cacheInfo = await obtenerDatoDBPreload("monitorCargado");
-                let necesitaBigQuery = !(cacheInfo && cacheInfo.data && cacheInfo.data.length > 0);
-
-                // Si no tiene los datos en caché, le mostramos el cuadro flotante
-                if (necesitaTarifas || necesitaBigQuery) {
-                    let toast = document.getElementById('toastCarga');
-                    let toastText = document.getElementById('toastText');
-                    let toastIcon = document.getElementById('toastIcon');
-                    
-                    toast.classList.add('show');
-                    
-                    // Cuenta regresiva visual
-                    let segs = 4;
-                    let timer = setInterval(() => {
-                        segs--;
-                        if(segs > 0) {
-                            toastText.innerText = `Sincronizando datos de la nube (Espere ~${segs}s)...`;
-                        } else {
-                            toastText.innerText = `Desempaquetando miles de registros...`;
-                            clearInterval(timer);
-                        }
-                    }, 1000);
-
-                    // 1. Descargar Tarifas
-                    if (necesitaTarifas) {
-                        const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
-                            fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
-                            fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
-                            fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
-                        ]);
-                        
-                        const dbData = await resDB.json();
-                        const dTarifas = await resTarifas.json(); const tfaPesoDB = await resTPeso.json();
-                        const tfaPedidoDB = await resTPedido.json(); const tfaRangoDB = await resTRango.json();
-                        const tfaMedidaDB = await resTMedida.json(); const trayectoDB = await resTrayecto.json();
-
-                        let pedidosHistoricosArray = [];
-                        let rutasPorDiaYPlaca = {};
-                        
-                        dbData.forEach(row => { 
-                            if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricosArray.push(String(id).trim())); 
-                            if (row.fecha && row.placa) {
-                                let fLimpia = String(row.fecha).trim();
-                                if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
-                                if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
-                                let pLimpia = String(row.placa).trim().toUpperCase();
-                                rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
-                            }
-                        });
-
-                        sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                            dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                            rutasPorDiaYPlaca, pedidosHistoricosArray
-                        }));
+                let toast = document.getElementById('toastCarga');
+                let toastText = document.getElementById('toastText');
+                let toastIcon = document.getElementById('toastIcon');
+                
+                toast.classList.add('show');
+                
+                let segs = 3;
+                let timer = setInterval(() => {
+                    segs--;
+                    if(segs > 0) {
+                        toastText.innerText = `Sincronizando datos de Drive (Espere ~${segs}s)...`;
+                    } else {
+                        toastText.innerText = `Cargando tarifas y vehículos...`;
+                        clearInterval(timer);
                     }
+                }, 1000);
 
-                    // 2. Descargar BigQuery
-                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
-                    const jsonResponse = await resBQ.json();
-                    if(!jsonResponse.error) {
-                        await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
+                // Forzar descarga fresca de tarifas, configuraciones y listas de vehículos
+                const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                    fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                    fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                    fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                ]);
+                
+                const dbData = await resDB.json();
+                const dTarifas = await resTarifas.json(); const tfaPesoDB = await resTPeso.json();
+                const tfaPedidoDB = await resTPedido.json(); const tfaRangoDB = await resTRango.json();
+                const tfaMedidaDB = await resTMedida.json(); const trayectoDB = await resTrayecto.json();
+
+                let pedidosHistoricosArray = [];
+                let rutasPorDiaYPlaca = {};
+                
+                dbData.forEach(row => { 
+                    if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricosArray.push(String(id).trim())); 
+                    if (row.fecha && row.placa) {
+                        let fLimpia = String(row.fecha).trim();
+                        if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
+                        if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
+                        let pLimpia = String(row.placa).trim().toUpperCase();
+                        rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
                     }
+                });
 
-                    // Termina la carga, mostramos éxito y ocultamos
-                    clearInterval(timer);
-                    toast.classList.add('success');
-                    toastIcon.className = ''; 
-                    toastIcon.innerHTML = '✅';
-                    toastText.innerText = '¡Datos 100% cargados! Puede ingresar a los módulos.';
-                    
-                    // Ocultar el cuadro después de 4 segundos
-                    setTimeout(() => { toast.classList.remove('show'); }, 4000);
+                sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                    dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
+                    rutasPorDiaYPlaca, pedidosHistoricosArray
+                }));
 
-                } else {
-                    // Si ya tenía los datos en caché de antes, los actualizamos silenciosamente en el fondo
-                    // sin mostrar la notificación para no molestar.
-                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
-                    const jsonResponse = await resBQ.json();
-                    if(!jsonResponse.error) {
-                        await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
-                    }
+                // Descargar el Monitor Espejo fresco
+                const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                const jsonResponse = await resBQ.json();
+                if(!jsonResponse.error) {
+                    await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
                 }
+
+                clearInterval(timer);
+                toast.classList.add('success');
+                toastIcon.className = ''; 
+                toastIcon.innerHTML = '✅';
+                toastText.innerText = '¡Precios y vehículos actualizados!';
+                
+                setTimeout(() => { toast.classList.remove('show'); }, 2500);
+
             } catch(e) { 
-                console.log("⚠️ Error en pre-carga silenciosa:", e); 
+                console.log("⚠️ Error en descarga:", e); 
                 document.getElementById('toastCarga').classList.remove('show');
             }
-        }, 500); 
+        }, 300); 
     };
 
     // FUNCIONES DEL MODAL
