@@ -23,13 +23,19 @@
         
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; color: var(--slate-700); font-size: 13px; }
         
-        /* NAVBAR CORPORATIVO */
+        /* NAVBAR CORPORATIVO HORIZONTAL (Nuevo Diseño) */
         .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
-        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
-        .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; white-space: nowrap; }
+        
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
+        .nav-links a:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; white-space: nowrap; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
@@ -107,14 +113,21 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
             Dashboard Gerencial
         </div>
-        <div class="nav-links">
-            <a href="Inicio.html">&larr; Menú Principal</a>
-            <a href="Simulador.html">🏠 Simulador</a>
-            <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
-            <a href="Rentabilidad.html">📊 Rentabilidad</a>
-            <a href="RentabilidadVehiculos.html">🚛 Vehículos</a>
-            <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+        
+        <div class="nav-menu-container">
+            <div class="nav-links">
+                <a href="Inicio.html"><span>🏠</span> Menú</a>
+                <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
+                <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
+                <a href="AuditorMasivo.html"><span>⚡</span> Carga Masiva</a>
+                <a href="AuditoriaRutas.html"><span>🔍</span> Auditoría</a>
+                <a href="Rentabilidad.html"><span>📊</span> Rentabilidad</a>
+                <a href="RentabilidadVehiculos.html"><span>🚛</span> Vehículos</a>
+                <a href="Reportes.html" class="active"><span>📈</span> Dashboard</a>
+                <a href="Registro.html"><span>🛡️</span> Accesos</a>
+            </div>
         </div>
+        
         <div class="user-info" id="infoUsuario"></div>
     </div>
 

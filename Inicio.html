@@ -108,6 +108,27 @@
         .btn-save { background: var(--blue-600); color: white; }
         .btn-save:hover { background: #1d4ed8; }
         .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        /* ================= TOAST NOTIFICATION (NUEVO) ================= */
+        .toast-container {
+            position: fixed; bottom: 30px; right: 30px;
+            background: white; padding: 16px 24px; border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--blue-600);
+            display: flex; align-items: center; gap: 15px;
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;
+            z-index: 9999; font-weight: 600; font-size: 0.95em; color: var(--slate-800);
+        }
+        .toast-container.show { transform: translateX(0); }
+        .toast-container.success { border-left-color: var(--emerald-600); }
+        
+        .toast-spinner {
+            width: 18px; height: 18px; border: 3px solid var(--slate-200);
+            border-top-color: var(--blue-600); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -130,8 +151,15 @@
         
         <a href="Simulador.html" class="menu-card card-simulador">
             <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
-            <div class="card-title">Simulador Operativo</div>
-            <p class="card-desc">Herramienta de tarificación rápida para pedidos individuales y registro de rutas diarias.</p>
+            <div class="card-title">Simulador (Por IDs)</div>
+            <p class="card-desc">Herramienta de tarificación rápida pegando listados de IDs individuales.</p>
+            <div class="arrow-link">Acceder al módulo &rarr;</div>
+        </a>
+
+        <a href="SimuladorCartaPorte.html" class="menu-card card-simulador">
+            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+            <div class="card-title">Simulador (Carta Porte)</div>
+            <p class="card-desc">Calcula múltiples rutas extrayendo vehículos desde listados de Carta Porte.</p>
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
@@ -163,6 +191,13 @@
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
+        <a href="AuditoriaRutas.html" class="menu-card card-auditor" id="cardAuditoria">
+            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
+            <div class="card-title">Auditoría de Rutas</div>
+            <p class="card-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</p>
+            <div class="arrow-link">Acceder al módulo &rarr;</div>
+        </a>
+
         <a href="Registro.html" class="menu-card card-registro" id="cardRegistro">
             <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
             <div class="card-title">Control de Accesos</div>
@@ -170,6 +205,11 @@
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
+    </div>
+
+    <div id="toastCarga" class="toast-container">
+        <div id="toastIcon" class="toast-spinner"></div>
+        <div id="toastText">Conectando a la nube...</div>
     </div>
 
     <div class="modal-overlay" id="modalPerfil">
@@ -200,7 +240,6 @@
     if (!sesion) { window.location.href = 'index.html'; }
 
     window.onload = function() {
-        // Inyección de la barra superior (incluyendo el nuevo botón)
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad}</span>
             <span style="opacity:0.5;">|</span>
@@ -214,19 +253,144 @@
         if (sesion.rol !== 'Administrador') {
             document.getElementById('cardRegistro').style.display = 'none';
             document.getElementById('cardReportes').style.display = 'none'; 
+            document.getElementById('cardAuditoria').style.display = 'none'; 
         }
+
+        // =========================================================================
+        // 🚀 INICIO DEL MOTOR DE PRE-CARGA CON NOTIFICACIÓN INTELIGENTE
+        // =========================================================================
+        const dbNamePreload = "SimuladorDB";
+        const storeNamePreload = "MonitorStore";
+
+        function initDBPreload() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbNamePreload, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(storeNamePreload)) { db.createObjectStore(storeNamePreload, { keyPath: "id" }); }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function guardarDatoDBPreload(id, data, timestamp) {
+            const db = await initDBPreload();
+            const tx = db.transaction(storeNamePreload, "readwrite");
+            tx.objectStore(storeNamePreload).put({ id: id, data: data, timestamp: timestamp });
+            return new Promise(resolve => tx.oncomplete = resolve);
+        }
+
+        async function obtenerDatoDBPreload(id) {
+            const db = await initDBPreload();
+            const tx = db.transaction(storeNamePreload, "readonly");
+            const request = tx.objectStore(storeNamePreload).get(id);
+            return new Promise(resolve => {
+                request.onsuccess = () => resolve(request.result ? request.result : null);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        // Arranca medio segundo después de cargar el menú
+        setTimeout(async () => {
+            try {
+                // Verificamos qué le falta al usuario
+                let necesitaTarifas = !sessionStorage.getItem('cacheTarifarioFull');
+                const cacheInfo = await obtenerDatoDBPreload("monitorCargado");
+                let necesitaBigQuery = !(cacheInfo && cacheInfo.data && cacheInfo.data.length > 0);
+
+                // Si no tiene los datos en caché, le mostramos el cuadro flotante
+                if (necesitaTarifas || necesitaBigQuery) {
+                    let toast = document.getElementById('toastCarga');
+                    let toastText = document.getElementById('toastText');
+                    let toastIcon = document.getElementById('toastIcon');
+                    
+                    toast.classList.add('show');
+                    
+                    // Cuenta regresiva visual
+                    let segs = 4;
+                    let timer = setInterval(() => {
+                        segs--;
+                        if(segs > 0) {
+                            toastText.innerText = `Sincronizando datos de la nube (Espere ~${segs}s)...`;
+                        } else {
+                            toastText.innerText = `Desempaquetando miles de registros...`;
+                            clearInterval(timer);
+                        }
+                    }, 1000);
+
+                    // 1. Descargar Tarifas
+                    if (necesitaTarifas) {
+                        const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                            fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                            fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                            fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                        ]);
+                        
+                        const dbData = await resDB.json();
+                        const dTarifas = await resTarifas.json(); const tfaPesoDB = await resTPeso.json();
+                        const tfaPedidoDB = await resTPedido.json(); const tfaRangoDB = await resTRango.json();
+                        const tfaMedidaDB = await resTMedida.json(); const trayectoDB = await resTrayecto.json();
+
+                        let pedidosHistoricosArray = [];
+                        let rutasPorDiaYPlaca = {};
+                        
+                        dbData.forEach(row => { 
+                            if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricosArray.push(String(id).trim())); 
+                            if (row.fecha && row.placa) {
+                                let fLimpia = String(row.fecha).trim();
+                                if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
+                                if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
+                                let pLimpia = String(row.placa).trim().toUpperCase();
+                                rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+                            }
+                        });
+
+                        sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                            dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
+                            rutasPorDiaYPlaca, pedidosHistoricosArray
+                        }));
+                    }
+
+                    // 2. Descargar BigQuery
+                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                    const jsonResponse = await resBQ.json();
+                    if(!jsonResponse.error) {
+                        await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
+                    }
+
+                    // Termina la carga, mostramos éxito y ocultamos
+                    clearInterval(timer);
+                    toast.classList.add('success');
+                    toastIcon.className = ''; 
+                    toastIcon.innerHTML = '✅';
+                    toastText.innerText = '¡Datos 100% cargados! Puede ingresar a los módulos.';
+                    
+                    // Ocultar el cuadro después de 4 segundos
+                    setTimeout(() => { toast.classList.remove('show'); }, 4000);
+
+                } else {
+                    // Si ya tenía los datos en caché de antes, los actualizamos silenciosamente en el fondo
+                    // sin mostrar la notificación para no molestar.
+                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                    const jsonResponse = await resBQ.json();
+                    if(!jsonResponse.error) {
+                        await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
+                    }
+                }
+            } catch(e) { 
+                console.log("⚠️ Error en pre-carga silenciosa:", e); 
+                document.getElementById('toastCarga').classList.remove('show');
+            }
+        }, 500); 
     };
 
     // FUNCIONES DEL MODAL
     function abrirModal() {
-        // Rellenamos lo que sabemos (Nombre). El usuario original y la contraseña se deben tipear por seguridad.
         document.getElementById('inpNombre').value = sesion.nombre;
-        
-        // Asumimos que el usuario actual se guardó en sesión. Si no, lo dejamos en blanco para que lo digiten.
         document.getElementById('inpUsrOriginal').value = sesion.usuario || '';
         document.getElementById('inpUsuario').value = sesion.usuario || '';
         document.getElementById('inpPassword').value = '';
-        
         document.getElementById('modalPerfil').style.display = 'flex';
     }
 
@@ -255,12 +419,11 @@
             nombre: nNom,
             usuario: nUsr,
             password: nPass,
-            rol: sesion.rol,      // Mantenemos el mismo rol
-            ciudad: sesion.ciudad // Mantenemos la misma ciudad
+            rol: sesion.rol,      
+            ciudad: sesion.ciudad 
         };
 
         try {
-            // Enviamos los datos a la hoja de Google
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -268,12 +431,10 @@
                 body: JSON.stringify(dataToSave)
             });
 
-            // Actualizamos la memoria local para no tener que salir y volver a entrar
             sesion.nombre = nNom;
             sesion.usuario = nUsr;
             localStorage.setItem('sesionActiva', JSON.stringify(sesion));
             
-            // Actualizamos la vista
             document.getElementById('uiNombre').innerText = nNom;
             document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${nNom}!`;
             

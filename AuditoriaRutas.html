@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FlexNet - Auditoría de Rutas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="seguridad.js"></script>
+    <style>
+        :root { 
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
+            --blue-600: #2563eb; --blue-50: #eff6ff;
+            --emerald-600: #059669; --emerald-50: #ecfdf5;
+            --red-600: #dc2626; --red-50: #fef2f2;
+            --amber-600: #d97706; --purple-600: #7c3aed;
+        }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
+        
+        /* NAVBAR CORPORATIVO HORIZONTAL */
+        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; white-space: nowrap; }
+        
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
+        .nav-links a:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; white-space: nowrap; }
+        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+
+        .wrapper { max-width: 1600px; margin: 25px auto; display: grid; grid-template-columns: 320px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
+        .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
+
+        .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
+        .status-ready { color: var(--emerald-600); background: var(--emerald-50); border-color: #a7f3d0; }
+        .status-error { color: var(--red-600); background: var(--red-50); border-color: #fecaca; }
+        .status-loading { color: var(--purple-600); }
+
+        label { display: block; font-weight: 600; margin: 15px 0 6px; font-size: 0.9em; color: var(--slate-700); }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: var(--purple-600); box-shadow: 0 0 0 3px #f3e8ff; }
+
+        button { width: 100%; padding: 12px; background: var(--purple-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
+        button:hover:not(:disabled) { background: #6d28d9; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        
+        .btn-success { background: var(--emerald-600); margin-top: 10px; }
+        .btn-success:hover:not(:disabled) { background: #047857; }
+
+        .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* TABLA DE RESULTADOS */
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: inset 0 0 0 1px var(--slate-200); border-radius: 8px; max-height: 60vh;}
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; white-space: nowrap; }
+        th { background: var(--slate-50); padding: 12px 10px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10; }
+        td { padding: 10px 10px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
+        
+        .col-total { font-weight: 700; background: var(--purple-50); color: var(--purple-600); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .tarifa-modificada { background: var(--amber-50) !important; color: var(--amber-600) !important; border: 1px dashed var(--amber-600); }
+        .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
+        
+        .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 700; display: inline-block;}
+        .srv-normal { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;}
+        .srv-exclusivo { background: #fef08a; color: #b45309; border: 1px solid #fde047;}
+        .srv-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;}
+
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
+        .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
+
+        .btn-edit-tfa { background: transparent; border: none; border-radius: 4px; cursor: pointer; color: var(--slate-400); padding: 2px; display: flex; align-items: center; transition: all 0.2s;}
+        .btn-edit-tfa:hover { background: var(--purple-100); color: var(--purple-600); transform: scale(1.1);}
+
+        /* Cajas de resumen */
+        .summary-grid { display: flex; gap: 15px; margin-bottom: 20px;}
+        .summary-box { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid var(--slate-200); background: white;}
+        .summary-box h4 { margin: 0 0 5px 0; font-size: 0.8em; color: var(--slate-500); text-transform: uppercase;}
+        .summary-box span { font-size: 1.6em; font-weight: 800; color: var(--slate-900);}
+        .val-diff { color: var(--amber-600) !important; }
+        
+        /* FILTROS DE TABLA EN LÍNEA */
+        .filter-inline { padding: 4px 6px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 4px; background: white; outline: none; min-width: 140px;}
+        .filter-inline:focus { border-color: var(--purple-600); }
+    </style>
+    
+    <script src="config.js"></script>
+    <script src="motorTarifas.js"></script> 
+</head>
+<body>
+
+<div class="navbar" id="navbar">
+    <div class="navbar-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        Auditoría de Rutas
+    </div>
+    
+    <div class="nav-menu-container">
+        <div class="nav-links">
+            <a href="Inicio.html"><span>🏠</span> Menú</a>
+            <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
+            <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
+            <a href="AuditorMasivo.html"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditoriaRutas.html" class="active"><span>🔍</span> Auditoría</a>
+            <a href="Rentabilidad.html"><span>📊</span> Rentabilidad</a>
+            <a href="RentabilidadVehiculos.html"><span>🚛</span> Vehículos</a>
+            <a href="Reportes.html"><span>📈</span> Dashboard</a>
+            <a href="Registro.html"><span>🛡️</span> Accesos</a>
+        </div>
+    </div>
+
+    <div class="user-info" id="infoUsuario"></div>
+</div>
+
+<div class="wrapper">
+    <aside>
+        <div class="card" style="border-top: 4px solid var(--purple-600); padding: 20px;">
+            <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
+            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando Tarifario...</div>
+            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando BigQuery...</div>
+        </div>
+
+        <div class="card">
+            <h3>🔍 Buscar Ruta Guardada</h3>
+            
+            <label>📅 Fecha de la Ruta:</label>
+            <input type="date" id="buscarFecha" onchange="actualizarPlacasDisponibles()">
+            
+            <label>🚛 Placa del Vehículo:</label>
+            <select id="buscarPlaca">
+                <option value="">Seleccione una fecha primero...</option>
+            </select>
+            <p style="font-size: 0.8em; color: var(--slate-500); margin-top: 5px;">El sistema buscará los pedidos guardados en esta ruta y permitirá corregir las tarifas individuales sumando o restando al total.</p>
+
+            <button id="btnBuscar" onclick="buscarRuta()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                BUSCAR Y DESCARGAR
+            </button>
+            
+            <button id="btnGuardar" class="btn-success" onclick="guardarCambios()" disabled style="margin-top: 30px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                ACTUALIZAR INGRESOS DE RUTA
+            </button>
+        </div>
+        
+        <div id="divProgreso" style="display:none; color: var(--purple-600); font-weight: bold; text-align: center; margin-top: 10px;">
+            <div class="loader-spinner"></div> Optimizando datos desde la nube...
+        </div>
+    </aside>
+
+    <main>
+        <div class="summary-grid">
+            <div class="summary-box">
+                <h4>Ingreso Guardado en Nube</h4>
+                <span id="lblIngresoNube" style="color:var(--slate-500);">$0.00</span>
+            </div>
+            <div class="summary-box" style="border-bottom: 4px solid var(--purple-600);">
+                <h4>Nuevo Ingreso Calculado</h4>
+                <span id="lblIngresoNuevo" style="color:var(--purple-600);">$0.00</span>
+            </div>
+            <div class="summary-box">
+                <h4>Pedidos en Ruta</h4>
+                <span id="lblPedidos">0</span>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 20px 15px; border-bottom: 1px solid var(--slate-100); flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin: 0; border-bottom: none; padding: 0;">📋 Detalle de la Factura</h3>
+                
+                <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Cliente:</label>
+                        <select id="filtroTablaCliente" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Servicio:</label>
+                        <select id="filtroTablaServicio" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Tarifa:</label>
+                        <select id="filtroTablaTarifa" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODAS">Todas</option>
+                            <option value="CERO">Solo $0.00</option>
+                            <option value="MAYOR">Mayor a $0.00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="tblD">
+                    <thead>
+                        <tr>
+                            <th>ID Pedido</th>
+                            <th>Cliente</th>
+                            <th>Servicio</th>
+                            <th>Loc. Origen</th>
+                            <th>Loc. Destino (CP)</th>
+                            <th style="text-align:center;">Bultos</th>
+                            <th style="text-align:center;">Peso (Kg)</th>
+                            <th>Tarifa Original Sistema</th>
+                            <th style="background:var(--slate-50); width:110px;">Tarifa Final Manual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="9" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Use el buscador para cargar una ruta...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // 🔒 VALIDACIÓN DE SESIÓN ESTRICTA (SOLO ADMINISTRADORES)
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        alert("⛔ Acceso denegado. Este módulo es exclusivo para Administradores.");
+        window.location.href = 'Inicio.html'; 
+    }
+
+    let dMonitor = [], trayectoDB = [];
+    let dbRutas = []; 
+    
+    let rutaActiva = null;
+    let idsRuta = [];
+    let pedidosHistoricosAuditoria = new Set(); 
+    let tarifasBase = {}; 
+    let tarifasEditadas = {}; 
+    let totalIngresoCalculado = 0;
+
+    // --- FUNCIONES DE SÚPER MEMORIA (IndexedDB) ---
+    const dbName = "SimuladorDB";
+    const storeName = "MonitorStore";
+
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: "id" }); }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function obtenerDatoDB(id) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readonly");
+        const request = tx.objectStore(storeName).get(id);
+        return new Promise(resolve => {
+            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    async function guardarDatoDB(id, data) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put({ id: id, data: data });
+        return new Promise(resolve => tx.oncomplete = resolve);
+    }
+
+    window.onload = async function() {
+        const hoy = new Date();
+        document.getElementById('buscarFecha').value = hoy.toISOString().split('T')[0];
+
+        document.getElementById('infoUsuario').innerHTML = `
+            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+
+        try {
+            document.getElementById('divProgreso').style.display = 'block';
+            
+            // 1. OBTENER RUTAS HISTÓRICAS (Obligatorio conectarse a internet para auditar lo más reciente)
+            let promesaRutas = (async () => {
+                const resDB = await fetch(SCRIPT_URL);
+                dbRutas = await resDB.json();
+            })();
+
+            // 2. CARGA DE TARIFARIO (CACHE-FIRST)
+            let promesaTarifas = (async () => {
+                let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
+                if (cacheTarifas) {
+                    let parsed = JSON.parse(cacheTarifas);
+                    window.dTarifas = parsed.dTarifas; 
+                    window.tfaPesoDB = parsed.tfaPesoDB; 
+                    window.tfaPedidoDB = parsed.tfaPedidoDB;
+                    window.tfaRangoDB = parsed.tfaRangoDB; 
+                    window.tfaMedidaDB = parsed.tfaMedidaDB; 
+                    trayectoDB = parsed.trayectoDB;
+                    
+                    let box = document.getElementById('statusNube');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = "✅ Tarifario: Listo (Caché)";
+                } else {
+                    const [resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                        fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                        fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                        fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                    ]);
+
+                    window.dTarifas = await resTarifas.json(); window.tfaPesoDB = await resTPeso.json();
+                    window.tfaPedidoDB = await resTPedido.json(); window.tfaRangoDB = await resTRango.json();
+                    window.tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
+
+                    let box = document.getElementById('statusNube');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = "✅ Tarifario Nube: Sincronizado";
+                }
+            })();
+
+            // 3. CARGA DE BIGQUERY (CACHE-FIRST)
+            let promesaMonitor = (async () => {
+                const cacheMonitor = await obtenerDatoDB("monitorCargado");
+                if (cacheMonitor && cacheMonitor.length > 0) {
+                    dMonitor = cacheMonitor;
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})`;
+                } else {
+                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                    dMonitor = await resBQ.json();
+                    await guardarDatoDB("monitorCargado", dMonitor);
+                    
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Datos Carga: Sincronizado (${dMonitor.length})`;
+                }
+            })();
+
+            // Esperar que las 3 conexiones terminen
+            await Promise.all([promesaRutas, promesaTarifas, promesaMonitor]);
+
+            document.getElementById('divProgreso').style.display = 'none';
+            actualizarPlacasDisponibles();
+
+        } catch (e) {
+            document.getElementById('divProgreso').innerHTML = "❌ Error de conexión al servidor.";
+        }
+    };
+
+    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function actualizarPlacasDisponibles() {
+        const f = document.getElementById('buscarFecha').value;
+        const selPlaca = document.getElementById('buscarPlaca');
+        
+        selPlaca.innerHTML = '<option value="">Seleccione placa...</option>';
+        if (!f) return;
+
+        const rutasDelDia = dbRutas.filter(r => r.fecha === f);
+        const placasUnicas = [...new Set(rutasDelDia.map(r => String(r.placa).toUpperCase().trim()))].sort();
+
+        if (placasUnicas.length === 0) {
+            selPlaca.innerHTML = '<option value="">No hay rutas registradas este día</option>';
+        } else {
+            placasUnicas.forEach(p => {
+                selPlaca.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+        }
+    }
+
+    function buscarRuta() {
+        const f = document.getElementById('buscarFecha').value;
+        const p = document.getElementById('buscarPlaca').value; 
+        
+        if(!f || !p) return alert("Ingrese Fecha y seleccione una Placa para buscar.");
+
+        rutaActiva = dbRutas.find(r => r.fecha === f && String(r.placa).toUpperCase().trim() === p);
+        if(!rutaActiva) return alert(`❌ No se encontró ninguna ruta guardada para el vehículo ${p} en la fecha ${f}.`);
+
+        idsRuta = String(rutaActiva.listaIds).split(',').map(x => x.trim()).filter(x => x);
+        if(idsRuta.length === 0) return alert("⚠️ La ruta se encontró pero no tiene pedidos registrados.");
+
+        document.getElementById('lblIngresoNube').innerText = `$${Number(rutaActiva.ingresos).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('lblPedidos').innerText = idsRuta.length;
+        
+        pedidosHistoricosAuditoria.clear();
+        let indiceRutaActiva = dbRutas.indexOf(rutaActiva);
+
+        dbRutas.forEach((r, index) => {
+            let esPasado = r.fecha < f;
+            let esMismoDiaPrevio = (r.fecha === f && index < indiceRutaActiva);
+            if (esPasado || esMismoDiaPrevio) {
+                if (r.listaIds) {
+                    r.listaIds.split(',').forEach(id => pedidosHistoricosAuditoria.add(String(id).trim()));
+                }
+            }
+        });
+
+        tarifasBase = {};
+        tarifasEditadas = {};
+        
+        renderizarTabla();
+        document.getElementById('btnGuardar').disabled = false;
+    }
+
+    function filtrarTabla() {
+        let fCliente = document.getElementById('filtroTablaCliente').value;
+        let fServicio = document.getElementById('filtroTablaServicio').value;
+        let fTarifa = document.getElementById('filtroTablaTarifa').value;
+        
+        let filas = document.querySelectorAll('#tblD tbody tr');
+        
+        filas.forEach(fila => {
+            if (fila.children.length <= 1) return; 
+            
+            let valCliente = fila.getAttribute('data-cliente');
+            let valServicio = fila.getAttribute('data-servicio');
+            let valTarifa = parseFloat(fila.getAttribute('data-tarifa')) || 0;
+            
+            let pasaCliente = (fCliente === "TODOS" || valCliente === fCliente);
+            let pasaServicio = (fServicio === "TODOS" || valServicio === fServicio);
+            let pasaTarifa = true;
+            if (fTarifa === "CERO") pasaTarifa = (valTarifa === 0);
+            if (fTarifa === "MAYOR") pasaTarifa = (valTarifa > 0);
+            
+            if (pasaCliente && pasaServicio && pasaTarifa) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    function renderizarTabla() {
+        const tbody = document.querySelector('#tblD tbody');
+        tbody.innerHTML = '';
+        
+        let clientesEnTabla = new Set();
+        let serviciosEnTabla = new Set();
+
+        idsRuta.forEach(id => {
+            const pedidoMon = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
+            let htmlFila = "";
+
+            if(pedidoMon) {
+                let cp = String(pedidoMon['CP'] || pedidoMon['Localidad'] || '').trim().toUpperCase();
+                let locOrigen = String(pedidoMon['Localidad_Origen'] || pedidoMon['Localidad_origen'] || '-').trim().toUpperCase();
+                let bultos = pedidoMon['cantidad_bultos'] || pedidoMon['Cantidad_Bultos'] || pedidoMon['Bultos'] || 1;
+                let clienteStr = String(pedidoMon.Cliente || 'SIN CLIENTE').trim().toUpperCase();
+                let servicioMonitor = String(pedidoMon.Servicio || pedidoMon.Tipo_Servicio || '-').toUpperCase();
+                
+                clientesEnTabla.add(clienteStr);
+                serviciosEnTabla.add(servicioMonitor);
+
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+                pedidoMon['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(pedidoMon['TipoTrayecto'] || '-').trim().toUpperCase();
+
+                let calcNube = calcularTarifasAutomaticas(pedidoMon); 
+                let yaExisteEnFlexNet = pedidosHistoricosAuditoria.has(String(id).trim());
+                let intentosNum = parseInt(pedidoMon['QTY_INCIDENCIAS'] || pedidoMon['NroIntentos'] || pedidoMon['Intentos'] || pedidoMon['intentos']) || 1;
+                if (parseInt(pedidoMon['QTY_INCIDENCIAS']) > 0) intentosNum += 1;
+                
+                if(tarifasBase[id] === undefined) {
+                    if (yaExisteEnFlexNet) {
+                        tarifasBase[id] = 0;
+                    } else {
+                        tarifasBase[id] = calcNube.total > 0 ? calcNube.total : 0;
+                    }
+                }
+
+                let cobroReal = tarifasEditadas[id] !== undefined ? tarifasEditadas[id] : tarifasBase[id];
+                
+                let classServicio = servicioMonitor.includes("NORMAL") ? "srv-normal" : (servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : "srv-default");
+                let classTotal = tarifasEditadas[id] !== undefined ? "col-total tarifa-modificada" : "col-total";
+                
+                let htmlStatus = "";
+                if (yaExisteEnFlexNet) {
+                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                    if (tarifasEditadas[id] === undefined) classTotal += " col-tachada"; 
+                } else if (intentosNum > 1) {
+                    htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+                }
+
+                htmlFila = `
+                    <tr data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
+                        <td><strong>${id}</strong></td>
+                        <td style="font-size:0.85em;">${clienteStr}</td>
+                        <td style="font-size:0.8em; text-align:center;"><span class="badge-srv ${classServicio}">${servicioMonitor}<br>${htmlStatus}</span></td>
+                        <td style="text-align:center; font-size:0.8em;">${locOrigen}</td>
+                        <td style="text-align:center; font-size:0.8em;">${cp}</td>
+                        <td style="text-align:center;">${bultos}</td>
+                        <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
+                        <td style="color:var(--slate-500);">$${tarifasBase[id].toFixed(2)}</td>
+                        <td class="${classTotal}">
+                            <span>$${cobroReal.toFixed(2)}</span>
+                            <button type="button" class="btn-edit-tfa" onclick="editarTarifaRuta('${id}', ${cobroReal})" title="Modificar esta tarifa">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                        </td>
+                    </tr>`;
+            } else {
+                if(tarifasBase[id] === undefined) tarifasBase[id] = 0;
+                let cobroReal = tarifasEditadas[id] !== undefined ? tarifasEditadas[id] : tarifasBase[id];
+                let classTotal = tarifasEditadas[id] !== undefined ? "col-total tarifa-modificada" : "col-total";
+
+                htmlFila = `
+                    <tr data-cliente="DESCONOCIDO" data-servicio="DESCONOCIDO" data-tarifa="${cobroReal}">
+                        <td><strong>${id}</strong></td>
+                        <td colspan="6" style="color:var(--slate-400); font-style:italic;">Datos del paquete no disponibles en el monitor actual.</td>
+                        <td style="color:var(--slate-500);">$${tarifasBase[id].toFixed(2)}</td>
+                        <td class="${classTotal}">
+                            <span>$${cobroReal.toFixed(2)}</span>
+                            <button type="button" class="btn-edit-tfa" onclick="editarTarifaRuta('${id}', ${cobroReal})" title="Modificar esta tarifa">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                        </td>
+                    </tr>`;
+            }
+
+            tbody.innerHTML += htmlFila;
+        });
+
+        // Actualizar Selectores de Filtro
+        let selFiltroCliente = document.getElementById('filtroTablaCliente');
+        let selFiltroServicio = document.getElementById('filtroTablaServicio');
+        let valPrevCliente = selFiltroCliente.value;
+        let valPrevServicio = selFiltroServicio.value;
+
+        selFiltroCliente.innerHTML = '<option value="TODOS">Todos</option>';
+        [...clientesEnTabla].sort().forEach(c => { selFiltroCliente.innerHTML += `<option value="${c}">${c}</option>`; });
+        selFiltroServicio.innerHTML = '<option value="TODOS">Todos</option>';
+        [...serviciosEnTabla].sort().forEach(s => { selFiltroServicio.innerHTML += `<option value="${s}">${s}</option>`; });
+        
+        if (clientesEnTabla.has(valPrevCliente)) selFiltroCliente.value = valPrevCliente;
+        if (serviciosEnTabla.has(valPrevServicio)) selFiltroServicio.value = valPrevServicio;
+
+        filtrarTabla(); 
+
+        let diferenciaManual = 0;
+        for (let id in tarifasEditadas) {
+            diferenciaManual += (tarifasEditadas[id] - tarifasBase[id]);
+        }
+
+        totalIngresoCalculado = Number(rutaActiva.ingresos) + diferenciaManual;
+        
+        let lblNuevo = document.getElementById('lblIngresoNuevo');
+        lblNuevo.innerText = `$${totalIngresoCalculado.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        
+        if (Math.abs(diferenciaManual) > 0.001) {
+            lblNuevo.classList.add('val-diff');
+        } else {
+            lblNuevo.classList.remove('val-diff');
+        }
+    }
+
+    function editarTarifaRuta(idPedido, tarifaActual) {
+        let nuevoValor = prompt(`AUDITORÍA DE TARIFA\n\nID Pedido: ${idPedido}\n\nIngrese el nuevo valor de cobro final para este paquete:`, tarifaActual);
+        if (nuevoValor === null) return; 
+        
+        let parsed = parseFloat(nuevoValor.replace(',', '.'));
+        if (isNaN(parsed) || parsed < 0) return alert("❌ Valor inválido.");
+        
+        tarifasEditadas[idPedido] = parsed;
+        renderizarTabla(); 
+    }
+
+    async function guardarCambios() {
+        if(!rutaActiva) return;
+
+        if (!confirm(`¿Estás seguro de actualizar el ingreso de esta ruta a $${totalIngresoCalculado.toFixed(2)} en la base de datos central?`)) return;
+
+        const btnConf = document.getElementById('btnGuardar');
+        btnConf.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> ACTUALIZANDO NUBE...`;
+        btnConf.disabled = true;
+        
+        const payload = {
+            action: 'update_ingreso_ruta',
+            fecha: document.getElementById('buscarFecha').value,
+            placa: document.getElementById('buscarPlaca').value, 
+            nuevoIngreso: totalIngresoCalculado
+        };
+
+        try {
+            const response = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { "Content-Type": "text/plain" }, 
+                body: JSON.stringify(payload) 
+            });
+            
+            alert("✅ ¡El ingreso de la ruta ha sido actualizado exitosamente en Google Sheets!");
+            
+            rutaActiva.ingresos = totalIngresoCalculado;
+            document.getElementById('lblIngresoNube').innerText = `$${totalIngresoCalculado.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('lblIngresoNuevo').classList.remove('val-diff');
+            
+        } catch (e) { 
+            alert("❌ Error de red al intentar guardar los cambios."); 
+        } finally { 
+            btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> ACTUALIZAR INGRESOS DE RUTA`; 
+            btnConf.disabled = false; 
+        }
+    }
+</script>
+</body>
+</html>

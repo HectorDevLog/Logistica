@@ -17,14 +17,19 @@
         
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
         
-        /* NAVBAR CORPORATIVO */
+        /* NAVBAR CORPORATIVO HORIZONTAL (Nuevo Diseño) */
         .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
-        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
-        .nav-links a:hover { background: rgba(255,255,255,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; white-space: nowrap; }
         
-        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
+        .nav-links a:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; white-space: nowrap; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
@@ -96,7 +101,6 @@
         .badge-vehiculo { background: var(--slate-100); padding: 4px 8px; border-radius: 4px; font-weight: 600; border: 1px solid var(--slate-200); }
         .col-tachada { text-decoration: line-through; color: #94a3b8 !important; background: transparent !important; font-weight: normal; }
         
-        /* Estilos del Badge Redespacho (Igual a la imagen) */
         .badge-redespacho { 
             background: #ffe4e6; 
             color: #e11d48; 
@@ -122,13 +126,18 @@
         Auditor y Despacho Masivo
     </div>
     
-    <div class="nav-links">
-        <a href="Inicio.html">&larr; Menú Principal</a>
-        <a href="Simulador.html">🏠 Simulador</a>
-        <a href="Rentabilidad.html">📊 Rentabilidad</a>
-        <a href="RentabilidadVehiculos.html">🚛 Vehículos</a>
-        <a href="Reportes.html">📈 Dashboard</a>
-        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    <div class="nav-menu-container">
+        <div class="nav-links">
+            <a href="Inicio.html"><span>🏠</span> Menú</a>
+            <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
+            <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
+            <a href="AuditorMasivo.html" class="active"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
+            <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
+            <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
+            <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
+            <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
+        </div>
     </div>
 
     <div class="user-info" id="infoUsuario"></div>
@@ -138,8 +147,8 @@
     <aside>
         <div class="card" style="border-top: 4px solid var(--purple-600); padding: 20px;">
             <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
-            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Descargando Tarifario Nube...</div>
-            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Sincronizando Monitor PC...</div>
+            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando Tarifario...</div>
+            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando BigQuery...</div>
         </div>
 
         <div class="card">
@@ -222,9 +231,16 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN
+    // 🔒 VALIDACIÓN DE SESIÓN (Oculta opciones de Admin, pero permite el acceso al módulo)
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
+        linksToHide.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+    }
 
     let dMonitor = [], dTarifas = [];
     let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
@@ -248,10 +264,10 @@
         });
     }
 
-    async function guardarDatoDB(id, data) {
+    async function guardarDatoDB(id, data, timestamp) {
         const db = await initDB();
         const tx = db.transaction(storeName, "readwrite");
-        tx.objectStore(storeName).put({ id: id, data: data });
+        tx.objectStore(storeName).put({ id: id, data: data, timestamp: timestamp });
         return new Promise(resolve => tx.oncomplete = resolve);
     }
 
@@ -260,9 +276,24 @@
         const tx = db.transaction(storeName, "readonly");
         const request = tx.objectStore(storeName).get(id);
         return new Promise(resolve => {
-            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onsuccess = () => resolve(request.result ? request.result : null);
             request.onerror = () => resolve(null);
         });
+    }
+
+    function formatearFechaUniversal(val) {
+        if (!val) return "";
+        let str = String(val).trim();
+        if (str.charAt(0) === "'") str = str.substring(1);
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+        if (str.indexOf("/") > -1) {
+            let p = str.split(" ")[0].split("/");
+            if (p.length === 3) {
+               if(p[0].length === 4) return `${p[0]}-${("0"+p[1]).slice(-2)}-${("0"+p[2]).slice(-2)}`;
+               return `${p[2]}-${("0"+p[1]).slice(-2)}-${("0"+p[0]).slice(-2)}`;
+            }
+        }
+        return str;
     }
 
     window.onload = async function() {
@@ -270,79 +301,119 @@
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
-        if (sesion.rol !== 'Administrador') { document.getElementById('linkRegistro').style.display = 'none'; }
 
-        try {
-            const cacheTarifas = await obtenerDatoDB("tarifasCargadas");
-            if (cacheTarifas) {
-                dTarifas = cacheTarifas.dTarifas || []; tfaPesoDB = cacheTarifas.tfaPesoDB || []; tfaPedidoDB = cacheTarifas.tfaPedidoDB || [];
-                tfaRangoDB = cacheTarifas.tfaRangoDB || []; tfaMedidaDB = cacheTarifas.tfaMedidaDB || []; trayectoDB = cacheTarifas.trayectoDB || [];
-                pedidosHistoricos = new Set(cacheTarifas.pedidosHistoricos || []);
+        // ==========================================
+        // 1. CARGA DE TARIFARIO (CACHE-FIRST)
+        // ==========================================
+        let promesaTarifas = (async () => {
+            try {
+                let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
                 
-                let box = document.getElementById('statusNube');
-                box.className = "status-box status-ready";
-                box.innerHTML = `✅ Tarifas en Memoria <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span></span>`;
-                cloudLista = true;
-            }
+                if (cacheTarifas) {
+                    let parsed = JSON.parse(cacheTarifas);
+                    dTarifas = parsed.dTarifas; 
+                    window.tfaPesoDB = parsed.tfaPesoDB; 
+                    window.tfaPedidoDB = parsed.tfaPedidoDB;
+                    window.tfaRangoDB = parsed.tfaRangoDB; 
+                    window.tfaMedidaDB = parsed.tfaMedidaDB; 
+                    trayectoDB = parsed.trayectoDB;
+                    pedidosHistoricos = new Set(parsed.pedidosHistoricosArray);
+                    
+                    let box = document.getElementById('statusNube');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = "✅ Tarifario Nube: Listo (Caché Rápido)";
+                } else {
+                    const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                        fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                        fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                        fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                    ]);
 
-            const cacheMonitor = await obtenerDatoDB("monitorCargado");
-            if (cacheMonitor && cacheMonitor.length > 0) {
-                dMonitor = cacheMonitor;
-                let box = document.getElementById('statusMonitor');
-                box.className = "status-box status-ready";
-                box.innerHTML = `✅ Monitor en Memoria (${dMonitor.length}) <span style="font-weight:normal; font-size:0.8em; margin-left:auto;"><span class="loader-spinner" style="width:10px;height:10px;"></span></span>`;
-                monitorListo = true;
-            }
-            checkReady();
-        } catch(e) { console.error(e); }
+                    const dbData = await resDB.json();
+                    dTarifas = await resTarifas.json(); 
+                    window.tfaPesoDB = await resTPeso.json();
+                    window.tfaPedidoDB = await resTPedido.json(); 
+                    window.tfaRangoDB = await resTRango.json();
+                    window.tfaMedidaDB = await resTMedida.json(); 
+                    trayectoDB = await resTrayecto.json();
 
-        actualizarDesdeNube();
+                    pedidosHistoricos.clear();
+                    let rutasPorDiaYPlaca = {};
+                    
+                    dbData.forEach(row => { 
+                        if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
+                        if (row.fecha && row.placa) {
+                            let fLimpia = formatearFechaUniversal(row.fecha);
+                            let pLimpia = String(row.placa).trim().toUpperCase();
+                            rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+                        }
+                    });
+
+                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                        dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: Array.from(pedidosHistoricos)
+                    }));
+
+                    let box = document.getElementById('statusNube');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = "✅ Tarifario Nube: Sincronizado";
+                }
+                cloudLista = true; checkReady();
+            } catch (e) {
+                document.getElementById('statusNube').className = "status-box status-error";
+                document.getElementById('statusNube').innerHTML = "❌ Error Tarifas: Revise conexión.";
+            }
+        })();
+
+        // ==========================================
+        // 2. CARGA DE BIGQUERY (CACHE-FIRST)
+        // ==========================================
+        let promesaMonitor = (async () => {
+            try {
+                const cacheInfo = await obtenerDatoDB("monitorCargado");
+                let usoCache = false;
+
+                if (cacheInfo && cacheInfo.data && cacheInfo.data.length > 0) {
+                    dMonitor = cacheInfo.data;
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})`;
+                    usoCache = true;
+                }
+
+                if (!usoCache) {
+                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                    const jsonResponse = await resBQ.json();
+                    if(jsonResponse.error) throw new Error(jsonResponse.error);
+                    
+                    dMonitor = jsonResponse;
+                    await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
+
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `✅ Datos Carga: Sincronizado (${dMonitor.length})`;
+                }
+                monitorListo = true; checkReady();
+            } catch (e) {
+                document.getElementById('statusMonitor').className = "status-box status-error";
+                document.getElementById('statusMonitor').innerHTML = `❌ Error BigQuery: ${e.message}`;
+            }
+        })();
+
+        // --- Sincronización silenciosa cada 5 min ---
+        setInterval(async function() {
+            try {
+                const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                const jsonResponse = await resBQ.json();
+                if(!jsonResponse.error) {
+                    dMonitor = jsonResponse;
+                    await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
+                }
+            } catch(e) { /* Silencioso */ }
+        }, 300000);
+
+        await Promise.all([promesaTarifas, promesaMonitor]);
     };
-
-    async function actualizarDesdeNube() {
-        try {
-            const resAll = await fetch(`${SCRIPT_URL}?action=getAllTarifas`);
-            const allData = await resAll.json();
-            
-            dTarifas = allData.tarifas || []; tfaPesoDB = allData.peso || []; tfaPedidoDB = allData.pedido || [];
-            tfaRangoDB = allData.rango || []; tfaMedidaDB = allData.medida || []; trayectoDB = allData.trayecto || [];
-            
-            pedidosHistoricos.clear();
-            if(allData.db) allData.db.forEach(row => { if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); });
-
-            await guardarDatoDB("tarifasCargadas", { dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, pedidosHistoricos: Array.from(pedidosHistoricos) });
-
-            let box = document.getElementById('statusNube');
-            box.className = "status-box status-ready";
-            box.innerHTML = "✅ Tarifario Nube: Sincronizado";
-            cloudLista = true; checkReady();
-        } catch (e) {
-            let box = document.getElementById('statusNube');
-            box.className = "status-box status-ready";
-            box.innerHTML = "✅ Tarifas Rápidas: Listas (Modo Offline)";
-        }
-
-        try {
-            const resExcel = await fetch(`${SCRIPT_URL}?action=getMonitorExcel`);
-            const base64Data = await resExcel.text();
-            if(!base64Data.startsWith('[') && !base64Data.startsWith('{')) {
-                const binaryData = atob(base64Data);
-                const uint8Array = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) { uint8Array[i] = binaryData.charCodeAt(i); }
-                const workbook = XLSX.read(uint8Array, {type: 'array'});
-                dMonitor = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {raw: false});
-                await guardarDatoDB("monitorCargado", dMonitor);
-            }
-            let box = document.getElementById('statusMonitor');
-            box.className = "status-box status-ready";
-            box.innerHTML = `✅ Monitor Nube: Sincronizado (${dMonitor.length})`;
-            monitorListo = true; checkReady();
-        } catch (e) {
-            let box = document.getElementById('statusMonitor');
-            box.className = "status-box status-ready";
-            box.innerHTML = `✅ Monitor Rápido: Listo (Modo Offline)`;
-        }
-    }
 
     function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
 
@@ -428,7 +499,6 @@
 
                 let vehiculoDisp = extraerVehiculo(p);
                 
-                // --- LÓGICA CORREGIDA DE INTENTOS Y REDESPACHO ---
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 
@@ -436,7 +506,6 @@
                 let esRedespacho = cobradoAntes || intentosNum > 1;
                 let numVisual = esRedespacho ? (intentosNum > 1 ? intentosNum : 2) : intentosNum;
 
-                // CÁLCULO
                 let calc = calcularTarifasAutomaticas(p);
                 let cobroReal = esRedespacho ? 0 : calc.total;
                 tIngresosValidos += cobroReal;
@@ -506,7 +575,9 @@
                     ingresos: parseFloat(g.ingresos.toFixed(2)),
                     cBase: veh.costo, cAyudantes: 0, cExc: 0, cHE: 0,
                     placa: g.placa, listaIds: g.ids.join(', '),
-                    usuario: sesion.nombre
+                    usuario: sesion.nombre,
+                    proveedor: "MASIVO",
+                    tipoRuta: "NORMAL"
                 });
             }
 

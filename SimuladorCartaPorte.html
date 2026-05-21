@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FlexNet - Despacho por Carta Porte</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="seguridad.js"></script>
+    <style>
+        :root { 
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
+            --blue-600: #2563eb; --blue-50: #eff6ff;
+            --emerald-600: #059669; --emerald-50: #ecfdf5;
+            --red-600: #dc2626; --red-50: #fef2f2;
+            --amber-600: #d97706; --amber-50: #fffbeb;
+            --purple-600: #7c3aed; --purple-50: #faf5ff;
+        }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
+        
+        /* NAVBAR */
+        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
+        .nav-links a:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; white-space: nowrap; }
+        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;}
+        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+
+        .wrapper { max-width: 1700px; margin: 25px auto; display: grid; grid-template-columns: 360px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
+        .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
+
+        label { display: block; font-weight: 600; margin: 15px 0 6px; font-size: 0.9em; color: var(--slate-700); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+        .row-flex { display: flex; gap: 15px; }
+        
+        .panel-dinamico { background: var(--slate-50); padding: 15px; border-radius: 8px; border: 1px solid var(--slate-200); margin-top: 15px; }
+        
+        .radio-group { display: flex; gap: 15px; background: var(--slate-50); padding: 10px; border-radius: 6px; border: 1px solid var(--slate-200); margin-bottom: 15px;}
+        .radio-group label { margin: 0; display: flex; align-items: center; gap: 5px; cursor: pointer;}
+        .radio-group input { width: auto; margin: 0;}
+
+        button { width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 15px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
+        button:hover:not(:disabled) { background: #1d4ed8; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn-success { background: var(--emerald-600); margin-top: 10px; }
+        .btn-success:hover:not(:disabled) { background: #047857; }
+        .btn-outline { background: white; color: var(--blue-600); border: 2px solid var(--blue-600); }
+        .btn-outline:hover:not(:disabled) { background: var(--blue-50); }
+
+        .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
+        .status-ready { color: var(--emerald-600); background: var(--emerald-50); border-color: #a7f3d0; }
+        .status-error { color: var(--red-600); background: var(--red-50); border-color: #fecaca; }
+        .status-loading { color: var(--blue-600); }
+        .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* KPIs SUPERIORES */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); border-left: 4px solid var(--slate-400); }
+        .stat-box h4 { margin: 0 0 5px 0; font-size: 0.85em; text-transform: uppercase; color: #64748b; }
+        .stat-box span { font-size: 1.8em; font-weight: 800; color: var(--slate-900); display: block; }
+        
+        .box-ing { border-left-color: var(--blue-600); } .box-ing span { color: var(--blue-600); }
+        .box-cos { border-left-color: var(--red-600); } .box-cos span { color: var(--red-600); }
+        .box-ren { border-left-color: var(--emerald-600); }
+
+        /* TABLA DE RESULTADOS */
+        .table-wrapper { width: 100%; overflow-x: auto; background: white; box-shadow: inset 0 0 0 1px var(--slate-200); border-radius: 8px; max-height:600px;}
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; white-space: nowrap; }
+        th { background: var(--slate-50); padding: 12px 10px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10;}
+        td { padding: 10px 10px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
+        
+        .col-tarifa { color: #64748b; font-size: 0.9em; }
+        .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); display: flex; justify-content: space-between; align-items: center; gap: 8px;}
+        
+        .badge-prov { background: var(--slate-200); color: var(--slate-700); padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 0.8em;}
+        .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
+        .tarifa-modificada { background: var(--amber-50) !important; color: var(--amber-600) !important; border: 1px dashed var(--amber-600); }
+        
+        .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
+        
+        /* BADGES DINÁMICOS */
+        .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 700; display: inline-block; letter-spacing: 0.5px;}
+        .srv-normal { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;}
+        .srv-exclusivo { background: #fef08a; color: #b45309; border: 1px solid #fde047;}
+        .srv-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;}
+
+        .badge-loc { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; font-weight: 600; background: #f8fafc; border: 1px solid #cbd5e1; color: var(--slate-700);}
+        .badge-origen { background: var(--purple-50); color: var(--purple-600); border-color: #e9d5ff;}
+
+        .btn-edit-tfa { background: transparent; border: none; border-radius: 4px; cursor: pointer; color: var(--slate-400); padding: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;}
+        .btn-edit-tfa:hover { background: var(--blue-100); color: var(--blue-600); transform: scale(1.1);}
+
+        /* FILTROS EN LA TABLA */
+        .filter-inline { padding: 4px 6px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 4px; background: white; outline: none; min-width: 140px; }
+        .filter-inline:focus { border-color: var(--blue-600); }
+    </style>
+    
+    <script src="config.js"></script>
+    <script src="motorTarifas.js"></script> 
+</head>
+<body>
+
+<div class="navbar" id="navbar">
+    <div class="navbar-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        Simulador Operativo Mediante Carta Porte
+    </div>
+    
+    <div class="nav-menu-container">
+        <div class="nav-links">
+            <a href="Inicio.html"><span>🏠</span> Menú</a>
+            <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
+            <a href="SimuladorCartaPorte.html" class="active"><span>📄</span> Sim. (CP)</a>
+            <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
+            <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
+            <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
+            <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
+            <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
+        </div>
+    </div>
+    
+    <div class="user-info" id="infoUsuario"></div>
+</div>
+
+<div class="wrapper">
+    <aside>
+        <div class="card" style="border-top: 4px solid var(--blue-600); padding: 20px;">
+            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando Tarifario...</div>
+            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando BigQuery...</div>
+        </div>
+
+        <div class="card">
+            <h3>⚙️ Detección Inteligente</h3>
+            
+            <label>📅 Fecha de Despacho:</label>
+            <input type="date" id="fechaDespacho">
+
+            <label>Modo de Ingreso:</label>
+            <div class="radio-group">
+                <label><input type="radio" name="modoCP" value="individual" checked onchange="toggleModo()"> Individual</label>
+                <label><input type="radio" name="modoCP" value="masivo" onchange="toggleModo()"> Masivo</label>
+            </div>
+
+            <div id="divIndividual">
+                <label>📄 Número de Carta Porte:</label>
+                <input type="text" id="txtCPIndividual" placeholder="Ej. 65289">
+            </div>
+            
+            <div id="divMasivo" style="display:none;">
+                <label>📄 Cartas Porte (Una por línea):</label>
+                <textarea id="txtCPMasivo" rows="5" placeholder="Pegue la lista aquí..."></textarea>
+            </div>
+
+            <button onclick="analizarCPs()" class="btn-outline">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                EXTRAER VEHÍCULOS
+            </button>
+
+            <div id="resumenVehiculos" class="panel-dinamico" style="display:none; background:#eff6ff; border-color:#bfdbfe;"></div>
+
+            <div id="panelConfiguracion" style="display:none; margin-top:20px;">
+                <label>⚙️ Aplicar a todos los vehículos:</label>
+                <select id="tipoServicioGlobal" onchange="cambiarVistaGlobal()">
+                    <option value="NORMAL">Normal (Precio Base Día)</option>
+                    <option value="EXCLUSIVO HORARIO LABORAL">Exclusivo Horario Laboral (Solo ITSA)</option>
+                    <option value="EXCLUSIVO FUERA HORARIO">Exclusivo Fuera Horario (Solo ITSA)</option>
+                    <option value="EXCLUSIVO">Exclusivo (Manual)</option>
+                    <option value="POR RUTA">Por Ruta (Manual)</option>
+                    <option value="POR PUNTO">Por Punto (Manual)</option>
+                </select>
+
+                <div id="subPanelItsa" class="row-flex" style="margin-top:10px;">
+                    <div style="flex:1"><label>Estibas/Ayudantes:</label><input type="number" id="estibasItsa" value="0" min="0"></div>
+                    <div style="flex:1"><label>Horas Extras:</label><input type="number" id="heItsa" value="0" min="0" step="0.5"></div>
+                </div>
+
+                <div id="subPanelOtros" style="display:none; margin-top:10px;">
+                    <div class="row-flex" id="divCostoManual">
+                        <div style="flex:1"><label>Costo Fijo ($):</label><input type="number" id="costoManual" value="0" min="0"></div>
+                    </div>
+                    <div id="divPuntosManual" style="display:none;">
+                        <div class="row-flex">
+                            <div style="flex:1"><label>Puntos Base:</label><input type="number" id="cantPuntosBase" value="0"></div>
+                            <div style="flex:1"><label>Costo P. Base ($):</label><input type="number" id="precioPuntosBase" value="0"></div>
+                        </div>
+                        <div class="row-flex" style="margin-top:10px;">
+                            <div style="flex:1"><label>Costo P. Adicional ($):</label><input type="number" id="precioPuntoAdicional" value="0"></div>
+                        </div>
+                    </div>
+                    <div class="row-flex" style="margin-top:10px;">
+                        <div style="flex:1"><label>Cant. Estibas:</label><input type="number" id="estibasManual" value="0"></div>
+                        <div style="flex:1"><label>Precio x Estiba ($):</label><input type="number" id="precioEstibaManual" value="0"></div>
+                    </div>
+                </div>
+
+                <button id="btnCalc" onclick="ejecutarCalculo()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    CALCULAR COSTOS Y RUTAS
+                </button>
+                <button id="btnSave" class="btn-success" onclick="guardarRutas()" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    GUARDAR TODAS LAS RUTAS
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <div class="stats-grid">
+            <div class="stat-box box-ing"><h4>Ingresos Brutos</h4><span id="vIng">$0.00</span></div>
+            <div class="stat-box box-cos"><h4>Costo Operativo Total</h4><span id="vCos">$0.00</span></div>
+            <div id="boxR" class="stat-box box-ren"><h4>Rentabilidad Neta</h4><span id="vRent">$0.00</span></div>
+            <div class="stat-box"><h4>Vehículos Guardados</h4><span id="vVeh">0</span></div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 20px 15px; border-bottom: 1px solid var(--slate-100); flex-wrap: wrap; gap: 15px;">
+                <h3 style="margin: 0; border-bottom: none; padding: 0;">📋 Detalle Consolidado de Pedidos</h3>
+                
+                <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Cliente:</label>
+                        <select id="filtroTablaCliente" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Servicio:</label>
+                        <select id="filtroTablaServicio" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 5px;">
+                        <label style="margin:0; font-size: 0.85em;">Tarifa:</label>
+                        <select id="filtroTablaTarifa" class="filter-inline" onchange="filtrarTabla()">
+                            <option value="TODAS">Todas</option>
+                            <option value="CERO">Solo $0.00</option>
+                            <option value="MAYOR">Mayor a $0.00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="tblD">
+                    <thead>
+                        <tr>
+                            <th>Carta Porte</th>
+                            <th>Placa Asignada</th>
+                            <th>ID Pedido</th>
+                            <th>Cliente</th>
+                            <th style="text-align:center;">Intentos</th>
+                            <th>Servicio Monitor</th>
+                            <th>Loc. Origen</th>
+                            <th>Loc. Destino (CP)</th>
+                            <th>Trayecto Base</th>
+                            <th style="text-align:center;">Bultos</th>
+                            <th style="text-align:center;">Peso (Kg)</th>
+                            <th class="col-tarifa">Tfa. Peso</th>
+                            <th class="col-tarifa">Tfa. Pedido</th>
+                            <th class="col-tarifa">Tfa. Rango</th>
+                            <th class="col-tarifa">Tfa. Medida</th>
+                            <th style="background:var(--slate-50); width:110px;">Tarifa Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="16" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Extraiga los vehículos de las Cartas Porte para simular.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // 🔒 VALIDACIÓN DE SESIÓN (Oculta opciones de Admin para Ruteadores, pero deja visible Carga Masiva, CP y Rentabilidad)
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+    if (sesion.rol !== 'Administrador') { 
+        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
+        linksToHide.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+    }
+
+    let dMonitor = [], dTarifas = [], trayectoDB = [];
+    let pedidosHistoricos = new Set(); 
+    let rutasPorDiaYPlaca = {}; 
+    
+    // Almacenamiento local del proceso
+    window.agrupacionVehiculos = {};
+    window.rutasAguardar = [];
+    window.tarifasModificadas = {}; // Guarda ediciones manuales de la Tarifa Final
+
+    // Motor de Memoria IndexedDB
+    const dbName = "SimuladorDB";
+    const storeName = "MonitorStore";
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: "id" }); }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    async function obtenerDatoDB(id) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readonly");
+        const request = tx.objectStore(storeName).get(id);
+        return new Promise(resolve => {
+            request.onsuccess = () => resolve(request.result ? request.result : null);
+            request.onerror = () => resolve(null);
+        });
+    }
+    async function guardarDatoDB(id, data, timestamp) {
+        const db = await initDB();
+        const tx = db.transaction(storeName, "readwrite");
+        tx.objectStore(storeName).put({ id: id, data: data, timestamp: timestamp });
+        return new Promise(resolve => tx.oncomplete = resolve);
+    }
+
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
+        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
+    function formatearFechaUniversal(val) {
+        if (!val) return "";
+        let str = String(val).trim();
+        if (str.charAt(0) === "'") str = str.substring(1);
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+        return str;
+    }
+
+    window.onload = async function() {
+        document.getElementById('infoUsuario').innerHTML = `<span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span><button onclick="cerrarSesion()" class="btn-logout">Salir</button>`;
+        document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
+
+        // ==========================================
+        // 1. CARGA DE TARIFARIO (CACHE-FIRST)
+        // ==========================================
+        let promesaTarifas = (async () => {
+            try {
+                let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
+                
+                if (cacheTarifas) {
+                    let parsed = JSON.parse(cacheTarifas);
+                    dTarifas = parsed.dTarifas; window.tfaPesoDB = parsed.tfaPesoDB; window.tfaPedidoDB = parsed.tfaPedidoDB;
+                    window.tfaRangoDB = parsed.tfaRangoDB; window.tfaMedidaDB = parsed.tfaMedidaDB; trayectoDB = parsed.trayectoDB;
+                    rutasPorDiaYPlaca = parsed.rutasPorDiaYPlaca;
+                    pedidosHistoricos = new Set(parsed.pedidosHistoricosArray);
+                    
+                    document.getElementById('statusNube').className = "status-box status-ready";
+                    document.getElementById('statusNube').innerHTML = "✅ Tarifario Nube: Listo (Caché Rápido)";
+                } else {
+                    const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                        fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                        fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                        fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                    ]);
+
+                    const dbData = await resDB.json();
+                    dTarifas = await resTarifas.json(); window.tfaPesoDB = await resTPeso.json();
+                    window.tfaPedidoDB = await resTPedido.json(); window.tfaRangoDB = await resTRango.json();
+                    window.tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
+
+                    pedidosHistoricos.clear();
+                    rutasPorDiaYPlaca = {};
+                    
+                    dbData.forEach(row => { 
+                        if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
+                        if (row.fecha && row.placa) {
+                            let fLimpia = formatearFechaUniversal(row.fecha);
+                            rutasPorDiaYPlaca[`${fLimpia}|${String(row.placa).trim().toUpperCase()}`] = true;
+                        }
+                    });
+
+                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                        dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: Array.from(pedidosHistoricos)
+                    }));
+
+                    document.getElementById('statusNube').className = "status-box status-ready";
+                    document.getElementById('statusNube').innerHTML = "✅ Tarifario Nube: Sincronizado";
+                }
+            } catch (e) {
+                document.getElementById('statusNube').className = "status-box status-error";
+                document.getElementById('statusNube').innerHTML = "❌ Error Tarifas: Revise conexión.";
+            }
+        })();
+
+        // ==========================================
+        // 2. CARGA DE BIGQUERY (CACHE-FIRST)
+        // ==========================================
+        let promesaMonitor = (async () => {
+            try {
+                const cacheInfo = await obtenerDatoDB("monitorCargado");
+                let usoCache = false;
+
+                if (cacheInfo && cacheInfo.data && cacheInfo.data.length > 0) {
+                    dMonitor = cacheInfo.data;
+                    let fechaSync = cacheInfo.timestamp || new Date().toLocaleString();
+                    
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                            <span>✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})</span>
+                            <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
+                        </div>
+                    `;
+                    usoCache = true;
+                }
+
+                if (!usoCache) {
+                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                    const jsonResponse = await resBQ.json();
+                    if(jsonResponse.error) throw new Error(jsonResponse.error);
+                    
+                    dMonitor = jsonResponse;
+                    let fechaSync = new Date().toLocaleString();
+                    await guardarDatoDB("monitorCargado", dMonitor, fechaSync);
+
+                    let box = document.getElementById('statusMonitor');
+                    box.className = "status-box status-ready";
+                    box.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                            <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
+                            <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('statusMonitor').className = "status-box status-error";
+                document.getElementById('statusMonitor').innerHTML = `❌ Error BigQuery: ${e.message}`;
+            }
+        })();
+        
+        await Promise.all([promesaTarifas, promesaMonitor]);
+    };
+
+    async function forzarSincronizacion() {
+        let box = document.getElementById('statusMonitor');
+        box.className = "status-box status-loading";
+        box.innerHTML = `<span class="loader-spinner"></span> Descargando desde BigQuery...`;
+        
+        try {
+            const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+            const jsonResponse = await resBQ.json();
+            if(jsonResponse.error) throw new Error(jsonResponse.error);
+            
+            dMonitor = jsonResponse;
+            await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
+            
+            box.className = "status-box status-ready";
+            box.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                    <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
+                    <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
+                </div>
+            `;
+            
+            if (Object.keys(window.agrupacionVehiculos).length > 0) {
+                analizarCPs();
+            }
+        } catch (e) {
+            box.className = "status-box status-error";
+            box.innerHTML = `❌ Error al actualizar: ${e.message}`;
+        }
+    }
+
+    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function toggleModo() {
+        let modo = document.querySelector('input[name="modoCP"]:checked').value;
+        document.getElementById('divIndividual').style.display = modo === 'individual' ? 'block' : 'none';
+        document.getElementById('divMasivo').style.display = modo === 'masivo' ? 'block' : 'none';
+    }
+
+    function cambiarVistaGlobal() {
+        const tipo = document.getElementById('tipoServicioGlobal').value;
+        const isManual = (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA' || tipo === 'POR PUNTO');
+        
+        document.getElementById('subPanelItsa').style.display = isManual ? 'none' : 'flex';
+        document.getElementById('subPanelOtros').style.display = isManual ? 'block' : 'none';
+        
+        if(isManual) {
+            document.getElementById('divCostoManual').style.display = (tipo === 'POR PUNTO') ? 'none' : 'flex';
+            document.getElementById('divPuntosManual').style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
+        }
+    }
+
+    function editarTarifaManual(idPedido, tarifaActual) {
+        let nuevoValor = prompt(`EDITAR TARIFA MANUAL\n\nID Pedido: ${idPedido}\n\nIngrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
+        if (nuevoValor === null) return; 
+        
+        let parsed = parseFloat(nuevoValor.replace(',', '.'));
+        if (isNaN(parsed) || parsed < 0) {
+            alert("❌ Valor inválido. Asegúrese de ingresar un número mayor o igual a 0.");
+            return;
+        }
+        
+        window.tarifasModificadas[idPedido] = parsed;
+        ejecutarCalculo(); 
+    }
+
+    function filtrarTabla() {
+        let fCliente = document.getElementById('filtroTablaCliente').value;
+        let fServicio = document.getElementById('filtroTablaServicio').value;
+        let fTarifa = document.getElementById('filtroTablaTarifa').value;
+        
+        let filas = document.querySelectorAll('#tblD tbody tr');
+        
+        filas.forEach(fila => {
+            if (fila.children.length <= 1) return; 
+            
+            let valCliente = fila.getAttribute('data-cliente');
+            let valServicio = fila.getAttribute('data-servicio');
+            let valTarifa = parseFloat(fila.getAttribute('data-tarifa')) || 0;
+            
+            let pasaCliente = (fCliente === "TODOS" || valCliente === fCliente);
+            let pasaServicio = (fServicio === "TODOS" || valServicio === fServicio);
+            let pasaTarifa = true;
+            if (fTarifa === "CERO") pasaTarifa = (valTarifa === 0);
+            if (fTarifa === "MAYOR") pasaTarifa = (valTarifa > 0);
+            
+            if (pasaCliente && pasaServicio && pasaTarifa) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    function analizarCPs() {
+        let modo = document.querySelector('input[name="modoCP"]:checked').value;
+        let cpsRaw = modo === 'individual' ? document.getElementById('txtCPIndividual').value : document.getElementById('txtCPMasivo').value;
+        let cps = [...new Set(cpsRaw.split('\n').map(x => x.trim()).filter(x => x))];
+
+        if(cps.length === 0) return alert("Ingrese al menos una Carta Porte.");
+
+        let encontrados = dMonitor.filter(x => {
+            let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim();
+            return cps.includes(cpMonitor);
+        });
+
+        if(encontrados.length === 0) return alert("❌ No se encontraron pedidos en el Monitor para las Cartas Porte ingresadas.");
+
+        let agrupado = {};
+        encontrados.forEach(p => {
+            let placa = String(p['VEHICULO'] || p['Vehiculo'] || p['vehiculo'] || p['PLACA'] || p['Placa'] || 'SIN_PLACA').toUpperCase().trim();
+            if(!agrupado[placa]) agrupado[placa] = [];
+            agrupado[placa].push(p);
+        });
+
+        let resumenHtml = `<strong style='color:var(--blue-600); font-size:1.1em;'>Camiones Detectados (${Object.keys(agrupado).length}):</strong><ul style='margin:8px 0 0; padding-left:20px; font-size:0.95em;'>`;
+        
+        Object.keys(agrupado).forEach(placa => {
+            let provMatch = dTarifas.find(t => {
+                let tPlaca = String(t.PLACA || t.PLACAS || t.Placa || t.vehiculo || t[' PLACA'] || '').toUpperCase().trim();
+                return tPlaca === placa;
+            });
+            
+            let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
+            
+            if(!provOriginal && agrupado[placa].length > 0) {
+                let p = agrupado[placa][0];
+                provOriginal = String(p['TRANSPORTISTA'] || p['Transportista'] || 'SIN PROVEEDOR').toUpperCase().trim();
+            }
+
+            if(provOriginal.includes("ENTREGAR S.A") || provOriginal.includes("ENTREGAR")) {
+                provOriginal = "ITSACOURIER";
+            }
+            
+            resumenHtml += `<li><b>${placa}</b> <span class="badge-prov">${provOriginal || "MANUAL"}</span> - ${agrupado[placa].length} paquetes</li>`;
+        });
+        resumenHtml += "</ul>";
+        
+        document.getElementById('resumenVehiculos').innerHTML = resumenHtml;
+        document.getElementById('resumenVehiculos').style.display = 'block';
+        document.getElementById('panelConfiguracion').style.display = 'block';
+        
+        window.agrupacionVehiculos = agrupado;
+    }
+
+    function ejecutarCalculo() {
+        let fecha = document.getElementById('fechaDespacho').value;
+        if(!fecha) return alert("⚠️ Seleccione la fecha de despacho.");
+        
+        let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
+        let isManual = (tipoGlobal === 'EXCLUSIVO' || tipoGlobal === 'POR RUTA' || tipoGlobal === 'POR PUNTO');
+        
+        let tbody = document.querySelector('#tblD tbody');
+        tbody.innerHTML = '';
+        
+        let totalIngresos = 0, totalCostos = 0;
+        window.rutasAguardar = [];
+        
+        let clientesEnTabla = new Set();
+        let serviciosEnTabla = new Set();
+
+        let estItsa = parseFloat(document.getElementById('estibasItsa').value) || 0;
+        let heItsa = parseFloat(document.getElementById('heItsa').value) || 0;
+        let cFijoManual = parseFloat(document.getElementById('costoManual').value) || 0;
+        let estManual = parseFloat(document.getElementById('estibasManual').value) || 0;
+        let pEstManual = parseFloat(document.getElementById('precioEstibaManual').value) || 0;
+        let pBasePunto = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+        let cBasePunto = parseFloat(document.getElementById('cantPuntosBase').value) || 0;
+        let pAdPunto = parseFloat(document.getElementById('precioPuntoAdicional').value) || 0;
+
+        Object.keys(window.agrupacionVehiculos).forEach(placa => {
+            let pedidos = window.agrupacionVehiculos[placa];
+            
+            let provMatch = dTarifas.find(t => {
+                let tP = String(t.PLACA || t.PLACAS || t.Placa || '').toUpperCase().trim();
+                return tP === placa;
+            });
+            
+            let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
+            if(!provOriginal && pedidos.length > 0) {
+                let trans = String(pedidos[0]['TRANSPORTISTA'] || pedidos[0]['Transportista'] || '').toUpperCase().trim();
+                if(trans) provOriginal = trans;
+            }
+
+            let prov = provOriginal;
+            if (prov.includes("ENTREGAR")) prov = "ITSACOURIER";
+            
+            let opt = provMatch || {};
+            let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true;
+            let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
+
+            if(isManual) {
+                if(tipoGlobal === 'POR PUNTO') {
+                    cExc = pedidos.length <= cBasePunto ? pBasePunto : pBasePunto + ((pedidos.length - cBasePunto) * pAdPunto);
+                } else {
+                    cExc = cFijoManual;
+                }
+                cEstibas = estManual * pEstManual;
+            } else {
+                cEstibas = estItsa * 30;
+                let heTarifa = parseDinero(opt['HORAS EXTRAS']);
+                if (heTarifa === 0) heTarifa = 6.25;
+                cHE = heItsa * heTarifa;
+                
+                if(tipoGlobal === 'NORMAL') {
+                    cBase = yaSalioHoy ? 0 : parseDinero(opt['Precio Base Dia']);
+                } else if(tipoGlobal === 'EXCLUSIVO HORARIO LABORAL') {
+                    cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']);
+                } else if(tipoGlobal === 'EXCLUSIVO FUERA HORARIO') {
+                    cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']);
+                }
+            }
+
+            let costoVehiculo = cBase + cEstibas + cExc + cHE;
+            totalCostos += costoVehiculo;
+            
+            let ingresosVehiculo = 0;
+            let idsArr = [];
+
+            pedidos.forEach(p => {
+                let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
+                let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                let locOrigen = String(p['Localidad_Origen'] || p['Localidad_origen'] || p['localidad_origen'] || '-').trim().toUpperCase();
+                let bultos = p['cantidad_bultos'] || p['Cantidad_Bultos'] || p['Bultos'] || 1;
+                let cartaPorteStr = p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || '-';
+                idsArr.push(id);
+                
+                let clienteStr = String(p.Cliente || 'SIN CLIENTE').trim().toUpperCase();
+                let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
+                clientesEnTabla.add(clienteStr);
+                serviciosEnTabla.add(servicioMonitor);
+
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+
+                let calcNube = calcularTarifasAutomaticas(p);
+
+                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
+                let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
+                let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
+
+                let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
+
+                if (yaExisteEnFlexNet) {
+                    cobroReal = 0; 
+                    classTotal += " col-tachada"; 
+                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                } else {
+                    cobroReal = calcNube.total > 0 ? calcNube.total : 0;
+                    if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+                }
+
+                if (window.tarifasModificadas[id] !== undefined) {
+                    cobroReal = parseFloat(window.tarifasModificadas[id]);
+                    classTotal += " tarifa-modificada"; 
+                }
+
+                ingresosVehiculo += cobroReal;
+                totalIngresos += cobroReal;
+                
+                let classServicio = servicioMonitor.includes("NORMAL") ? "srv-normal" : (servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : "srv-default");
+
+                tbody.innerHTML += `<tr data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
+                    <td style="color:var(--slate-500); font-weight:bold;">${cartaPorteStr}</td>
+                    <td><span class="badge-prov">${placa}</span></td>
+                    <td><strong>${id}</strong></td>
+                    <td>${clienteStr}</td>
+                    <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
+                    <td style="font-size:0.8em; text-align:center;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
+                    <td style="text-align:center;"><span class="badge-loc badge-origen">${locOrigen}</span></td>
+                    <td style="text-align:center;"><span class="badge-loc">${cp}</span></td>
+                    <td style="color:var(--slate-500); font-size:0.85em;">${p['TipoTrayecto']}</td>
+                    <td style="text-align:center; font-weight:700;">${bultos}</td>
+                    <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaPeso.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaPedido.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaRango.toFixed(2)}</td>
+                    <td class="col-tarifa">$${calcNube.tfaMedida.toFixed(2)}</td>
+                    <td class="${classTotal}">
+                        <span>$${cobroReal.toFixed(2)}</span>
+                        <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            window.rutasAguardar.push({
+                fecha: fecha,
+                ciudad: provMatch ? provMatch.CIUDAD : "GENERAL",
+                pedidos: pedidos.length,
+                ingresos: ingresosVehiculo,
+                cBase: cBase,
+                cAyudantes: cEstibas,
+                cExc: cExc,
+                cHE: cHE,
+                placa: placa,
+                listaIds: idsArr.join(', '),
+                usuario: sesion.nombre,
+                proveedor: prov,
+                tipoRuta: tipoGlobal
+            });
+        });
+
+        let selFiltroCliente = document.getElementById('filtroTablaCliente');
+        let selFiltroServicio = document.getElementById('filtroTablaServicio');
+        let valPrevCliente = selFiltroCliente.value;
+        let valPrevServicio = selFiltroServicio.value;
+
+        selFiltroCliente.innerHTML = '<option value="TODOS">Todos</option>';
+        [...clientesEnTabla].sort().forEach(c => { selFiltroCliente.innerHTML += `<option value="${c}">${c}</option>`; });
+        
+        selFiltroServicio.innerHTML = '<option value="TODOS">Todos</option>';
+        [...serviciosEnTabla].sort().forEach(s => { selFiltroServicio.innerHTML += `<option value="${s}">${s}</option>`; });
+
+        if (clientesEnTabla.has(valPrevCliente)) selFiltroCliente.value = valPrevCliente;
+        if (serviciosEnTabla.has(valPrevServicio)) selFiltroServicio.value = valPrevServicio;
+
+        filtrarTabla(); 
+
+        let util = totalIngresos - totalCostos;
+        
+        document.getElementById('vIng').innerText = `$${totalIngresos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('vCos').innerText = `$${totalCostos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('vRent').innerText = `$${util.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('vVeh').innerText = window.rutasAguardar.length;
+        
+        let boxR = document.getElementById('boxR');
+        if (util < 0) {
+            boxR.style.borderLeftColor = 'var(--red-600)'; document.getElementById('vRent').style.color = 'var(--red-600)';
+        } else {
+            boxR.style.borderLeftColor = 'var(--emerald-600)'; document.getElementById('vRent').style.color = 'var(--emerald-600)';
+        }
+
+        document.getElementById('btnSave').disabled = false;
+    }
+
+    async function guardarRutas() {
+        if(!window.rutasAguardar || window.rutasAguardar.length === 0) return alert("Calcule las rutas primero.");
+
+        if (!confirm(`¿Desea enviar ${window.rutasAguardar.length} ruta(s) a la base de datos?`)) return;
+
+        const btnConf = document.getElementById('btnSave');
+        btnConf.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> GUARDANDO...`;
+        btnConf.disabled = true;
+        
+        try {
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', mode: 'no-cors', headers: { "Content-Type": "text/plain" }, 
+                body: JSON.stringify(window.rutasAguardar) 
+            });
+            
+            alert(`✅ ¡Las ${window.rutasAguardar.length} rutas han sido guardadas con éxito!`);
+            
+            document.querySelector('#tblD tbody').innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px; color:#94a3b8; font-style:italic;">Operación exitosa.</td></tr>`;
+            ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
+            document.getElementById('vVeh').innerText = '0';
+            
+            window.rutasAguardar.forEach(ruta => {
+                ruta.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim()));
+                rutasPorDiaYPlaca[`${ruta.fecha}|${ruta.placa}`] = true;
+            });
+
+            window.rutasAguardar = [];
+            window.tarifasModificadas = {}; 
+            document.getElementById('resumenVehiculos').style.display = 'none';
+            document.getElementById('panelConfiguracion').style.display = 'none';
+            document.getElementById('txtCPIndividual').value = '';
+            document.getElementById('txtCPMasivo').value = '';
+            
+            document.getElementById('filtroTablaCliente').innerHTML = '<option value="TODOS">Todos</option>';
+            document.getElementById('filtroTablaServicio').innerHTML = '<option value="TODOS">Todos</option>';
+            document.getElementById('filtroTablaTarifa').value = "TODAS";
+            
+        } catch (e) { 
+            alert("❌ Error de conexión al guardar."); 
+        } finally { 
+            btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> GUARDAR TODAS LAS RUTAS`; 
+        }
+    }
+</script>
+</body>
+</html>

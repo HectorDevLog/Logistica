@@ -15,13 +15,19 @@
         
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
         
-        /* NAVBAR CORPORATIVO */
+        /* NAVBAR CORPORATIVO HORIZONTAL (Nuevo Diseño) */
         .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
-        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
-        .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
+        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; white-space: nowrap; }
+        
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
+        .nav-links a:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; white-space: nowrap; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
@@ -42,7 +48,8 @@
         .controls-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; border: 1px solid var(--slate-200); }
         .control-group { flex: 1; min-width: 160px; }
         .control-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9em; color: var(--slate-700); }
-        .control-group input, .control-group select { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 0.95em; box-sizing: border-box; }
+        .control-group input, .control-group select { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 0.95em; box-sizing: border-box; outline: none; transition: border-color 0.2s;}
+        .control-group input:focus, .control-group select:focus { border-color: var(--blue-600); }
         
         .legend-box { background: var(--slate-50); padding: 12px 15px; border-radius: 8px; font-size: 0.8em; border: 1px solid var(--slate-200); min-width: 250px;}
         .legend-box strong { display: block; margin-bottom: 5px; color: var(--slate-900); }
@@ -95,14 +102,21 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
         Rentabilidad por Vehículo
     </div>
-    <div class="nav-links">
-        <a href="Inicio.html">&larr; Menú Principal</a>
-        <a href="Simulador.html">🏠 Simulador</a>
-        <a href="AuditorMasivo.html">⚡ Carga Masiva</a>
-        <a href="Rentabilidad.html">📊 Rentabilidad Total</a>
-        <a id="linkReportes" href="Reportes.html">📈 Dashboard</a>
-        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    
+    <div class="nav-menu-container">
+        <div class="nav-links">
+            <a href="Inicio.html"><span>🏠</span> Menú</a>
+            <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
+            <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
+            <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
+            <a href="Rentabilidad.html"><span>📊</span> Rentabilidad Total</a>
+            <a href="RentabilidadVehiculos.html" class="active"><span>🚛</span> Vehículos</a>
+            <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
+            <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
+        </div>
     </div>
+
     <div class="user-info" id="infoUsuario"></div>
 </div>
 
@@ -160,11 +174,15 @@
 </div>
 
 <script>
+    // 🔒 VALIDACIÓN DE SESIÓN (Oculta botones de Admin para los ruteadores)
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
     if (sesion.rol !== 'Administrador') { 
-        document.getElementById('linkRegistro').style.display = 'none';
-        document.getElementById('linkReportes').style.display = 'none';
+        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
+        linksToHide.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
     }
 
     let dbGlobal = [];
@@ -182,13 +200,14 @@
         seleccionarMes();
 
         try {
+            // Obtenemos directamente la base de datos de rutas guardadas
             const res = await fetch(SCRIPT_URL);
             dbGlobal = await res.json();
             
             cargarFiltros();
             procesarMatriz();
         } catch (error) {
-            document.getElementById('contenedorTabla').innerHTML = `<div class="loader-container" style="color:var(--red-600);">❌ Error cargando los datos.</div>`;
+            document.getElementById('contenedorTabla').innerHTML = `<div class="loader-container" style="color:var(--red-600);">❌ Error cargando los datos. Verifique su internet.</div>`;
         }
     };
 
@@ -219,7 +238,12 @@
                 selC.innerHTML += `<option value="${c}">${c}</option>`;
             }
         });
-        if (sesion.rol !== 'Administrador') { selC.value = sesion.ciudad; selC.disabled = true; }
+        
+        // Bloqueo de ciudad para usuarios No Administradores
+        if (sesion.rol !== 'Administrador') { 
+            selC.value = sesion.ciudad; 
+            selC.disabled = true; 
+        }
 
         const selV = document.getElementById('filtroVehiculo');
         selV.innerHTML = '<option value="ALL">Todos los Vehículos</option>';
