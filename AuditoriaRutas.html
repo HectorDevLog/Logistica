@@ -35,21 +35,42 @@
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
         .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
 
-        .status-box { padding: 12px; border-radius: 6px; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
-        .status-ready { color: var(--emerald-600); background: var(--emerald-50); border-color: #a7f3d0; }
-        .status-error { color: var(--red-600); background: var(--red-50); border-color: #fecaca; }
-        .status-loading { color: var(--purple-600); }
+        /* 🔥 PÍLDORAS DE ESTADO ANIMADAS 🔥 */
+        .status-pill {
+            background: rgba(241, 245, 249, 0.8); border: 1px solid var(--slate-200);
+            padding: 10px 15px; border-radius: 8px; font-size: 0.85em; font-weight: 600;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+            transition: all 0.3s ease; color: var(--slate-700);
+        }
+        .status-pill.success { background: var(--emerald-50); border-color: #a7f3d0; color: var(--emerald-700); }
+        .status-pill.loading { background: var(--blue-50); border-color: #bfdbfe; color: var(--blue-700); }
+        .status-pill.error { background: var(--red-50); border-color: #fecaca; color: var(--red-700); }
+        
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .status-dot.success { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.loading { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; animation: pulseDot 1s infinite alternate; }
+        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        @keyframes pulseDot { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
 
+        /* 🔥 ANIMACIÓN EN RECUADROS Y BOTONES 🔥 */
         label { display: block; font-weight: 600; margin: 15px 0 6px; font-size: 0.9em; color: var(--slate-700); }
-        input, select { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
-        input:focus, select:focus { outline: none; border-color: var(--purple-600); box-shadow: 0 0 0 3px #f3e8ff; }
+        input, select { 
+            width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; 
+            box-sizing: border-box; font-family: inherit; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        input:hover, select:hover { border-color: var(--purple-600); background-color: #faf5ff; }
+        input:focus, select:focus { outline: none; border-color: var(--purple-600); box-shadow: 0 0 0 3px #f3e8ff; background-color: white; transform: translateY(-1px); }
 
-        button { width: 100%; padding: 12px; background: var(--purple-600); color: white; border: none; font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; transition: background 0.2s; }
-        button:hover:not(:disabled) { background: #6d28d9; }
-        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        button { 
+            width: 100%; padding: 12px; background: var(--purple-600); color: white; border: none; 
+            font-weight: 700; cursor: pointer; margin-top: 20px; border-radius: 6px; font-size: 1em; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        button:hover:not(:disabled) { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(124, 58, 237, 0.2); }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
         
         .btn-success { background: var(--emerald-600); margin-top: 10px; }
-        .btn-success:hover:not(:disabled) { background: #047857; }
+        .btn-success:hover:not(:disabled) { background: #047857; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); }
 
         .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -69,7 +90,7 @@
         .srv-exclusivo { background: #fef08a; color: #b45309; border: 1px solid #fde047;}
         .srv-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;}
 
-        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 6px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 6px; line-height: 1.4;}
         .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
 
         .btn-edit-tfa { background: transparent; border: none; border-radius: 4px; cursor: pointer; color: var(--slate-400); padding: 2px; display: flex; align-items: center; transition: all 0.2s;}
@@ -77,14 +98,16 @@
 
         /* Cajas de resumen */
         .summary-grid { display: flex; gap: 15px; margin-bottom: 20px;}
-        .summary-box { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid var(--slate-200); background: white;}
+        .summary-box { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid var(--slate-200); background: white; transition: transform 0.2s; }
+        .summary-box:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .summary-box h4 { margin: 0 0 5px 0; font-size: 0.8em; color: var(--slate-500); text-transform: uppercase;}
         .summary-box span { font-size: 1.6em; font-weight: 800; color: var(--slate-900);}
         .val-diff { color: var(--amber-600) !important; }
         
         /* FILTROS DE TABLA EN LÍNEA */
-        .filter-inline { padding: 4px 6px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 4px; background: white; outline: none; min-width: 140px;}
-        .filter-inline:focus { border-color: var(--purple-600); }
+        .filter-inline { padding: 4px 6px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 4px; background: white; outline: none; min-width: 140px; transition: all 0.2s;}
+        .filter-inline:hover { border-color: var(--purple-600); }
+        .filter-inline:focus { border-color: var(--purple-600); box-shadow: 0 0 0 3px #f3e8ff;}
     </style>
     
     <script src="config.js"></script>
@@ -119,8 +142,14 @@
     <aside>
         <div class="card" style="border-top: 4px solid var(--purple-600); padding: 20px;">
             <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
-            <div id="statusNube" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando Tarifario...</div>
-            <div id="statusMonitor" class="status-box status-loading"><span class="loader-spinner"></span> Iniciando BigQuery...</div>
+            <div class="status-pill loading" id="pillTarifas">
+                <span class="status-dot loading" id="dotTarifas"></span>
+                <span id="txtTarifas">Tarifario: Conectando...</span>
+            </div>
+            <div class="status-pill loading" id="pillMonitor">
+                <span class="status-dot loading" id="dotMonitor"></span>
+                <span id="txtMonitor">Base Operativa: Conectando...</span>
+            </div>
         </div>
 
         <div class="card">
@@ -135,19 +164,14 @@
             </select>
             <p style="font-size: 0.8em; color: var(--slate-500); margin-top: 5px;">El sistema buscará los pedidos guardados en esta ruta y permitirá corregir las tarifas individuales sumando o restando al total.</p>
 
-            <button id="btnBuscar" onclick="buscarRuta()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                BUSCAR Y DESCARGAR
+            <button id="btnBuscar" onclick="buscarRuta()" disabled>
+                <span class="loader-spinner"></span> INICIANDO SISTEMA...
             </button>
             
             <button id="btnGuardar" class="btn-success" onclick="guardarCambios()" disabled style="margin-top: 30px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 ACTUALIZAR INGRESOS DE RUTA
             </button>
-        </div>
-        
-        <div id="divProgreso" style="display:none; color: var(--purple-600); font-weight: bold; text-align: center; margin-top: 10px;">
-            <div class="loader-spinner"></div> Optimizando datos desde la nube...
         </div>
     </aside>
 
@@ -220,17 +244,29 @@
 </div>
 
 <script>
+    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+
+    function cerrarSesion() {
+        localStorage.removeItem('sesionActiva');
+        window.location.href = 'index.html';
+    }
+
+    function setPillStatus(id, state, text) {
+        document.getElementById('pill' + id).className = 'status-pill ' + state;
+        document.getElementById('dot' + id).className = 'status-dot ' + state;
+        document.getElementById('txt' + id).innerText = text;
+    }
+
     let dMonitor = [], trayectoDB = [];
     let dbRutas = []; 
     
     let rutaActiva = null;
     let idsRuta = [];
-    let pedidosHistoricosAuditoria = {}; // Cambiado a objeto para guardar Fecha y Placa
+    let pedidosHistoricosAuditoria = {}; 
     let tarifasBase = {}; 
     let tarifasEditadas = {}; 
     let totalIngresoCalculado = 0;
 
-    // --- FUNCIONES DE SÚPER MEMORIA (IndexedDB) ---
     const dbName = "SimuladorDB";
     const storeName = "MonitorStore";
 
@@ -256,97 +292,76 @@
         });
     }
 
-    async function guardarDatoDB(id, data) {
-        const db = await initDB();
-        const tx = db.transaction(storeName, "readwrite");
-        tx.objectStore(storeName).put({ id: id, data: data });
-        return new Promise(resolve => tx.oncomplete = resolve);
-    }
-
     window.onload = async function() {
+        if (!sesion) { window.location.href = 'index.html'; return; }
+
+        document.getElementById('infoUsuario').innerHTML = `
+            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+
         const hoy = new Date();
         document.getElementById('buscarFecha').value = hoy.toISOString().split('T')[0];
 
-        // Usamos la variable 'sesion' que ya viene declarada en seguridad.js
-        if(sesion) {
-            document.getElementById('infoUsuario').innerHTML = `
-                <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
-                <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-            `;
-        }
-
         try {
-            document.getElementById('divProgreso').style.display = 'block';
+            // 1. CARGAR TARIFAS DESDE MEMORIA INSTANTÁNEAMENTE
+            let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
+            if (cacheTarifas) {
+                let parsed = JSON.parse(cacheTarifas);
+                window.dTarifas = parsed.dTarifas; 
+                window.tfaPesoDB = parsed.tfaPesoDB; 
+                window.tfaPedidoDB = parsed.tfaPedidoDB;
+                window.tfaRangoDB = parsed.tfaRangoDB; 
+                window.tfaMedidaDB = parsed.tfaMedidaDB; 
+                trayectoDB = parsed.trayectoDB;
+                setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché)');
+            } else {
+                setPillStatus('Tarifas', 'loading', 'Descargando Tarifario...');
+                const [resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
+                    fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
+                    fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
+                    fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
+                ]);
+
+                window.dTarifas = await resTarifas.json(); window.tfaPesoDB = await resTPeso.json();
+                window.tfaPedidoDB = await resTPedido.json(); window.tfaRangoDB = await resTRango.json();
+                window.tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
+                setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado');
+            }
+
+            // 2. CARGAR MONITOR DESDE IndexedDB
+            let cacheMonitor = await obtenerDatoDB("monitorCargado");
+            if (cacheMonitor && cacheMonitor.length > 0) {
+                dMonitor = cacheMonitor;
+                setPillStatus('Monitor', 'success', `Monitor: Listo (${dMonitor.length})`);
+            } else {
+                setPillStatus('Monitor', 'loading', 'Descargando Base Operativa...');
+                const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                dMonitor = await resBQ.json();
+                setPillStatus('Monitor', 'success', `Monitor: Sincronizado`);
+            }
+
+            // 3. DESCARGA SILENCIOSA DE RUTAS HISTÓRICAS
+            const btnBuscar = document.getElementById('btnBuscar');
+            btnBuscar.disabled = true;
+            btnBuscar.innerHTML = `<span class="loader-spinner"></span> CARGANDO HISTÓRICO DE RUTAS...`;
+
+            const resDB = await fetch(SCRIPT_URL);
+            dbRutas = await resDB.json();
             
-            // 1. OBTENER RUTAS HISTÓRICAS
-            let promesaRutas = (async () => {
-                const resDB = await fetch(SCRIPT_URL);
-                dbRutas = await resDB.json();
-            })();
-
-            // 2. CARGA DE TARIFARIO (CACHE-FIRST)
-            let promesaTarifas = (async () => {
-                let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
-                if (cacheTarifas) {
-                    let parsed = JSON.parse(cacheTarifas);
-                    window.dTarifas = parsed.dTarifas; 
-                    window.tfaPesoDB = parsed.tfaPesoDB; 
-                    window.tfaPedidoDB = parsed.tfaPedidoDB;
-                    window.tfaRangoDB = parsed.tfaRangoDB; 
-                    window.tfaMedidaDB = parsed.tfaMedidaDB; 
-                    trayectoDB = parsed.trayectoDB;
-                    
-                    let box = document.getElementById('statusNube');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = "✅ Tarifario: Listo (Caché)";
-                } else {
-                    const [resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
-                        fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
-                        fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
-                        fetch(`${SCRIPT_URL}?action=getTfaMedida`), fetch(`${SCRIPT_URL}?action=getTrayecto`)
-                    ]);
-
-                    window.dTarifas = await resTarifas.json(); window.tfaPesoDB = await resTPeso.json();
-                    window.tfaPedidoDB = await resTPedido.json(); window.tfaRangoDB = await resTRango.json();
-                    window.tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
-
-                    let box = document.getElementById('statusNube');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = "✅ Tarifario Nube: Sincronizado";
-                }
-            })();
-
-            // 3. CARGA DE DRIVE (CACHE-FIRST)
-            let promesaMonitor = (async () => {
-                const cacheMonitor = await obtenerDatoDB("monitorCargado");
-                if (cacheMonitor && cacheMonitor.length > 0) {
-                    dMonitor = cacheMonitor;
-                    let box = document.getElementById('statusMonitor');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = `✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})`;
-                } else {
-                    const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
-                    dMonitor = await resBQ.json();
-                    await guardarDatoDB("monitorCargado", dMonitor);
-                    
-                    let box = document.getElementById('statusMonitor');
-                    box.className = "status-box status-ready";
-                    box.innerHTML = `✅ Datos Carga: Sincronizado (${dMonitor.length})`;
-                }
-            })();
-
-            // Esperar que las 3 conexiones terminen
-            await Promise.all([promesaRutas, promesaTarifas, promesaMonitor]);
-
-            document.getElementById('divProgreso').style.display = 'none';
+            btnBuscar.disabled = false;
+            btnBuscar.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                BUSCAR Y DESCARGAR
+            `;
             actualizarPlacasDisponibles();
 
         } catch (e) {
-            document.getElementById('divProgreso').innerHTML = "❌ Error de conexión al servidor.";
+            setPillStatus('Tarifas', 'error', 'Error de conexión');
+            setPillStatus('Monitor', 'error', 'Revise su internet');
+            document.getElementById('btnBuscar').innerHTML = "❌ ERROR AL CARGAR";
         }
     };
-
-    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
 
     function actualizarPlacasDisponibles() {
         const f = document.getElementById('buscarFecha').value;
@@ -462,7 +477,6 @@
 
                 let calcNube = calcularTarifasAutomaticas(pedidoMon); 
                 
-                // Comprobación en el objeto histórico
                 let historial = pedidosHistoricosAuditoria[String(id).trim()];
                 let yaExisteEnFlexNet = !!historial;
                 
@@ -484,7 +498,6 @@
                 
                 let htmlStatus = "";
                 
-                // --- DISEÑO: YA EN SISTEMA (Fecha y Placa) ---
                 if (yaExisteEnFlexNet) {
                     let partesF = historial.fecha.split('-');
                     let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
