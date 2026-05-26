@@ -113,6 +113,18 @@
             margin-top: 4px; 
             letter-spacing: 0.5px;
         }
+
+        .badge-cobrado { 
+            background: #fef3c7; 
+            color: #d97706; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 0.75em; 
+            font-weight: bold; 
+            border: 1px solid #fcd34d; 
+            display: inline-block; 
+            margin-top: 6px;
+        }
     </style>
     
     <script src="config.js"></script>
@@ -131,7 +143,7 @@
             <a href="Inicio.html"><span>🏠</span> Menú</a>
             <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
             <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
-            <a href="AuditorMasivo.html" class="active"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditorMasivo.html" class="active" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
             <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
             <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
             <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
@@ -231,20 +243,9 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Oculta opciones de Admin, pero permite el acceso al módulo)
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
-        linksToHide.forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        });
-    }
-
     let dMonitor = [], dTarifas = [];
     let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
-    let pedidosHistoricos = new Set();
+    let pedidosHistoricos = {}; // Ahora guarda Fecha y Placa como en AuditoriaRutas
     let cloudLista = false, monitorListo = false;
     let datosParaGuardar = [];
 
@@ -297,10 +298,12 @@
     }
 
     window.onload = async function() {
-        document.getElementById('infoUsuario').innerHTML = `
-            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
-            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-        `;
+        if(sesion) {
+            document.getElementById('infoUsuario').innerHTML = `
+                <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+                <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+            `;
+        }
 
         // ==========================================
         // 1. CARGA DE TARIFARIO (CACHE-FIRST)
@@ -317,7 +320,14 @@
                     window.tfaRangoDB = parsed.tfaRangoDB; 
                     window.tfaMedidaDB = parsed.tfaMedidaDB; 
                     trayectoDB = parsed.trayectoDB;
-                    pedidosHistoricos = new Set(parsed.pedidosHistoricosArray);
+                    
+                    // Si viene del caché, transformamos el array de pedidos nuevamente al objeto histórico
+                    pedidosHistoricos = {};
+                    if(parsed.pedidosHistoricosArray && parsed.pedidosHistoricosArray.length > 0) {
+                        parsed.pedidosHistoricosArray.forEach(p => {
+                            pedidosHistoricos[p.id] = { fecha: p.fecha, placa: p.placa };
+                        });
+                    }
                     
                     let box = document.getElementById('statusNube');
                     box.className = "status-box status-ready";
@@ -337,21 +347,31 @@
                     window.tfaMedidaDB = await resTMedida.json(); 
                     trayectoDB = await resTrayecto.json();
 
-                    pedidosHistoricos.clear();
+                    pedidosHistoricos = {};
                     let rutasPorDiaYPlaca = {};
+                    let pedidosArray = [];
                     
                     dbData.forEach(row => { 
-                        if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
                         if (row.fecha && row.placa) {
                             let fLimpia = formatearFechaUniversal(row.fecha);
                             let pLimpia = String(row.placa).trim().toUpperCase();
                             rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+                            
+                            if (row.listaIds) {
+                                row.listaIds.split(',').forEach(id => {
+                                    let cleanId = String(id).trim();
+                                    if(!pedidosHistoricos[cleanId]) {
+                                        pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
+                                        pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                    }
+                                });
+                            }
                         }
                     });
 
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: Array.from(pedidosHistoricos)
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray
                     }));
 
                     let box = document.getElementById('statusNube');
@@ -366,7 +386,7 @@
         })();
 
         // ==========================================
-        // 2. CARGA DE BIGQUERY (CACHE-FIRST)
+        // 2. CARGA DE DRIVE (CACHE-FIRST)
         // ==========================================
         let promesaMonitor = (async () => {
             try {
@@ -425,7 +445,7 @@
             let d = jsDate.getUTCDate();
             let m = jsDate.getUTCMonth() + 1; 
             let y = jsDate.getUTCFullYear();
-            return d + "/" + m + "/" + y;
+            return ("0" + d).slice(-2) + "/" + ("0" + m).slice(-2) + "/" + y;
         }
         return String(fecha).trim();
     }
@@ -502,8 +522,11 @@
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 
-                let cobradoAntes = pedidosHistoricos.has(String(id).trim());
+                // --- NUEVA LÓGICA DE HISTORIAL COMPLETO ---
+                let historial = pedidosHistoricos[id];
+                let cobradoAntes = !!historial;
                 let esRedespacho = cobradoAntes || intentosNum > 1;
+                
                 let numVisual = esRedespacho ? (intentosNum > 1 ? intentosNum : 2) : intentosNum;
 
                 let calc = calcularTarifasAutomaticas(p);
@@ -518,9 +541,23 @@
 
                 if(index < 300) {
                     let classTotal = esRedespacho ? "col-total col-tachada" : "col-total";
+                    
+                    let htmlStatus = "";
+                    if (cobradoAntes) {
+                        let partesF = historial.fecha.split('-');
+                        let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
+
+                        htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
+                            YA EN SISTEMA<br>
+                            <span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
+                        </div>`;
+                    } else if (esRedespacho) {
+                        htmlStatus = `<br><span class="badge-redespacho">REDESPACHO</span>`;
+                    }
+
                     let celdaIntentos = `<td style="text-align:center; font-weight:700;">
                         ${numVisual}
-                        ${esRedespacho ? '<br><span class="badge-redespacho">REDESPACHO</span>' : ''}
+                        ${htmlStatus}
                     </td>`;
 
                     tbody.innerHTML += `<tr>

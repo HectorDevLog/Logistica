@@ -119,12 +119,12 @@
                 <a href="Inicio.html"><span>🏠</span> Menú</a>
                 <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
                 <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
-                <a href="AuditorMasivo.html"><span>⚡</span> Carga Masiva</a>
-                <a href="AuditoriaRutas.html"><span>🔍</span> Auditoría</a>
-                <a href="Rentabilidad.html"><span>📊</span> Rentabilidad</a>
-                <a href="RentabilidadVehiculos.html"><span>🚛</span> Vehículos</a>
-                <a href="Reportes.html" class="active"><span>📈</span> Dashboard</a>
-                <a href="Registro.html"><span>🛡️</span> Accesos</a>
+                <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
+                <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
+                <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
+                <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
+                <a href="Reportes.html" class="active" id="linkReportes"><span>📈</span> Dashboard</a>
+                <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
             </div>
         </div>
         
@@ -284,13 +284,9 @@
     </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN ESTRICTA
+    // 🔒 RECUPERAR SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        alert("⛔ Acceso denegado. Este módulo es de uso exclusivo para Administradores.");
-        window.location.href = 'Inicio.html'; 
-    }
 
     let dbOriginal = [];
     let dbFiltrada = [];

@@ -94,7 +94,7 @@
         .tarifa-modificada { background: var(--amber-50) !important; color: var(--amber-600) !important; border: 1px dashed var(--amber-600); }
         
         .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
-        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 6px;}
 
         /* BADGES DINÁMICOS */
         .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 700; display: inline-block; letter-spacing: 0.5px;}
@@ -307,21 +307,14 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Oculta opciones de Admin para Ruteadores)
+    // 🔒 RECUPERAR DATOS DE SESIÓN PARA LÓGICA INTERNA
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
-        linksToHide.forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        });
-    }
 
     let dMonitor = [], dTarifas = [];
     let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
     let cloudLista = false, monitorListo = false;
-    let pedidosHistoricos = new Set(); 
+    let pedidosHistoricos = {}; // Ahora guarda Fecha y Placa
     let rutasPorDiaYPlaca = {}; 
     let calculoRealizado = false; 
     let tarifasModificadas = {}; 
@@ -391,7 +384,14 @@
                     dTarifas = parsed.dTarifas; tfaPesoDB = parsed.tfaPesoDB; tfaPedidoDB = parsed.tfaPedidoDB;
                     tfaRangoDB = parsed.tfaRangoDB; tfaMedidaDB = parsed.tfaMedidaDB; trayectoDB = parsed.trayectoDB;
                     rutasPorDiaYPlaca = parsed.rutasPorDiaYPlaca;
-                    pedidosHistoricos = new Set(parsed.pedidosHistoricosArray);
+                    
+                    // Transformar el array guardado en Inicio.html al objeto pedidosHistoricos
+                    pedidosHistoricos = {};
+                    if(parsed.pedidosHistoricosArray && parsed.pedidosHistoricosArray.length > 0) {
+                        parsed.pedidosHistoricosArray.forEach(p => {
+                            pedidosHistoricos[p.id] = { fecha: p.fecha, placa: p.placa };
+                        });
+                    }
                     
                     document.getElementById('statusNube').className = "status-box status-ready";
                     document.getElementById('statusNube').innerHTML = "✅ Tarifario Nube: Listo (Caché Rápido)";
@@ -408,22 +408,32 @@
                     tfaPedidoDB = await resTPedido.json(); tfaRangoDB = await resTRango.json();
                     tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
 
-                    pedidosHistoricos.clear();
+                    pedidosHistoricos = {};
                     rutasPorDiaYPlaca = {};
+                    let pedidosArray = [];
                     
                     dbData.forEach(row => { 
-                        if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
                         if (row.fecha && row.placa) {
                             let fLimpia = formatearFechaUniversal(row.fecha);
                             let pLimpia = String(row.placa).trim().toUpperCase();
                             rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+
+                            if (row.listaIds) {
+                                row.listaIds.split(',').forEach(id => {
+                                    let cleanId = String(id).trim();
+                                    if(!pedidosHistoricos[cleanId]) {
+                                        pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
+                                        pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                    }
+                                });
+                            }
                         }
                     });
 
                     // Guardamos en memoria para la próxima pestaña
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                        rutasPorDiaYPlaca, pedidosHistoricosArray: Array.from(pedidosHistoricos)
+                        rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray
                     }));
 
                     document.getElementById('statusNube').className = "status-box status-ready";
@@ -436,15 +446,13 @@
             }
         })();
 
-        // 2. CARGA DE BIGQUERY (CACHE-FIRST)
+        // 2. CARGA DE BIGQUERY/DRIVE (CACHE-FIRST)
         let promesaMonitor = (async () => {
             try {
-                // Primero buscamos si ya se precargaron los datos en IndexedDB
                 const cacheInfo = await obtenerDatoDB("monitorCargado");
                 let usoCache = false;
 
                 if (cacheInfo && cacheInfo.data && cacheInfo.data.length > 0) {
-                    // Carga instantánea de memoria
                     dMonitor = cacheInfo.data;
                     let fechaSync = cacheInfo.timestamp || new Date().toLocaleString();
                     
@@ -454,7 +462,7 @@
                     box.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span>✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})</span>
-                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de BigQuery">🔄 Refrescar</button>
+                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de la nube">🔄 Refrescar</button>
                         </div>
                         <div style="font-size:0.75em; color:var(--emerald-700); font-weight:normal; margin-top:4px;">Última detección: ${fechaSync}</div>
                     `;
@@ -462,7 +470,6 @@
                     monitorListo = true; checkReady();
                 }
 
-                // Si NO había caché, o si queremos asegurarnos de tener la última versión en segundo plano
                 if (!usoCache) {
                     const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
                     const jsonResponse = await resBQ.json();
@@ -479,7 +486,7 @@
                     box.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
-                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de BigQuery">🔄 Refrescar</button>
+                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de la nube">🔄 Refrescar</button>
                         </div>
                         <div style="font-size:0.75em; color:var(--emerald-700); font-weight:normal; margin-top:4px;">Última detección: ${fechaSync}</div>
                     `;
@@ -510,7 +517,7 @@
                     box.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
-                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de BigQuery">🔄 Refrescar</button>
+                            <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de la nube">🔄 Refrescar</button>
                         </div>
                         <div style="font-size:0.75em; color:var(--emerald-700); font-weight:normal; margin-top:4px;">Última detección: ${fechaSync} (Auto)</div>
                     `;
@@ -532,7 +539,7 @@
         let box = document.getElementById('statusMonitor');
         box.className = "status-box status-loading";
         box.style.display = "flex";
-        box.innerHTML = `<span class="loader-spinner"></span> Descargando desde BigQuery...`;
+        box.innerHTML = `<span class="loader-spinner"></span> Descargando desde Nube...`;
         
         try {
             const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
@@ -549,7 +556,7 @@
             box.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
-                    <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de BigQuery">🔄 Refrescar</button>
+                    <button id="btnRefrescar" onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;" title="Descargar datos frescos de la nube">🔄 Refrescar</button>
                 </div>
                 <div style="font-size:0.75em; color:var(--emerald-700); font-weight:normal; margin-top:4px;">Última detección: ${fechaSync}</div>
             `;
@@ -786,14 +793,24 @@
 
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-                let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
+                
+                // LÓGICA DE HISTORIAL COMPLETO
+                let historial = pedidosHistoricos[String(id).trim()];
+                let yaExisteEnFlexNet = !!historial;
 
                 let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
 
                 if (yaExisteEnFlexNet) {
                     cobroReal = 0; 
                     classTotal += " col-tachada"; 
-                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                    
+                    let partesF = historial.fecha.split('-');
+                    let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
+
+                    htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
+                        YA EN SISTEMA<br>
+                        <span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
+                    </div>`;
                 } else {
                     cobroReal = tfaCalculada;
                     if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -909,7 +926,11 @@
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { "Content-Type": "text/plain" }, body: JSON.stringify(rutaData) });
             alert("✅ Ruta guardada con éxito en la base de datos.");
             
-            ids.forEach(id => pedidosHistoricos.add(String(id)));
+            // Actualizar la memoria instantánea para que el pedido no se pueda volver a cobrar
+            ids.forEach(id => {
+                pedidosHistoricos[String(id).trim()] = { fecha: fechaElegida, placa: placaVehiculo };
+            });
+            
             rutasPorDiaYPlaca[`${fechaElegida}|${placaVehiculo}`] = true;
             verificarVehiculoRepetido(); 
             

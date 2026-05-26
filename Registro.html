@@ -23,6 +23,7 @@
         .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
         .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
         .nav-links a:hover { background: rgba(255,255,255,0.1); }
+        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
         
         .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
         .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
@@ -94,14 +95,14 @@
     <div class="nav-menu-container">
         <div class="nav-links">
             <a href="Inicio.html"><span>🏠</span> Menú</a>
-            <a href="Simulador.html" class="active"><span>📝</span> Sim. (IDs)</a>
+            <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
             <a href="SimuladorCP.html"><span>📄</span> Sim. (CP)</a>
             <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
             <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
             <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
             <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
             <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
-            <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
+            <a href="Registro.html" class="active" id="linkRegistro"><span>🛡️</span> Accesos</a>
         </div>
     </div>
 
@@ -191,16 +192,9 @@
     </div>
 
 <script>
-    // 🔒 CANDADO DE SEGURIDAD ESTRICTA
+    // Recuperamos los datos de la sesión para la lógica interna (seguridad.js ya protegió la página)
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria', 'linkRentabilidad', 'linkVehiculos', 'linkMasivo'];
-        linksToHide.forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        });
-    }
 
     let modoEdicion = false;
     let usuarioOriginal = "";

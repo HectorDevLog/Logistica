@@ -86,7 +86,7 @@
         .tarifa-modificada { background: var(--amber-50) !important; color: var(--amber-600) !important; border: 1px dashed var(--amber-600); }
         
         .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
-        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px; line-height: 1.4;}
         
         /* BADGES DINÁMICOS */
         .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 700; display: inline-block; letter-spacing: 0.5px;}
@@ -284,19 +284,12 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Oculta opciones de Admin para Ruteadores, pero deja visible Carga Masiva, CP y Rentabilidad)
+    // 🔒 RECUPERAR DATOS DE SESIÓN PARA LÓGICA INTERNA
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
-        linksToHide.forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        });
-    }
 
     let dMonitor = [], dTarifas = [], trayectoDB = [];
-    let pedidosHistoricos = new Set(); 
+    let pedidosHistoricos = {}; // Ahora guarda Fecha y Placa 
     let rutasPorDiaYPlaca = {}; 
     
     // Almacenamiento local del proceso
@@ -364,7 +357,14 @@
                     dTarifas = parsed.dTarifas; window.tfaPesoDB = parsed.tfaPesoDB; window.tfaPedidoDB = parsed.tfaPedidoDB;
                     window.tfaRangoDB = parsed.tfaRangoDB; window.tfaMedidaDB = parsed.tfaMedidaDB; trayectoDB = parsed.trayectoDB;
                     rutasPorDiaYPlaca = parsed.rutasPorDiaYPlaca;
-                    pedidosHistoricos = new Set(parsed.pedidosHistoricosArray);
+                    
+                    // Transformar el array guardado en Inicio.html al objeto pedidosHistoricos
+                    pedidosHistoricos = {};
+                    if(parsed.pedidosHistoricosArray && parsed.pedidosHistoricosArray.length > 0) {
+                        parsed.pedidosHistoricosArray.forEach(p => {
+                            pedidosHistoricos[p.id] = { fecha: p.fecha, placa: p.placa };
+                        });
+                    }
                     
                     document.getElementById('statusNube').className = "status-box status-ready";
                     document.getElementById('statusNube').innerHTML = "✅ Tarifario Nube: Listo (Caché Rápido)";
@@ -380,20 +380,31 @@
                     window.tfaPedidoDB = await resTPedido.json(); window.tfaRangoDB = await resTRango.json();
                     window.tfaMedidaDB = await resTMedida.json(); trayectoDB = await resTrayecto.json();
 
-                    pedidosHistoricos.clear();
+                    pedidosHistoricos = {};
                     rutasPorDiaYPlaca = {};
+                    let pedidosArray = [];
                     
                     dbData.forEach(row => { 
-                        if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim())); 
                         if (row.fecha && row.placa) {
                             let fLimpia = formatearFechaUniversal(row.fecha);
-                            rutasPorDiaYPlaca[`${fLimpia}|${String(row.placa).trim().toUpperCase()}`] = true;
+                            let pLimpia = String(row.placa).trim().toUpperCase();
+                            rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+
+                            if (row.listaIds) {
+                                row.listaIds.split(',').forEach(id => {
+                                    let cleanId = String(id).trim();
+                                    if(!pedidosHistoricos[cleanId]) {
+                                        pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
+                                        pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                    }
+                                });
+                            }
                         }
                     });
 
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: Array.from(pedidosHistoricos)
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray
                     }));
 
                     document.getElementById('statusNube').className = "status-box status-ready";
@@ -419,12 +430,7 @@
                     
                     let box = document.getElementById('statusMonitor');
                     box.className = "status-box status-ready";
-                    box.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                            <span>✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})</span>
-                            <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
-                        </div>
-                    `;
+                    box.innerHTML = `✅ Datos Carga: Listo (Caché Local - ${dMonitor.length})`;
                     usoCache = true;
                 }
 
@@ -439,12 +445,7 @@
 
                     let box = document.getElementById('statusMonitor');
                     box.className = "status-box status-ready";
-                    box.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                            <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
-                            <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
-                        </div>
-                    `;
+                    box.innerHTML = `✅ Datos Carga: Sincronizado (${dMonitor.length})`;
                 }
             } catch (e) {
                 document.getElementById('statusMonitor').className = "status-box status-error";
@@ -454,36 +455,6 @@
         
         await Promise.all([promesaTarifas, promesaMonitor]);
     };
-
-    async function forzarSincronizacion() {
-        let box = document.getElementById('statusMonitor');
-        box.className = "status-box status-loading";
-        box.innerHTML = `<span class="loader-spinner"></span> Descargando desde BigQuery...`;
-        
-        try {
-            const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
-            const jsonResponse = await resBQ.json();
-            if(jsonResponse.error) throw new Error(jsonResponse.error);
-            
-            dMonitor = jsonResponse;
-            await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
-            
-            box.className = "status-box status-ready";
-            box.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                    <span>✅ Datos Carga: Sincronizado (${dMonitor.length})</span>
-                    <button onclick="forzarSincronizacion()" style="width:auto; padding:3px 8px; margin:0; font-size:0.8em; background:white; color:var(--emerald-700); border:1px solid #a7f3d0; border-radius:4px; cursor:pointer;">🔄 Refrescar</button>
-                </div>
-            `;
-            
-            if (Object.keys(window.agrupacionVehiculos).length > 0) {
-                analizarCPs();
-            }
-        } catch (e) {
-            box.className = "status-box status-error";
-            box.innerHTML = `❌ Error al actualizar: ${e.message}`;
-        }
-    }
 
     function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
 
@@ -693,14 +664,24 @@
 
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-                let yaExisteEnFlexNet = pedidosHistoricos.has(String(id).trim());
+                
+                // LÓGICA DE HISTORIAL COMPLETO
+                let historial = pedidosHistoricos[String(id).trim()];
+                let yaExisteEnFlexNet = !!historial;
 
                 let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
 
                 if (yaExisteEnFlexNet) {
                     cobroReal = 0; 
                     classTotal += " col-tachada"; 
-                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                    
+                    let partesF = historial.fecha.split('-');
+                    let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
+
+                    htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
+                        YA EN SISTEMA<br>
+                        <span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
+                    </div>`;
                 } else {
                     cobroReal = calcNube.total > 0 ? calcNube.total : 0;
                     if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -813,7 +794,9 @@
             document.getElementById('vVeh').innerText = '0';
             
             window.rutasAguardar.forEach(ruta => {
-                ruta.listaIds.split(',').forEach(id => pedidosHistoricos.add(String(id).trim()));
+                ruta.listaIds.split(',').forEach(id => {
+                    pedidosHistoricos[String(id).trim()] = { fecha: ruta.fecha, placa: ruta.placa };
+                });
                 rutasPorDiaYPlaca[`${ruta.fecha}|${ruta.placa}`] = true;
             });
 

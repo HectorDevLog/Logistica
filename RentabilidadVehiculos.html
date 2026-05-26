@@ -110,8 +110,8 @@
             <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
             <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
             <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
-            <a href="Rentabilidad.html"><span>📊</span> Rentabilidad Total</a>
-            <a href="RentabilidadVehiculos.html" class="active"><span>🚛</span> Vehículos</a>
+            <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad Total</a>
+            <a href="RentabilidadVehiculos.html" class="active" id="linkVehiculos"><span>🚛</span> Vehículos</a>
             <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
             <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
         </div>
@@ -174,16 +174,9 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN (Oculta botones de Admin para los ruteadores)
+    // 🔒 RECUPERAR DATOS DE SESIÓN PARA LÓGICA INTERNA
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
-        linksToHide.forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        });
-    }
 
     let dbGlobal = [];
 

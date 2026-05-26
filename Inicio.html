@@ -163,7 +163,7 @@
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
-        <a href="AuditorMasivo.html" class="menu-card card-auditor">
+        <a href="AuditorMasivo.html" class="menu-card card-auditor" id="cardMasivo">
             <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path></svg></div>
             <div class="card-title">Auditor Masivo</div>
             <p class="card-desc">Sube matrices de Excel, audita la facturación de miles de pedidos e inyecta a la nube.</p>
@@ -236,11 +236,13 @@
     </div>
 
 <script>
+    // Recuperamos variable sesion (que seguridad.js no bloquea aquí por ámbito local)
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
 
     window.onload = function() {
-        // 🔥 SOLUCIÓN ESTRICTA: Limpiar memoria antigua del caché al entrar al inicio
+        if(!sesion) return;
+
+        // Limpiar memoria antigua del caché al entrar al inicio
         sessionStorage.removeItem('cacheTarifarioFull');
 
         document.getElementById('infoUsuario').innerHTML = `
@@ -253,14 +255,8 @@
         
         document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${sesion.nombre}!`;
 
-        if (sesion.rol !== 'Administrador') {
-            document.getElementById('cardRegistro').style.display = 'none';
-            document.getElementById('cardReportes').style.display = 'none'; 
-            document.getElementById('cardAuditoria').style.display = 'none'; 
-        }
-
         // =========================================================================
-        // 🚀 INICIO DEL MOTOR DE DESCARGA DIRECTA (SIEMPRE ACTUALIZADO)
+        // 🚀 INICIO DEL MOTOR DE DESCARGA DIRECTA
         // =========================================================================
         const dbNamePreload = "SimuladorDB";
         const storeNamePreload = "MonitorStore";
@@ -303,7 +299,7 @@
                     }
                 }, 1000);
 
-                // Forzar descarga fresca de tarifas, configuraciones y listas de vehículos
+                // Descarga de tarifas, configuraciones y base de datos
                 const [resDB, resTarifas, resTPeso, resTPedido, resTRango, resTMedida, resTrayecto] = await Promise.all([
                     fetch(SCRIPT_URL), fetch(`${SCRIPT_URL}?action=getTarifas`), fetch(`${SCRIPT_URL}?action=getTfaPeso`),
                     fetch(`${SCRIPT_URL}?action=getTfaPedido`), fetch(`${SCRIPT_URL}?action=getTfaRango`),
@@ -315,17 +311,30 @@
                 const tfaPedidoDB = await resTPedido.json(); const tfaRangoDB = await resTRango.json();
                 const tfaMedidaDB = await resTMedida.json(); const trayectoDB = await resTrayecto.json();
 
+                // 🔥 AQUÍ ESTÁ EL CAMBIO CRÍTICO: Ahora guarda Fecha y Placa para el Historial
                 let pedidosHistoricosArray = [];
                 let rutasPorDiaYPlaca = {};
+                let trackPedidosUnicos = new Set();
                 
                 dbData.forEach(row => { 
-                    if (row.listaIds) row.listaIds.split(',').forEach(id => pedidosHistoricosArray.push(String(id).trim())); 
                     if (row.fecha && row.placa) {
                         let fLimpia = String(row.fecha).trim();
                         if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
                         if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
                         let pLimpia = String(row.placa).trim().toUpperCase();
+                        
                         rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+
+                        if (row.listaIds) {
+                            row.listaIds.split(',').forEach(id => {
+                                let cleanId = String(id).trim();
+                                if(!trackPedidosUnicos.has(cleanId)) {
+                                    trackPedidosUnicos.add(cleanId);
+                                    // Guardamos el objeto completo para que la Auditoría pueda leer Fecha y Placa
+                                    pedidosHistoricosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                }
+                            });
+                        }
                     }
                 });
 

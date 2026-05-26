@@ -117,7 +117,7 @@
                 <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
                 <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
                 <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
-                <a href="Rentabilidad.html" class="active"><span>📊</span> Rentabilidad</a>
+                <a href="Rentabilidad.html" class="active" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
                 <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
                 <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
                 <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
@@ -190,7 +190,7 @@
     let rawData = [];
     window.dTarifasGlobal = []; 
 
-    // 🔒 VALIDACIÓN DE SESIÓN
+    // 🔒 RECUPERAR DATOS DE SESIÓN PARA LÓGICA INTERNA
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
@@ -232,16 +232,6 @@
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
-        
-        if (sesion.rol !== 'Administrador') {
-            let linksToHide = ['linkRegistro', 'linkReportes', 'linkAuditoria'];
-            linksToHide.forEach(id => {
-                let el = document.getElementById(id);
-                if(el) el.style.display = 'none';
-            });
-            document.getElementById('boxFiltroRegion').style.display = 'none';
-            document.getElementById('divRegion').style.display = 'none';
-        }
 
         // Setear el mes y fechas iniciales al mes actual
         const hoy = new Date();
@@ -387,11 +377,11 @@
 
             if(nuevosAgregados > 0) {
                 renderDashboard();
-                alert(`✅ Sincronización exitosa. Se procesaron ${nuevosAgregados} rutas vehiculares desde BigQuery.`);
+                alert(`✅ Sincronización exitosa. Se procesaron ${nuevosAgregados} rutas vehiculares desde la Nube.`);
             }
 
         } catch (error) {
-            alert("❌ Error procesando los datos de BigQuery: " + error.message);
+            alert("❌ Error procesando los datos de Drive/BigQuery: " + error.message);
         } finally {
             btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> Sincronizar Datos Nube`;
             btn.disabled = false;
@@ -435,7 +425,7 @@
 
         let totalDias = dateList.length;
 
-        // Limpiar el formato "2026-05-18T20:41:25.000Z" que pueda venir de Google Sheets
+        // Limpiar el formato "2026-05-18T20:41:25.000Z"
         let dataMes = rawData.map(d => {
             let fechaLimpia = String(d.fecha).trim();
             if (fechaLimpia.charAt(0) === "'") fechaLimpia = fechaLimpia.substring(1);

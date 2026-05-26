@@ -15,7 +15,7 @@
         }
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 13px; color: var(--slate-700); }
         
-        /* NAVBAR CORPORATIVO HORIZONTAL */
+        /* NAVBAR CORPORATIVO HORIZONTAL (Nuevo Diseño) */
         .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; white-space: nowrap; }
         
@@ -69,7 +69,7 @@
         .srv-exclusivo { background: #fef08a; color: #b45309; border: 1px solid #fde047;}
         .srv-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;}
 
-        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 4px;}
+        .badge-cobrado { background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid #fcd34d; display: inline-block; margin-top: 6px;}
         .badge-redespacho { background: var(--red-50); color: var(--red-600); padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid #fecaca; display: inline-block; margin-top: 4px;}
 
         .btn-edit-tfa { background: transparent; border: none; border-radius: 4px; cursor: pointer; color: var(--slate-400); padding: 2px; display: flex; align-items: center; transition: all 0.2s;}
@@ -94,7 +94,7 @@
 
 <div class="navbar" id="navbar">
     <div class="navbar-brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
         Auditoría de Rutas
     </div>
     
@@ -103,12 +103,12 @@
             <a href="Inicio.html"><span>🏠</span> Menú</a>
             <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
             <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
-            <a href="AuditorMasivo.html"><span>⚡</span> Carga Masiva</a>
-            <a href="AuditoriaRutas.html" class="active"><span>🔍</span> Auditoría</a>
-            <a href="Rentabilidad.html"><span>📊</span> Rentabilidad</a>
-            <a href="RentabilidadVehiculos.html"><span>🚛</span> Vehículos</a>
-            <a href="Reportes.html"><span>📈</span> Dashboard</a>
-            <a href="Registro.html"><span>🛡️</span> Accesos</a>
+            <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
+            <a href="AuditoriaRutas.html" class="active" id="linkAuditoria"><span>🔍</span> Auditoría</a>
+            <a href="Rentabilidad.html" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
+            <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
+            <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
+            <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
         </div>
     </div>
 
@@ -220,20 +220,12 @@
 </div>
 
 <script>
-    // 🔒 VALIDACIÓN DE SESIÓN ESTRICTA (SOLO ADMINISTRADORES)
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
-    if (sesion.rol !== 'Administrador') { 
-        alert("⛔ Acceso denegado. Este módulo es exclusivo para Administradores.");
-        window.location.href = 'Inicio.html'; 
-    }
-
     let dMonitor = [], trayectoDB = [];
     let dbRutas = []; 
     
     let rutaActiva = null;
     let idsRuta = [];
-    let pedidosHistoricosAuditoria = new Set(); 
+    let pedidosHistoricosAuditoria = {}; // Cambiado a objeto para guardar Fecha y Placa
     let tarifasBase = {}; 
     let tarifasEditadas = {}; 
     let totalIngresoCalculado = 0;
@@ -275,15 +267,18 @@
         const hoy = new Date();
         document.getElementById('buscarFecha').value = hoy.toISOString().split('T')[0];
 
-        document.getElementById('infoUsuario').innerHTML = `
-            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
-            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-        `;
+        // Usamos la variable 'sesion' que ya viene declarada en seguridad.js
+        if(sesion) {
+            document.getElementById('infoUsuario').innerHTML = `
+                <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
+                <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+            `;
+        }
 
         try {
             document.getElementById('divProgreso').style.display = 'block';
             
-            // 1. OBTENER RUTAS HISTÓRICAS (Obligatorio conectarse a internet para auditar lo más reciente)
+            // 1. OBTENER RUTAS HISTÓRICAS
             let promesaRutas = (async () => {
                 const resDB = await fetch(SCRIPT_URL);
                 dbRutas = await resDB.json();
@@ -321,7 +316,7 @@
                 }
             })();
 
-            // 3. CARGA DE BIGQUERY (CACHE-FIRST)
+            // 3. CARGA DE DRIVE (CACHE-FIRST)
             let promesaMonitor = (async () => {
                 const cacheMonitor = await obtenerDatoDB("monitorCargado");
                 if (cacheMonitor && cacheMonitor.length > 0) {
@@ -387,7 +382,8 @@
         document.getElementById('lblIngresoNube').innerText = `$${Number(rutaActiva.ingresos).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
         document.getElementById('lblPedidos').innerText = idsRuta.length;
         
-        pedidosHistoricosAuditoria.clear();
+        // --- GUARDAMOS LA FECHA Y PLACA DEL HISTÓRICO ---
+        pedidosHistoricosAuditoria = {}; 
         let indiceRutaActiva = dbRutas.indexOf(rutaActiva);
 
         dbRutas.forEach((r, index) => {
@@ -395,7 +391,12 @@
             let esMismoDiaPrevio = (r.fecha === f && index < indiceRutaActiva);
             if (esPasado || esMismoDiaPrevio) {
                 if (r.listaIds) {
-                    r.listaIds.split(',').forEach(id => pedidosHistoricosAuditoria.add(String(id).trim()));
+                    r.listaIds.split(',').forEach(id => {
+                        let cleanId = String(id).trim();
+                        if(!pedidosHistoricosAuditoria[cleanId]) {
+                            pedidosHistoricosAuditoria[cleanId] = { fecha: r.fecha, placa: r.placa };
+                        }
+                    });
                 }
             }
         });
@@ -460,7 +461,11 @@
                 pedidoMon['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(pedidoMon['TipoTrayecto'] || '-').trim().toUpperCase();
 
                 let calcNube = calcularTarifasAutomaticas(pedidoMon); 
-                let yaExisteEnFlexNet = pedidosHistoricosAuditoria.has(String(id).trim());
+                
+                // Comprobación en el objeto histórico
+                let historial = pedidosHistoricosAuditoria[String(id).trim()];
+                let yaExisteEnFlexNet = !!historial;
+                
                 let intentosNum = parseInt(pedidoMon['QTY_INCIDENCIAS'] || pedidoMon['NroIntentos'] || pedidoMon['Intentos'] || pedidoMon['intentos']) || 1;
                 if (parseInt(pedidoMon['QTY_INCIDENCIAS']) > 0) intentosNum += 1;
                 
@@ -478,8 +483,17 @@
                 let classTotal = tarifasEditadas[id] !== undefined ? "col-total tarifa-modificada" : "col-total";
                 
                 let htmlStatus = "";
+                
+                // --- DISEÑO: YA EN SISTEMA (Fecha y Placa) ---
                 if (yaExisteEnFlexNet) {
-                    htmlStatus = `<div class="badge-cobrado">YA EN SISTEMA</div>`;
+                    let partesF = historial.fecha.split('-');
+                    let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
+
+                    htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
+                        YA EN SISTEMA<br>
+                        <span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
+                    </div>`;
+                    
                     if (tarifasEditadas[id] === undefined) classTotal += " col-tachada"; 
                 } else if (intentosNum > 1) {
                     htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -489,7 +503,10 @@
                     <tr data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
                         <td><strong>${id}</strong></td>
                         <td style="font-size:0.85em;">${clienteStr}</td>
-                        <td style="font-size:0.8em; text-align:center;"><span class="badge-srv ${classServicio}">${servicioMonitor}<br>${htmlStatus}</span></td>
+                        <td style="font-size:0.8em; text-align:center;">
+                            <span class="badge-srv ${classServicio}">${servicioMonitor}</span>
+                            ${htmlStatus}
+                        </td>
                         <td style="text-align:center; font-size:0.8em;">${locOrigen}</td>
                         <td style="text-align:center; font-size:0.8em;">${cp}</td>
                         <td style="text-align:center;">${bultos}</td>
