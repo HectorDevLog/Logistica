@@ -35,6 +35,16 @@
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); margin-bottom: 25px; }
         .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: var(--slate-900); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; }
 
+        /* 🔥 BOTÓN DE REFRESCAR ELEGANTE 🔥 */
+        .btn-refresh {
+            width: auto; padding: 6px 12px; margin: 0; font-size: 0.8em; 
+            background: white; color: var(--slate-700); border: 1px solid var(--slate-300); 
+            border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; 
+            transition: all 0.2s; font-weight: 600;
+        }
+        .btn-refresh:hover { background: var(--slate-50); border-color: var(--purple-600); color: var(--purple-600); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .btn-refresh:active { transform: translateY(0); }
+
         /* 🔥 PÍLDORAS DE ESTADO ANIMADAS 🔥 */
         .status-pill {
             background: rgba(241, 245, 249, 0.8); border: 1px solid var(--slate-200);
@@ -108,6 +118,19 @@
         .filter-inline { padding: 4px 6px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 4px; background: white; outline: none; min-width: 140px; transition: all 0.2s;}
         .filter-inline:hover { border-color: var(--purple-600); }
         .filter-inline:focus { border-color: var(--purple-600); box-shadow: 0 0 0 3px #f3e8ff;}
+
+        /* 🔥 TOAST DE ÉXITO INFERIOR DERECHO 🔥 */
+        #toastExito {
+            position: fixed; bottom: 30px; right: 30px;
+            background: white; padding: 16px 24px; border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--emerald-600);
+            display: flex; align-items: center; gap: 15px;
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9999; font-weight: 600; font-size: 0.95em; color: var(--slate-800);
+        }
+        #toastExito.show { transform: translateX(0); }
     </style>
     
     <script src="config.js"></script>
@@ -141,7 +164,14 @@
 <div class="wrapper">
     <aside>
         <div class="card" style="border-top: 4px solid var(--purple-600); padding: 20px;">
-            <h3 style="margin-bottom: 15px;">☁️ Estado de Conexión</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px;">
+                <h3 style="margin:0; border:none; padding:0;">☁️ Estado de Conexión</h3>
+                <button onclick="forzarDescarga()" class="btn-refresh" title="Forzar actualización de Tarifario y Monitor">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                    Actualizar
+                </button>
+            </div>
+
             <div class="status-pill loading" id="pillTarifas">
                 <span class="status-dot loading" id="dotTarifas"></span>
                 <span id="txtTarifas">Tarifario: Conectando...</span>
@@ -243,6 +273,11 @@
     </main>
 </div>
 
+<div id="toastExito" class="toast-container">
+    <span style="font-size: 1.5em; line-height: 1;">✅</span>
+    <div id="toastExitoText">¡Actualización exitosa!</div>
+</div>
+
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
 
@@ -261,7 +296,7 @@
     let dbRutas = []; 
     
     let rutaActiva = null;
-    let idsRuta = [];
+    let idsRutaOriginal = []; 
     let pedidosHistoricosAuditoria = {}; 
     let tarifasBase = {}; 
     let tarifasEditadas = {}; 
@@ -344,7 +379,7 @@
             // 3. DESCARGA SILENCIOSA DE RUTAS HISTÓRICAS
             const btnBuscar = document.getElementById('btnBuscar');
             btnBuscar.disabled = true;
-            btnBuscar.innerHTML = `<span class="loader-spinner"></span> CARGANDO HISTÓRICO DE RUTAS...`;
+            btnBuscar.innerHTML = `<span class="loader-spinner"></span> CARGANDO HISTÓRICO...`;
 
             const resDB = await fetch(SCRIPT_URL);
             dbRutas = await resDB.json();
@@ -362,6 +397,27 @@
             document.getElementById('btnBuscar').innerHTML = "❌ ERROR AL CARGAR";
         }
     };
+
+    // 🔥 FUNCIÓN DEL BOTÓN MAESTRO "ACTUALIZAR NUBE" 🔥
+    async function forzarDescarga() {
+        if(confirm("¿Forzar la actualización de los datos desde la nube?")) {
+            setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
+            setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
+            sessionStorage.removeItem('cacheTarifarioFull');
+            
+            try {
+                const request = indexedDB.open(dbName, 1);
+                request.onsuccess = (e) => {
+                    const db = e.target.result;
+                    const tx = db.transaction(storeName, "readwrite");
+                    tx.objectStore(storeName).delete("monitorCargado");
+                    tx.oncomplete = () => { location.reload(); };
+                };
+            } catch(e) {
+                location.reload();
+            }
+        }
+    }
 
     function actualizarPlacasDisponibles() {
         const f = document.getElementById('buscarFecha').value;
@@ -391,11 +447,35 @@
         rutaActiva = dbRutas.find(r => r.fecha === f && String(r.placa).toUpperCase().trim() === p);
         if(!rutaActiva) return alert(`❌ No se encontró ninguna ruta guardada para el vehículo ${p} en la fecha ${f}.`);
 
-        idsRuta = String(rutaActiva.listaIds).split(',').map(x => x.trim()).filter(x => x);
-        if(idsRuta.length === 0) return alert("⚠️ La ruta se encontró pero no tiene pedidos registrados.");
+        // 🔥 LECTOR INTELIGENTE DE IDS EN AUDITORÍA (Extrae el precio guardado) 🔥
+        idsRutaOriginal = [];
+        tarifasBase = {};
+        
+        // El String() evita errores si Google Sheets envió un número entero.
+        let arrRaw = String(rutaActiva.listaIds).split(',').map(x => x.trim()).filter(x => x);
+        
+        arrRaw.forEach(item => {
+            let partes = item.split('-');
+            let idLimpio = partes[0].trim().replace(/\D/g, '');
+            
+            if(idLimpio) {
+                idsRutaOriginal.push(idLimpio);
+                
+                // Si el item tiene un precio guardado en BD, lo extraemos
+                if(partes.length > 1) {
+                    let precioStr = partes[1].replace(/[^\d.-]/g, '');
+                    let precioNum = parseFloat(precioStr);
+                    if(!isNaN(precioNum)) {
+                        tarifasBase[idLimpio] = precioNum;
+                    }
+                }
+            }
+        });
 
-        document.getElementById('lblIngresoNube').innerText = `$${Number(rutaActiva.ingresos).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-        document.getElementById('lblPedidos').innerText = idsRuta.length;
+        if(idsRutaOriginal.length === 0) return alert("⚠️ La ruta se encontró pero no tiene pedidos registrados.");
+
+        document.getElementById('lblIngresoNube').innerText = `$${Number(rutaActiva.ingresos).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('lblPedidos').innerText = idsRutaOriginal.length;
         
         // --- GUARDAMOS LA FECHA Y PLACA DEL HISTÓRICO ---
         pedidosHistoricosAuditoria = {}; 
@@ -406,9 +486,9 @@
             let esMismoDiaPrevio = (r.fecha === f && index < indiceRutaActiva);
             if (esPasado || esMismoDiaPrevio) {
                 if (r.listaIds) {
-                    r.listaIds.split(',').forEach(id => {
-                        let cleanId = String(id).trim();
-                        if(!pedidosHistoricosAuditoria[cleanId]) {
+                    String(r.listaIds).split(',').forEach(item => {
+                        let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
+                        if(cleanId && !pedidosHistoricosAuditoria[cleanId]) {
                             pedidosHistoricosAuditoria[cleanId] = { fecha: r.fecha, placa: r.placa };
                         }
                     });
@@ -416,9 +496,7 @@
             }
         });
 
-        tarifasBase = {};
         tarifasEditadas = {};
-        
         renderizarTabla();
         document.getElementById('btnGuardar').disabled = false;
     }
@@ -458,7 +536,7 @@
         let clientesEnTabla = new Set();
         let serviciosEnTabla = new Set();
 
-        idsRuta.forEach(id => {
+        idsRutaOriginal.forEach(id => {
             const pedidoMon = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             let htmlFila = "";
 
@@ -483,6 +561,7 @@
                 let intentosNum = parseInt(pedidoMon['QTY_INCIDENCIAS'] || pedidoMon['NroIntentos'] || pedidoMon['Intentos'] || pedidoMon['intentos']) || 1;
                 if (parseInt(pedidoMon['QTY_INCIDENCIAS']) > 0) intentosNum += 1;
                 
+                // Si la base de datos NO tenía un precio guardado, calculamos uno por defecto.
                 if(tarifasBase[id] === undefined) {
                     if (yaExisteEnFlexNet) {
                         tarifasBase[id] = 0;
@@ -498,6 +577,7 @@
                 
                 let htmlStatus = "";
                 
+                // --- DISEÑO: YA EN SISTEMA (Fecha y Placa) ---
                 if (yaExisteEnFlexNet) {
                     let partesF = historial.fecha.split('-');
                     let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
@@ -607,11 +687,19 @@
         btnConf.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> ACTUALIZANDO NUBE...`;
         btnConf.disabled = true;
         
+        // 🔥 INYECTAR LA NUEVA LISTA DE IDs CON LOS PRECIOS ACTUALIZADOS 🔥
+        let nuevosIdsConPrecio = [];
+        idsRutaOriginal.forEach(id => {
+            let cobroReal = tarifasEditadas[id] !== undefined ? tarifasEditadas[id] : tarifasBase[id];
+            nuevosIdsConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
+        });
+
         const payload = {
             action: 'update_ingreso_ruta',
             fecha: document.getElementById('buscarFecha').value,
             placa: document.getElementById('buscarPlaca').value, 
-            nuevoIngreso: totalIngresoCalculado
+            nuevoIngreso: totalIngresoCalculado,
+            nuevaListaIds: nuevosIdsConPrecio.join(', ') // <-- Se envía al backend
         };
 
         try {
@@ -622,10 +710,16 @@
                 body: JSON.stringify(payload) 
             });
             
-            alert("✅ ¡El ingreso de la ruta ha sido actualizado exitosamente en Google Sheets!");
+            // 🔥 TOAST NOTIFICACIÓN ANIMADO 🔥
+            document.getElementById('toastExitoText').innerText = `¡Ingreso actualizado exitosamente!`;
+            let toast = document.getElementById('toastExito');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 4000);
             
             rutaActiva.ingresos = totalIngresoCalculado;
-            document.getElementById('lblIngresoNube').innerText = `$${totalIngresoCalculado.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            rutaActiva.listaIds = nuevosIdsConPrecio.join(', '); // Actualizamos memoria local
+            
+            document.getElementById('lblIngresoNube').innerText = `$${totalIngresoCalculado.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('lblIngresoNuevo').classList.remove('val-diff');
             
         } catch (e) { 
