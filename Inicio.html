@@ -171,12 +171,27 @@
         .btn-save:hover { background: #1d4ed8; }
         .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
 
+        /* 🔥 NOTIFICACIÓN FLOTANTE (TOAST) PARA AVISOS LARGOS 🔥 */
+        .toast-container {
+            position: fixed; bottom: 30px; right: 30px;
+            background: white; padding: 20px; border-radius: 10px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.2);
+            border-left: 5px solid var(--amber-500);
+            display: flex; align-items: flex-start; gap: 15px;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999; max-width: 400px; line-height: 1.5; color: var(--slate-700);
+        }
+        .toast-container.show { transform: translateX(0); }
+        .toast-container strong { color: var(--slate-900); display: block; margin-bottom: 5px; font-size: 1.05em; }
+
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 15px; padding: 20px; text-align: center; }
             .user-info { flex-wrap: wrap; justify-content: center; gap: 10px; line-height: 1.5; }
             .hero { padding: 30px 15px 90px; }
             .hero h1 { font-size: 1.8em; }
             .menu-grid { margin-top: -60px; grid-template-columns: 1fr; }
+            .toast-container { right: 5%; left: 5%; bottom: 20px; width: auto; max-width: 100%; }
         }
     </style>
 </head>
@@ -198,16 +213,16 @@
         <div class="status-dashboard">
             <div class="status-pill loading" id="pillTarifas">
                 <span class="status-dot loading" id="dotTarifas"></span>
-                <span id="txtTarifas">Tarifario: Conectando...</span>
+                <span id="txtTarifas">Tarifario: Verificando Nube...</span>
             </div>
             <div class="status-pill loading" id="pillMonitor">
                 <span class="status-dot loading" id="dotMonitor"></span>
-                <span id="txtMonitor">Base Operativa: Conectando...</span>
+                <span id="txtMonitor">Base Operativa: Verificando Nube...</span>
             </div>
         </div>
 
         <div id="msgBloqueo">
-            ⏳ Por favor espere, sincronizando bases de datos...
+            ⏳ Verificando si hay cambios en la nube...
         </div>
     </div>
 
@@ -271,6 +286,14 @@
 
     </div>
 
+    <div id="toastInfo" class="toast-container" style="border-left-color: var(--amber-500);">
+        <span style="font-size: 2em; line-height: 1;">💡</span>
+        <div>
+            <strong>Datos actualizados</strong>
+            <span style="font-size: 0.95em;">i no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando. El sistema se actualizará automáticamente de forma progresiva; el monitor se refresca cada 15 minutos de manera automática. Si lo prefiere, puede actualizar la página manualmente desde la parte superior.</span>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalPerfil">
         <div class="modal-box">
             <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Actualizar Mi Perfil</h3>
@@ -305,18 +328,28 @@
     }
 
     // 🔥 FUNCIÓN PARA DESBLOQUEAR EL MENÚ 🔥
-    function desbloquearMenu() {
+    function desbloquearMenu(mostrarAlerta = false) {
         document.getElementById('menuGrid').classList.remove('locked');
         let msg = document.getElementById('msgBloqueo');
         msg.style.background = '#ecfdf5';
         msg.style.color = '#059669';
         msg.style.borderColor = '#a7f3d0';
-        msg.innerHTML = '✅ Bases de datos conectadas. Módulos habilitados.';
+        msg.innerHTML = '✅ Bases de datos sincronizadas. Módulos habilitados.';
         
         setTimeout(() => { 
             msg.style.opacity = '0'; 
             setTimeout(() => { msg.style.display = 'none'; }, 500); 
         }, 3000);
+
+        // Si se descargaron datos nuevos (mostrarAlerta es true), lanzamos el Toast explicativo
+        if(mostrarAlerta) {
+            setTimeout(() => {
+                let toast = document.getElementById('toastInfo');
+                toast.classList.add('show');
+                // Se oculta después de 12 segundos para dar tiempo a leerlo bien
+                setTimeout(() => { toast.classList.remove('show'); }, 12000);
+            }, 1000);
+        }
     }
 
     window.onload = async function() {
@@ -326,7 +359,7 @@
             <span>📍 ${sesion.ciudad}</span>
             <span style="opacity:0.5;">|</span>
             <span>👤 <b id="uiNombre">${sesion.nombre}</b> (${sesion.rol})</span>
-            <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Haz clic aquí si agregaste vehículos nuevos en Excel">🔄 Actualizar Nube</button>
+            <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Ignorar caché y descargar todo">🔄 Actualizar Nube</button>
             <button onclick="abrirModal()" class="btn-nav">⚙️ Perfil</button>
             <button onclick="cerrarSesion()" class="btn-nav btn-logout">Salir</button>
         `;
@@ -368,30 +401,39 @@
             return new Promise(resolve => tx.oncomplete = resolve);
         }
 
-        // --- VERIFICACIÓN DE CACHÉ ---
-        let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
-        let cacheMonitor = await obtenerDatoDBPreload("monitorCargado");
-        
-        let necesitaTarifas = !cacheTarifas;
-        let necesitaMonitor = (!cacheMonitor || !cacheMonitor.data || cacheMonitor.data.length === 0);
-
-        // SI YA TIENE LOS DATOS (CARGA ULTRA RÁPIDA EN 0.1s)
-        if (!necesitaTarifas && !necesitaMonitor) {
-            setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
-            setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitor.data.length} reg)`);
-            desbloquearMenu(); // Desbloquea de inmediato
-            return; 
-        }
-
-        // SI NO TIENE LOS DATOS (DESCARGA EN PARALELO OPTIMIZADA)
         try {
-            if (necesitaTarifas) setPillStatus('Tarifas', 'loading', 'Tarifario: Descargando Nube...');
-            if (necesitaMonitor) setPillStatus('Monitor', 'loading', 'Base Operativa: Sincronizando...');
+            // 🔥 1. PING INTELIGENTE AL SERVIDOR 🔥
+            const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
+            const ping = await resPing.json();
             
-            // 🔥 DISPARAMOS AMBAS DESCARGAS EN PARALELO
+            if (ping.error) throw new Error(ping.error);
+
+            // 2. OBTENER CACHÉS LOCALES
+            let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+            let cacheMonitorObj = await obtenerDatoDBPreload("monitorCargado");
+            
+            let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+            
+            // 3. DECISIÓN: ¿NECESITAMOS DESCARGAR ALGO?
+            let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
+            let necesitaMonitor = !cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0 || cacheMonitorObj.timestamp !== ping.monitorTs;
+
+            // CASO A: NO HUBO CAMBIOS, DESBLOQUEO INSTANTÁNEO
+            if (!necesitaTarifas && !necesitaMonitor) {
+                setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
+                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
+                desbloquearMenu(false); // Desbloquea sin alerta extra
+                return; 
+            }
+
+            // CASO B: HAY CAMBIOS, DESCARGAMOS LO QUE FALTE EN PARALELO
+            let msg = document.getElementById('msgBloqueo');
+            msg.innerHTML = '⏳ Hay cambios en la nube. Sincronizando bases de datos...';
+            
             const promesas = [];
             
             if (necesitaTarifas) {
+                setPillStatus('Tarifas', 'loading', 'Descargando Tarifario Nuevo...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
                     const dbData = allData.db || [];
                     const dTarifas = allData.tarifas || []; 
@@ -427,31 +469,37 @@
                         }
                     });
 
+                    // 🔥 GUARDAMOS EL CACHÉ CON LA NUEVA ESTAMPA DE TIEMPO 🔥
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                        rutasPorDiaYPlaca, pedidosHistoricosArray
+                        rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
                     }));
                     
                     setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
                 }));
+            } else {
+                setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
             }
 
             if (necesitaMonitor) {
+                setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
-                        await guardarDatoDBPreload("monitorCargado", jsonResponse, new Date().toLocaleString());
+                        // 🔥 GUARDAMOS EL CACHÉ CON LA NUEVA ESTAMPA DE TIEMPO 🔥
+                        await guardarDatoDBPreload("monitorCargado", jsonResponse, ping.monitorTs);
                         setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${jsonResponse.length} reg)`);
                     } else {
                         setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
                     }
                 }));
+            } else {
+                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
             }
 
-            // ESPERAMOS A QUE TERMINEN AMBAS (O LA QUE FALTABA)
             await Promise.all(promesas);
-
-            // TODO CARGADO -> DESBLOQUEAMOS
-            desbloquearMenu();
+            
+            // TODO CARGADO -> DESBLOQUEAMOS Y MOSTRAMOS LA ALERTA EDUCATIVA
+            desbloquearMenu(true);
 
         } catch(e) { 
             console.log("⚠️ Error en descarga:", e); 
@@ -466,9 +514,9 @@
         }
     };
 
-    // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" (Rompe la memoria)
+    // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAAL
     async function forzarDescarga() {
-        if(confirm("¿Forzar la descarga de los datos más recientes de la nube? Use esto solo si agregó vehículos nuevos o hizo cambios recientes.")) {
+        if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
             
             setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
             setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
