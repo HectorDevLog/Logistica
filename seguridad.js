@@ -104,9 +104,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let nombreActivo = String(authLocal.nombre).trim().toLowerCase();
 
         // PERMISOS ESPECIALES PARA LEO
-        if (nombreActivo.includes('leonardo florez')) {
-            let paginasExtra = ['AuditoriaRutas.html', 'AuditorMasivo.html'];
-            let elementosExtra = ['linkAuditoria', 'cardAuditoria', 'linkMasivo', 'cardMasivo'];
+        if (nombreActivo.includes('leonardo flores')) {
+            // Le agregamos Reportes.html a sus páginas habilitadas
+            let paginasExtra = ['AuditoriaRutas.html', 'AuditorMasivo.html', 'Reportes.html'];
+            // Le agregamos los botones/tarjetas de Reportes a sus elementos habilitados
+            let elementosExtra = ['linkAuditoria', 'cardAuditoria', 'linkMasivo', 'cardMasivo', 'linkReportes', 'cardReportes'];
             
             prohibidas = prohibidas.filter(p => !paginasExtra.includes(p));
             ocultos = ocultos.filter(e => !elementosExtra.includes(e));

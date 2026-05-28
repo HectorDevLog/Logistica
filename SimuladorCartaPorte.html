@@ -218,6 +218,10 @@
                 <span class="status-dot loading" id="dotMonitor"></span>
                 <span id="txtMonitor">Base Operativa: Verificando caché...</span>
             </div>
+            
+            <div id="alertaCambios" style="display: none; background: #fffbeb; color: #d97706; padding: 12px; border-radius: 6px; border: 1px solid #fcd34d; margin-top: 15px; font-size: 0.85em; font-weight: 700; text-align: center;">
+                ☁️ Hay cambios en la Nube. Haz clic en "Actualizar" arriba.
+            </div>
         </div>
 
         <div class="card">
@@ -284,7 +288,7 @@
                     </div>
                 </div>
 
-                <button id="btnCalc" class="btn-main" onclick="ejecutarCalculo()">
+                <button id="btnCalc" class="btn-main" onclick="ejecutarCalculo()" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     CALCULAR COSTOS Y RUTAS
                 </button>
@@ -385,6 +389,22 @@
         }
     }
 
+    // 🔥 FUNCIÓN PARA RESALTAR ERRORES 🔥
+    function resaltarError(id) {
+        let el = document.getElementById(id);
+        if(el) {
+            el.focus();
+            let oldBorder = el.style.borderColor || '';
+            let oldShadow = el.style.boxShadow || '';
+            el.style.borderColor = "var(--red-600)";
+            el.style.boxShadow = "0 0 0 3px var(--red-50)";
+            setTimeout(() => {
+                el.style.borderColor = oldBorder;
+                el.style.boxShadow = oldShadow;
+            }, 3000);
+        }
+    }
+
     let dMonitor = [], dTarifas = [], trayectoDB = [];
     let pedidosHistoricos = {}; 
     let rutasPorDiaYPlaca = {}; 
@@ -441,6 +461,45 @@
         return str;
     }
 
+    function iniciarPingFondo() {
+        setInterval(async function() {
+            try {
+                const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
+                const ping = await resPing.json();
+                
+                let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+                let cacheMonitorObj = await obtenerDatoDB("monitorCargado");
+                
+                let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+                
+                let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
+                let necesitaMonitor = !cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.timestamp !== ping.monitorTs;
+
+                if (necesitaTarifas || necesitaMonitor) {
+                    console.log("⚠️ Cambios detectados en la Nube. Descargando silenciosamente...");
+                    
+                    if(necesitaMonitor) {
+                        const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                        const jsonResponse = await resBQ.json();
+                        if(!jsonResponse.error) {
+                            dMonitor = jsonResponse;
+                            await guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
+                            setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
+                        }
+                    }
+                    
+                    let alerta = document.getElementById('alertaCambios');
+                    if(alerta) {
+                        alerta.style.display = 'block';
+                        alerta.innerText = "☁️ Se detectaron nuevos datos en la nube. Vuelva a extraer o calcular para refrescar.";
+                    }
+                }
+            } catch(e) {
+                console.log("⚠️ Error en ping de fondo.");
+            }
+        }, 180000); // Revisa cada 3 minutos
+    }
+
     window.onload = async function() {
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
@@ -448,28 +507,43 @@
         `;
         document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
 
-        // 1. CARGA DE DATOS DE LA NUBE O MEMORIA (OPTIMIZADO EN PARALELO)
-        let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
-        let cacheMonitor = await obtenerDatoDB("monitorCargado");
+        // 1. CARGA DE DATOS DE LA NUBE O MEMORIA
+        let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+        let cacheMonitorObj = await obtenerDatoDB("monitorCargado");
         
+        let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
         let necesitaTarifas = !cacheTarifas;
-        let necesitaMonitor = (!cacheMonitor || !cacheMonitor.data || cacheMonitor.data.length === 0);
+        let necesitaMonitor = !cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0;
 
         if (!necesitaTarifas && !necesitaMonitor) {
-            // CARGA ULTRA RÁPIDA DESDE LA MEMORIA
-            let parsed = JSON.parse(cacheTarifas);
-            dTarifas = parsed.dTarifas; window.tfaPesoDB = parsed.tfaPesoDB; window.tfaPedidoDB = parsed.tfaPedidoDB;
-            window.tfaRangoDB = parsed.tfaRangoDB; window.tfaMedidaDB = parsed.tfaMedidaDB; trayectoDB = parsed.trayectoDB;
-            rutasPorDiaYPlaca = parsed.rutasPorDiaYPlaca;
+            dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
+            window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
+            rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
             
             pedidosHistoricos = {};
-            if(parsed.pedidosHistoricosArray) {
-                parsed.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
+            if(cacheTarifas.pedidosHistoricosArray) {
+                cacheTarifas.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
             }
-            dMonitor = cacheMonitor.data;
+            dMonitor = cacheMonitorObj.data;
 
-            setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché)');
+            setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
             setPillStatus('Monitor', 'success', `Base Operativa: Lista (${dMonitor.length})`);
+            
+            cloudLista = true; monitorListo = true; 
+            cargarProveedores(); 
+            checkReady();
+            
+            fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                if (cacheTarifas.timestamp !== ping.tarifarioTs || cacheMonitorObj.timestamp !== ping.monitorTs) {
+                    let alerta = document.getElementById('alertaCambios');
+                    if(alerta) {
+                        alerta.style.display = 'block';
+                        alerta.innerText = "☁️ Hay cambios en la Nube. Haz clic en 'Actualizar' arriba.";
+                    }
+                }
+            }).catch(e => console.log(e));
+            
+            iniciarPingFondo();
             return;
         }
 
@@ -500,7 +574,6 @@
                             rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
 
                             if (row.listaIds) {
-                                // Lector seguro para el histórico (por si tienen precios adjuntos)
                                 row.listaIds.split(',').forEach(item => {
                                     let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
                                     if(cleanId && !pedidosHistoricos[cleanId]) {
@@ -512,10 +585,13 @@
                         }
                     });
 
-                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                        dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray
-                    }));
+                    fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                        sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                            dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
+                            tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, timestamp: ping.tarifarioTs
+                        }));
+                    });
+
                     setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
                 }));
             }
@@ -524,7 +600,9 @@
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
                         dMonitor = jsonResponse;
-                        await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
+                        fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                            guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
+                        });
                         setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
                     } else {
                         setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
@@ -534,19 +612,21 @@
 
             await Promise.all(promesas);
 
+            cloudLista = true; monitorListo = true; 
+            cargarProveedores();
+            checkReady();
+            iniciarPingFondo();
+
         } catch (e) {
             setPillStatus('Tarifas', 'error', 'Error de conexión a Internet');
             setPillStatus('Monitor', 'error', 'Intente refrescar la página');
         }
     };
 
-    // 🔥 FUNCIÓN DEL BOTÓN MAESTRO "ACTUALIZAR NUBE" 🔥
     async function forzarDescarga() {
-        if(confirm("¿Forzar la descarga de los datos más recientes de la nube? Use esto solo si agregó vehículos nuevos o hubo cambios recientes.")) {
-            
+        if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
             setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
             setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
-            
             sessionStorage.removeItem('cacheTarifarioFull');
             
             try {
@@ -563,7 +643,12 @@
         }
     }
 
+    function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
     function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
+
+    function cargarProveedores() {
+        // Dummy function for compatibility if needed. Proveedores list is loaded dynamically in the calculation anyway.
+    }
 
     function toggleModo() {
         let modo = document.querySelector('input[name="modoCP"]:checked').value;
@@ -692,6 +777,23 @@
         let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
         let isManual = (tipoGlobal === 'EXCLUSIVO' || tipoGlobal === 'POR RUTA' || tipoGlobal === 'POR PUNTO');
         
+        // 🔥 BLOQUEO DE COSTO OBLIGATORIO PARA EXTERNOS/MANUAL 🔥
+        if (isManual) {
+            if (tipoGlobal === 'EXCLUSIVO' || tipoGlobal === 'POR RUTA') {
+                let costoCheck = parseFloat(document.getElementById('costoManual').value) || 0;
+                if (costoCheck <= 0) {
+                    resaltarError('costoManual');
+                    return alert("⚠️ DATO OBLIGATORIO: Debe ingresar el Costo Fijo que cobrará el proveedor antes de calcular.");
+                }
+            } else if (tipoGlobal === 'POR PUNTO') {
+                let costoPuntoCheck = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+                if (costoPuntoCheck <= 0) {
+                    resaltarError('precioPuntosBase');
+                    return alert("⚠️ DATO OBLIGATORIO: Debe ingresar el Costo P. Base que cobrará el proveedor antes de calcular.");
+                }
+            }
+        }
+        
         let tbody = document.querySelector('#tblD tbody');
         tbody.innerHTML = '';
         
@@ -757,7 +859,7 @@
             totalCostos += costoVehiculo;
             
             let ingresosVehiculo = 0;
-            let idsArrConPrecio = []; // 🔥 Aquí se inyecta el ID con precio
+            let idsArrConPrecio = []; 
 
             pedidos.forEach(p => {
                 let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
@@ -808,7 +910,6 @@
                 ingresosVehiculo += cobroReal;
                 totalIngresos += cobroReal;
                 
-                // Formateamos para inyectar a la base de datos
                 idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
                 
                 let classServicio = servicioMonitor.includes("NORMAL") ? "srv-normal" : (servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : "srv-default");
@@ -838,9 +939,10 @@
                 </tr>`;
             });
 
+            // 🔥 APLICACIÓN ESTRICTA DE LA CIUDAD DEL RUTEADOR 🔥
             window.rutasAguardar.push({
                 fecha: fecha,
-                ciudad: provMatch ? provMatch.CIUDAD : "GENERAL",
+                ciudad: sesion.ciudad.trim().toUpperCase(),
                 pedidos: pedidos.length,
                 ingresos: ingresosVehiculo,
                 cBase: cBase,

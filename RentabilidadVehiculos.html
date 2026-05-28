@@ -89,7 +89,9 @@
         .row-total td:nth-child(-n+8) { background: var(--slate-900) !important; }
 
         .loader-container { padding: 40px; text-align: center; color: var(--blue-600); font-weight: 600; font-size: 1.1em; }
-        
+        .loader-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .badge-prov { font-size: 0.75em; font-weight: 700; color: white; background: var(--slate-400); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; letter-spacing: 0.5px;}
         .badge-itsa { background: var(--blue-600); }
     </style>
@@ -149,6 +151,17 @@
             <label>Hasta:</label>
             <input type="date" id="fechaFin" onchange="procesarMatriz()">
         </div>
+        
+        <div class="control-group">
+            <label>👤 Ingresado por:</label>
+            <select id="filtroUsuario" onchange="procesarMatriz()"></select>
+        </div>
+        
+        <div class="control-group">
+            <label>🛣️ Tipo de Ruta:</label>
+            <select id="filtroTipoRuta" onchange="procesarMatriz()"></select>
+        </div>
+
         <div class="control-group">
             <label>🌎 Ciudad:</label>
             <select id="filtroCiudad" onchange="procesarMatriz()"></select>
@@ -161,11 +174,11 @@
             <label>🚛 Vehículo:</label>
             <select id="filtroVehiculo" onchange="procesarMatriz()"></select>
         </div>
-        
-        <div class="legend-box">
-            <strong>Leyenda Diaria:</strong>
-            <span class="cell-p">P:</span> Pedidos | <span class="cell-i">I:</span> Ingreso | <span class="cell-c">C:</span> Costo | <span class="cell-r" style="border:none; padding:0;">R:</span> Rentabilidad
-        </div>
+    </div>
+
+    <div class="legend-box" style="margin-bottom: 20px;">
+        <strong>Leyenda Diaria de la Tabla:</strong>
+        <span class="cell-p">P:</span> Pedidos | <span class="cell-i">I:</span> Ingreso | <span class="cell-c">C:</span> Costo | <span class="cell-r" style="border:none; padding:0;">R:</span> Rentabilidad
     </div>
 
     <div class="table-container" id="contenedorTabla">
@@ -193,12 +206,37 @@
         seleccionarMes();
 
         try {
-            // Obtenemos directamente la base de datos de rutas guardadas
-            const res = await fetch(SCRIPT_URL);
-            dbGlobal = await res.json();
+            // 1. CARGAMOS CACHÉ SI EXISTE
+            let cacheRutasStr = sessionStorage.getItem('cacheRutasGlobal');
+            let cacheRutas = cacheRutasStr ? JSON.parse(cacheRutasStr) : null;
             
-            cargarFiltros();
-            procesarMatriz();
+            if (cacheRutas) {
+                dbGlobal = cacheRutas.data;
+                cargarFiltros();
+                procesarMatriz();
+                
+                // Ping en segundo plano
+                fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                    if(cacheRutas.timestamp !== ping.tarifarioTs) {
+                        fetch(SCRIPT_URL).then(r=>r.json()).then(newData => {
+                            dbGlobal = newData;
+                            sessionStorage.setItem('cacheRutasGlobal', JSON.stringify({data: dbGlobal, timestamp: ping.tarifarioTs}));
+                            cargarFiltros();
+                            procesarMatriz();
+                        });
+                    }
+                });
+            } else {
+                const res = await fetch(SCRIPT_URL);
+                dbGlobal = await res.json();
+                
+                fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                    sessionStorage.setItem('cacheRutasGlobal', JSON.stringify({data: dbGlobal, timestamp: ping.tarifarioTs}));
+                });
+                
+                cargarFiltros();
+                procesarMatriz();
+            }
         } catch (error) {
             document.getElementById('contenedorTabla').innerHTML = `<div class="loader-container" style="color:var(--red-600);">❌ Error cargando los datos. Verifique su internet.</div>`;
         }
@@ -223,6 +261,8 @@
         const ciudades = [...new Set(dbGlobal.map(r => r.ciudad))].filter(Boolean).sort();
         const vehiculos = [...new Set(dbGlobal.map(r => r.placa))].filter(Boolean).sort();
         const proveedores = [...new Set(dbGlobal.map(r => r.proveedor || "GENERAL"))].filter(Boolean).sort();
+        const usuarios = [...new Set(dbGlobal.map(r => r.usuario))].filter(Boolean).sort();
+        const tiposRuta = [...new Set(dbGlobal.map(r => r.tipoRuta || "NORMAL"))].filter(Boolean).sort(); 
 
         const selC = document.getElementById('filtroCiudad');
         selC.innerHTML = '<option value="ALL">Todas las Ciudades</option>';
@@ -231,12 +271,22 @@
                 selC.innerHTML += `<option value="${c}">${c}</option>`;
             }
         });
-        
-        // Bloqueo de ciudad para usuarios No Administradores
         if (sesion.rol !== 'Administrador') { 
             selC.value = sesion.ciudad; 
             selC.disabled = true; 
         }
+
+        const selU = document.getElementById('filtroUsuario');
+        selU.innerHTML = '<option value="ALL">Todos los Usuarios</option>';
+        usuarios.forEach(u => { selU.innerHTML += `<option value="${u}">${u}</option>`; });
+        if (sesion.rol !== 'Administrador') {
+            selU.value = sesion.nombre;
+            selU.disabled = true;
+        }
+        
+        const selTR = document.getElementById('filtroTipoRuta');
+        selTR.innerHTML = '<option value="ALL">Todos los Tipos</option>';
+        tiposRuta.forEach(tr => { selTR.innerHTML += `<option value="${tr}">${tr}</option>`; });
 
         const selV = document.getElementById('filtroVehiculo');
         selV.innerHTML = '<option value="ALL">Todos los Vehículos</option>';
@@ -272,6 +322,8 @@
         const fCiudad = document.getElementById('filtroCiudad').value;
         const fVehiculo = document.getElementById('filtroVehiculo').value;
         const fProv = document.getElementById('filtroProv').value;
+        const fUsuario = document.getElementById('filtroUsuario').value;
+        const fTipoRuta = document.getElementById('filtroTipoRuta').value; 
 
         if(!fIniStr || !fFinStr) return;
 
@@ -279,18 +331,20 @@
         const dFin = formatearFechaEcuador(fFinStr);
         const diasDelRango = getFechasEnRango(dIni, dFin);
 
-        // FILTRADO DE DATOS
         let datosFiltrados = dbGlobal.filter(r => {
             if(!r.fecha) return false;
             let fr = formatearFechaEcuador(r.fecha);
+            
             if(fr < dIni || fr > dFin) return false;
             if(fCiudad !== 'ALL' && r.ciudad !== fCiudad) return false;
             if(fVehiculo !== 'ALL' && r.placa !== fVehiculo) return false;
             if(fProv !== 'ALL' && (r.proveedor || "GENERAL") !== fProv) return false;
+            if(fUsuario !== 'ALL' && r.usuario !== fUsuario) return false;
+            if(fTipoRuta !== 'ALL' && (r.tipoRuta || "NORMAL") !== fTipoRuta) return false; 
+            
             return true;
         });
 
-        // AGRUPACIÓN POR VEHÍCULO
         let matriz = {};
         datosFiltrados.forEach(r => {
             let p = r.placa;
@@ -388,7 +442,6 @@
             tbody += row;
         });
 
-        // FILA DE TOTALES GLOBALES
         let renGlobal = sumaGlobalIng - sumaGlobalCos;
         let marGlobal = sumaGlobalIng > 0 ? (renGlobal / sumaGlobalIng) * 100 : 0;
 
@@ -407,7 +460,6 @@
 
         document.getElementById('contenedorTabla').innerHTML = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 
-        // ACTUALIZAR KPIs
         document.getElementById('kpiIngresos').innerText = formatearMoneda(sumaGlobalIng);
         document.getElementById('kpiCostos').innerText = formatearMoneda(sumaGlobalCos);
         document.getElementById('kpiRentabilidad').innerText = formatearMoneda(renGlobal);
