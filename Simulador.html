@@ -133,6 +133,7 @@
         td { padding: 10px 10px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
         
         .col-tarifa { color: #64748b; font-size: 0.9em; }
+        
         .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         
         .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
@@ -163,10 +164,10 @@
             background: white; padding: 16px 24px; border-radius: 8px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             border-left: 5px solid var(--emerald-600);
-            display: flex; align-items: center; gap: 15px;
+            display: flex; align-items: flex-start; gap: 15px;
             transform: translateX(150%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 9999; font-weight: 600; font-size: 0.95em; color: var(--slate-800);
+            z-index: 9999; font-weight: 600; font-size: 0.95em; color: var(--slate-800); max-width: 350px; line-height: 1.4;
         }
         #toastExito.show { transform: translateX(0); }
     </style>
@@ -212,11 +213,15 @@
 
             <div class="status-pill loading" id="pillTarifas" style="margin-bottom: 12px;">
                 <span class="status-dot loading" id="dotTarifas"></span>
-                <span id="txtTarifas">Tarifario: Conectando...</span>
+                <span id="txtTarifas">Tarifario: Verificando caché...</span>
             </div>
             <div class="status-pill loading" id="pillMonitor" style="margin-bottom: 0px;">
                 <span class="status-dot loading" id="dotMonitor"></span>
-                <span id="txtMonitor">Base Operativa: Conectando...</span>
+                <span id="txtMonitor">Base Operativa: Verificando caché...</span>
+            </div>
+            
+            <div id="alertaCambios" style="display: none; background: #fffbeb; color: #d97706; padding: 12px; border-radius: 6px; border: 1px solid #fcd34d; margin-top: 15px; font-size: 0.85em; font-weight: 700; text-align: center;">
+                ☁️ Hay cambios en la Nube. Haz clic en "Actualizar" arriba.
             </div>
         </div>
 
@@ -259,7 +264,7 @@
 
                 <div id="subPanelManual" style="margin-top:10px;">
                     <div class="row-flex">
-                        <div style="flex:1"><label>Costo Acordado ($):</label><input type="number" id="costoManual" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
+                        <div style="flex:1"><label>Costo Fijo Operativo ($):</label><input type="number" id="costoManual" value="0" min="0" step="0.01" oninput="marcarCambios()"></div>
                     </div>
                     <div class="row-flex" style="margin-top:10px;">
                         <div style="flex:1"><label>Cant. Estibas:</label><input type="number" id="estibasManual" value="0" min="0" oninput="marcarCambios()"></div>
@@ -278,16 +283,16 @@
                 </div>
             </div>
             
+            <div id="divIngresoRepartir" style="display:none; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:15px;">
+                <label style="color: var(--blue-600);">💰 Ingreso General (A prorratear entre exclusivos según peso):</label>
+                <input type="number" id="ingresoRepartir" value="0" min="0" step="0.01">
+            </div>
+            
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
                 <label>📦 Cargar IDs de Pedidos:</label>
                 <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--blue-600); margin-bottom:6px;">0 Únicos</span>
             </div>
-            
             <textarea id="txtPedidos" rows="6" oninput="contarPedidos(); marcarCambios();" placeholder="Pegue aquí el listado de IDs (Hacia abajo o separados por comas)..."></textarea>
-
-            <div id="alertaCambios">
-                ⚠️ Se detectaron cambios en la configuración. Haga clic en "CALCULAR SIMULACIÓN" para actualizar.
-            </div>
 
             <button id="btnCalc" class="btn-main" onclick="ejecutar()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -380,7 +385,7 @@
 </div>
 
 <div id="toastExito" class="toast-container">
-    <span style="font-size: 1.5em; line-height: 1;">✅</span>
+    <span style="font-size: 2em; line-height: 1; padding-top: 5px;">✅</span>
     <div id="toastExitoText">¡Ruta guardada con éxito!</div>
 </div>
 
@@ -389,7 +394,6 @@
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
-    // Función auxiliar para cambiar el estado de las píldoras
     function setPillStatus(id, state, text) {
         let pill = document.getElementById('pill' + id);
         let dot = document.getElementById('dot' + id);
@@ -398,6 +402,21 @@
             pill.className = 'status-pill ' + state;
             dot.className = 'status-dot ' + state;
             txt.innerText = text;
+        }
+    }
+
+    function resaltarError(id) {
+        let el = document.getElementById(id);
+        if(el) {
+            el.focus();
+            let oldBorder = el.style.borderColor || '';
+            let oldShadow = el.style.boxShadow || '';
+            el.style.borderColor = "var(--red-600)";
+            el.style.boxShadow = "0 0 0 3px var(--red-50)";
+            setTimeout(() => {
+                el.style.borderColor = oldBorder;
+                el.style.boxShadow = oldShadow;
+            }, 3000);
         }
     }
 
@@ -441,6 +460,12 @@
         return new Promise(resolve => tx.oncomplete = resolve);
     }
 
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
+        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
     function formatearFechaUniversal(val) {
         if (!val) return "";
         let str = String(val).trim();
@@ -456,16 +481,58 @@
         return str;
     }
 
-    // 🚀 LECTOR UNIVERSAL INTELIGENTE
+    function iniciarPingFondo() {
+        setInterval(async function() {
+            try {
+                const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
+                const ping = await resPing.json();
+                
+                let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+                let cacheMonitorObj = await obtenerDatoDB("monitorCargado");
+                
+                let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+                
+                let dMonitorCache = null;
+                let tsMonitorCache = null;
+                if (cacheMonitorObj) {
+                    if (Array.isArray(cacheMonitorObj)) dMonitorCache = cacheMonitorObj;
+                    else if (cacheMonitorObj.data) {
+                        dMonitorCache = cacheMonitorObj.data;
+                        tsMonitorCache = cacheMonitorObj.timestamp;
+                    }
+                }
+
+                let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
+                let necesitaMonitor = !dMonitorCache || dMonitorCache.length === 0 || tsMonitorCache !== ping.monitorTs;
+
+                if (necesitaTarifas || necesitaMonitor) {
+                    if(necesitaMonitor) {
+                        const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
+                        const jsonResponse = await resBQ.json();
+                        if(!jsonResponse.error) {
+                            dMonitor = jsonResponse;
+                            await guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
+                            setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
+                        }
+                    }
+                    
+                    let alerta = document.getElementById('alertaCambios');
+                    if(alerta) {
+                        alerta.style.display = 'block';
+                        alerta.innerText = "☁️ Se detectaron nuevos datos en la nube. Vuelva a calcular para refrescar.";
+                    }
+                }
+            } catch(e) { console.log("⚠️ Error en ping de fondo."); }
+        }, 180000); 
+    }
+
     function obtenerIdsLimpios() {
         let rawText = document.getElementById('txtPedidos').value;
-        // Soporta tanto saltos de línea (\n) como comas (,)
         let rawItems = rawText.split(/[\n,]/);
         let ids = [];
         
         rawItems.forEach(item => {
             if(item) {
-                // Si el item viene con guion, solo tomamos la parte de la izquierda.
                 let strId = String(item).split('-')[0].trim().replace(/\D/g, '');
                 if(strId && strId.length > 3) {
                     ids.push(strId);
@@ -482,110 +549,130 @@
         `;
         document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
 
-        // 1. CARGA DE DATOS DE LA NUBE O MEMORIA
-        let cacheTarifas = sessionStorage.getItem('cacheTarifarioFull');
-        let cacheMonitor = await obtenerDatoDB("monitorCargado");
+        let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+        let cacheMonitorObj = await obtenerDatoDB("monitorCargado");
         
-        let necesitaTarifas = !cacheTarifas;
-        let necesitaMonitor = (!cacheMonitor || !cacheMonitor.data || cacheMonitor.data.length === 0);
+        let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+        
+        let dMonitorCache = null;
+        let tsMonitorCache = null;
+        if (cacheMonitorObj) {
+            if (Array.isArray(cacheMonitorObj)) dMonitorCache = cacheMonitorObj;
+            else if (cacheMonitorObj.data) {
+                dMonitorCache = cacheMonitorObj.data;
+                tsMonitorCache = cacheMonitorObj.timestamp;
+            } else {
+                dMonitorCache = cacheMonitorObj;
+            }
+        }
 
-        if (!necesitaTarifas && !necesitaMonitor) {
-            // CARGA ULTRA RÁPIDA DESDE LA MEMORIA
-            let parsed = JSON.parse(cacheTarifas);
-            dTarifas = parsed.dTarifas; tfaPesoDB = parsed.tfaPesoDB; tfaPedidoDB = parsed.tfaPedidoDB;
-            tfaRangoDB = parsed.tfaRangoDB; tfaMedidaDB = parsed.tfaMedidaDB; trayectoDB = parsed.trayectoDB;
-            rutasPorDiaYPlaca = parsed.rutasPorDiaYPlaca;
+        let necesitaTarifas = !cacheTarifas;
+        let necesitaMonitor = !dMonitorCache || dMonitorCache.length === 0;
+
+        const promesas = [];
+
+        if (!necesitaTarifas) {
+            dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
+            window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
+            rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
             
             pedidosHistoricos = {};
-            if(parsed.pedidosHistoricosArray) {
-                parsed.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
+            if(cacheTarifas.pedidosHistoricosArray) {
+                cacheTarifas.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
             }
-            dMonitor = cacheMonitor.data;
+            setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
+        } else {
+            setPillStatus('Tarifas', 'loading', 'Descargando Tarifario...');
+            promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
+                const dbData = allData.db || [];
+                dTarifas = allData.tarifas || []; 
+                window.tfaPesoDB = allData.peso || [];
+                window.tfaPedidoDB = allData.pedido || []; 
+                window.tfaRangoDB = allData.rango || [];
+                window.tfaMedidaDB = allData.medida || []; 
+                trayectoDB = allData.trayecto || [];
 
-            setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché)');
-            setPillStatus('Monitor', 'success', `Base Operativa: Lista (${dMonitor.length})`);
-            
-            cloudLista = true; monitorListo = true; 
-            cargarProveedores(); checkReady();
-            return;
-        }
+                pedidosHistoricos = {};
+                rutasPorDiaYPlaca = {};
+                let pedidosArray = [];
+                
+                dbData.forEach(row => { 
+                    if (row.fecha && row.placa) {
+                        let fLimpia = formatearFechaUniversal(row.fecha);
+                        let pLimpia = String(row.placa).trim().toUpperCase();
+                        rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
 
-        try {
-            if(necesitaTarifas) setPillStatus('Tarifas', 'loading', 'Descargando Tarifario...');
-            if(necesitaMonitor) setPillStatus('Monitor', 'loading', 'Descargando Base Operativa...');
-
-            const promesas = [];
-            
-            if (necesitaTarifas) {
-                promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
-                    const dbData = allData.db || [];
-                    dTarifas = allData.tarifas || []; 
-                    tfaPesoDB = allData.peso || [];
-                    tfaPedidoDB = allData.pedido || []; 
-                    tfaRangoDB = allData.rango || [];
-                    tfaMedidaDB = allData.medida || []; 
-                    trayectoDB = allData.trayecto || [];
-
-                    pedidosHistoricos = {};
-                    rutasPorDiaYPlaca = {};
-                    let pedidosArray = [];
-                    
-                    dbData.forEach(row => { 
-                        if (row.fecha && row.placa) {
-                            let fLimpia = formatearFechaUniversal(row.fecha);
-                            let pLimpia = String(row.placa).trim().toUpperCase();
-                            rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
-
-                            if (row.listaIds) {
-                                row.listaIds.split(',').forEach(item => {
-                                    let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
-                                    if(cleanId && !pedidosHistoricos[cleanId]) {
-                                        pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
-                                        pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
-                                    }
-                                });
-                            }
+                        if (row.listaIds) {
+                            row.listaIds.split(',').forEach(item => {
+                                let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
+                                if(cleanId && !pedidosHistoricos[cleanId]) {
+                                    pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
+                                    pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                }
+                            });
                         }
-                    });
-
-                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                        dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                        rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray
-                    }));
-                    setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
-                }));
-            }
-
-            if (necesitaMonitor) {
-                promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
-                    if(!jsonResponse.error) {
-                        dMonitor = jsonResponse;
-                        await guardarDatoDB("monitorCargado", dMonitor, new Date().toLocaleString());
-                        setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
-                    } else {
-                        setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
                     }
-                }));
-            }
+                });
 
-            await Promise.all(promesas);
+                fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                        dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, timestamp: ping.tarifarioTs
+                    }));
+                });
 
-            cloudLista = true; monitorListo = true; 
-            cargarProveedores(); checkReady();
-
-        } catch (e) {
-            setPillStatus('Tarifas', 'error', 'Error de conexión a Internet');
-            setPillStatus('Monitor', 'error', 'Intente refrescar la página');
+                setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
+            }));
         }
+
+        if (!necesitaMonitor) {
+            dMonitor = dMonitorCache;
+            setPillStatus('Monitor', 'success', `Base Operativa: Lista (${dMonitor.length})`);
+        } else {
+            setPillStatus('Monitor', 'loading', 'Descargando Base Operativa...');
+            promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
+                if(!jsonResponse.error) {
+                    dMonitor = jsonResponse;
+                    fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+                        guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
+                    });
+                    setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
+                } else {
+                    setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
+                }
+            }));
+        }
+
+        if (promesas.length > 0) {
+            try { await Promise.all(promesas); } catch (e) {
+                setPillStatus('Tarifas', 'error', 'Error de conexión a Internet');
+                setPillStatus('Monitor', 'error', 'Intente refrescar la página');
+            }
+        }
+
+        cloudLista = true; monitorListo = true; 
+        cargarProveedores(); checkReady();
+        
+        fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
+            let tTs = cacheTarifas ? cacheTarifas.timestamp : null;
+            let mTs = tsMonitorCache;
+
+            if ((tTs && tTs !== ping.tarifarioTs) || (mTs && mTs !== ping.monitorTs)) {
+                let alerta = document.getElementById('alertaCambios');
+                if(alerta) {
+                    alerta.style.display = 'block';
+                    alerta.innerText = "☁️ Hay cambios en la Nube. Haz clic en 'Actualizar' arriba.";
+                }
+            }
+        }).catch(e => console.log(e));
+        
+        iniciarPingFondo();
     };
 
-    // 🔥 FUNCIÓN DEL BOTÓN MAESTRO "ACTUALIZAR NUBE" (Rompe la memoria) 🔥
     async function forzarDescarga() {
-        if(confirm("¿Forzar la descarga de los datos más recientes de la nube? Use esto solo si agregó vehículos nuevos o hubo cambios recientes.")) {
-            
+        if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
             setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
             setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
-            
             sessionStorage.removeItem('cacheTarifarioFull');
             
             try {
@@ -596,20 +683,12 @@
                     tx.objectStore(storeName).delete("monitorCargado");
                     tx.oncomplete = () => { location.reload(); };
                 };
-            } catch(e) {
-                location.reload();
-            }
+            } catch(e) { location.reload(); }
         }
     }
 
     function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
     function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
-
-    function parseDinero(valorExcel) {
-        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
-        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
-        return parseFloat(limpio) || 0;
-    }
 
     function cargarProveedores() {
         const provs = [...new Set(dTarifas.map(v => v.PROVEEDOR))];
@@ -651,6 +730,9 @@
         const tipo = document.getElementById('tipoServicioOtros').value;
         document.getElementById('subPanelManual').style.display = (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') ? 'block' : 'none';
         document.getElementById('subPanelPuntos').style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
+        
+        // 🔥 Mostrar Prorrateo si NO es NORMAL 🔥
+        document.getElementById('divIngresoRepartir').style.display = (tipo === 'NORMAL') ? 'none' : 'block';
     }
 
     function verificarVehiculoRepetido() {
@@ -738,62 +820,82 @@
             return alert("⚠️ Seleccione Fecha, Proveedor y Vehículo para calcular.");
         }
 
+        const isItsa = prov.toUpperCase().includes('ITSACOURIER') || prov.toUpperCase().includes('ENTREGAR');
+        let tipoGlobal = isItsa ? document.getElementById('tipoServicioItsa').value : document.getElementById('tipoServicioOtros').value;
+        let isManual = !isItsa;
+
+        // 🔥 VALIDACIÓN DE COSTO OBLIGATORIO 🔥
+        if (isManual) {
+            if (tipoGlobal === 'EXCLUSIVO' || tipoGlobal === 'POR RUTA') {
+                let costoCheck = parseFloat(document.getElementById('costoManual').value) || 0;
+                if (costoCheck <= 0) {
+                    resaltarError('costoManual');
+                    return alert("⚠️ DATO OBLIGATORIO: Debe ingresar el Costo Fijo Operativo que cobrará el proveedor antes de calcular.");
+                }
+            } else if (tipoGlobal === 'POR PUNTO') {
+                let costoPuntoCheck = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+                if (costoPuntoCheck <= 0) {
+                    resaltarError('precioPuntosBase');
+                    return alert("⚠️ DATO OBLIGATORIO: Debe ingresar el Costo P. Base que cobrará el proveedor antes de calcular.");
+                }
+            }
+        }
+
         const ids = obtenerIdsLimpios();
         if (ids.length === 0) return alert("⚠️ Ingrese al menos un ID de pedido numérico.");
 
         for (let id of ids) {
-            if (!/^\d+$/.test(id)) return alert(`⚠️ El ID (${id}) es incorrecto. Debe contener solo números.`);
-            
             const existe = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             if (!existe) return alert(`❌ PEDIDO NO EXISTE (${id}). Presione el botón "Actualizar" si cree que es un pedido muy reciente.`);
         }
 
         const opt = selV.options[selV.selectedIndex];
-        const isItsa = prov.toUpperCase().includes('ITSACOURIER') || prov.toUpperCase().includes('ENTREGAR');
         const placaVehiculo = opt.text.split(' - ')[0].trim().toUpperCase();
         const yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placaVehiculo}`] === true;
 
         let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
         let detalleCostoText = "";
 
-        if (isItsa) {
-            const tipoItsa = document.getElementById('tipoServicioItsa').value;
-            const cantEstibas = parseFloat(document.getElementById('estibasItsa').value) || 0;
-            const cantHE = parseFloat(document.getElementById('heItsa').value) || 0;
-            
-            cEstibas = cantEstibas * 30;
-            cHE = cantHE * parseFloat(opt.dataset.he);
+        let estItsa = parseFloat(document.getElementById('estibasItsa').value) || 0;
+        let heItsa = parseFloat(document.getElementById('heItsa').value) || 0;
+        let cFijoManual = parseFloat(document.getElementById('costoManual').value) || 0;
+        let estManual = parseFloat(document.getElementById('estibasManual').value) || 0;
+        let pEstManual = parseFloat(document.getElementById('precioEstibaManual').value) || 0;
+        let pBasePunto = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+        let cBasePunto = parseFloat(document.getElementById('cantPuntosBase').value) || 0;
+        let pAdPunto = parseFloat(document.getElementById('precioPuntoAdicional').value) || 0;
 
-            if (tipoItsa === 'NORMAL') {
+        let ingresoRepartir = parseFloat(document.getElementById('ingresoRepartir').value) || 0;
+
+        if (isItsa) {
+            cEstibas = estItsa * 30;
+            let heTarifa = parseDinero(opt.dataset.he);
+            if (heTarifa === 0) heTarifa = 6.25;
+            cHE = heItsa * heTarifa;
+
+            if (tipoGlobal === 'NORMAL') {
                 cBase = yaSalioHoy ? 0 : parseFloat(opt.value);
                 detalleCostoText = `Base: $${cBase} (Ya Salió: ${yaSalioHoy ? 'Sí' : 'No'}) | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
-            } else if (tipoItsa === 'EXCLUSIVO HORARIO LABORAL') {
+            } else if (tipoGlobal === 'EXCLUSIVO HORARIO LABORAL') {
                 cBase = 0; 
                 cExc = parseFloat(opt.dataset.exlab);
                 detalleCostoText = `Exc Lab: $${cExc} | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
-            } else if (tipoItsa === 'EXCLUSIVO FUERA HORARIO') {
+            } else if (tipoGlobal === 'EXCLUSIVO FUERA HORARIO') {
                 cBase = 0;
                 cExc = parseFloat(opt.dataset.exfuer);
                 detalleCostoText = `Exc Fuera: $${cExc} | Est: $${cEstibas} | HE: $${cHE.toFixed(2)}`;
             }
         } else {
-            const tipoOtros = document.getElementById('tipoServicioOtros').value;
-            if (tipoOtros === 'EXCLUSIVO' || tipoOtros === 'POR RUTA') {
-                cExc = parseFloat(document.getElementById('costoManual').value) || 0;
-                let cantEstibas = parseFloat(document.getElementById('estibasManual').value) || 0;
-                let preEstiba = parseFloat(document.getElementById('precioEstibaManual').value) || 0;
-                cEstibas = cantEstibas * preEstiba;
-                detalleCostoText = `${tipoOtros}: $${cExc} | Estibas: $${cEstibas}`;
-            } else if (tipoOtros === 'POR PUNTO') {
-                let pBase = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
-                let cantBase = parseFloat(document.getElementById('cantPuntosBase').value) || 0;
-                let pAdicional = parseFloat(document.getElementById('precioPuntoAdicional').value) || 0;
-                
+            if (tipoGlobal === 'EXCLUSIVO' || tipoGlobal === 'POR RUTA') {
+                cExc = cFijoManual;
+                cEstibas = estManual * pEstManual;
+                detalleCostoText = `${tipoGlobal}: $${cExc} | Estibas: $${cEstibas}`;
+            } else if (tipoGlobal === 'POR PUNTO') {
                 let puntosTotales = ids.length;
-                if (puntosTotales <= cantBase) {
-                    cExc = pBase;
+                if (puntosTotales <= cBasePunto) {
+                    cExc = pBasePunto;
                 } else {
-                    cExc = pBase + ((puntosTotales - cantBase) * pAdicional);
+                    cExc = pBasePunto + ((puntosTotales - cBasePunto) * pAdPunto);
                 }
                 detalleCostoText = `Por Punto: $${cExc} (${puntosTotales} pts)`;
             }
@@ -808,89 +910,125 @@
         let lineasTextarea = []; 
         let idsParaBD = [];
 
+        // 🔥 FASE 1: CLASIFICAR EXCLUSIVOS Y CALCULAR PESOS RESTANTES 🔥
+        let pesoTotalExclusivosRestantes = 0;
+        let cantidadExclusivosRestantes = 0;
+        let sumaEditadosExclusivos = 0;
+
+        let arrayPedidosObject = [];
+
         ids.forEach(id => {
             const p = dMonitor.find(x => String(x['PEDIDOID']) === String(id) || String(x['idpedido']) === String(id) || String(x['2idpedido']) === String(id));
             if(p) {
-                let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-                let locOrigen = String(p['Localidad_Origen'] || p['Localidad_origen'] || p['localidad_origen'] || '-').trim().toUpperCase();
-                let bultos = p['cantidad_bultos'] || p['Cantidad_Bultos'] || p['Bultos'] || 1;
-                let clienteStr = String(p.Cliente || 'SIN CLIENTE').trim().toUpperCase();
                 let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
+                let esExclusivo = servicioMonitor.includes("EXCLUSIVO");
                 
-                clientesEnTabla.add(clienteStr);
-                serviciosEnTabla.add(servicioMonitor);
+                p._calcNube = calcularTarifasAutomaticas(p);
+                p._esExclusivo = esExclusivo;
+                p._yaExiste = !!pedidosHistoricos[String(id).trim()];
 
-                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
-                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(p['TipoTrayecto'] || p['Tipo_Trayecto'] || p['Trayecto'] || '-').trim().toUpperCase();
-
-                let calcNube = calcularTarifasAutomaticas(p);
-                let tfaCalculada = calcNube.total > 0 ? calcNube.total : 0;
-
-                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
-                let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-                
-                let historial = pedidosHistoricos[String(id).trim()];
-                let yaExisteEnFlexNet = !!historial;
-
-                let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
-
-                if (yaExisteEnFlexNet) {
-                    cobroReal = 0; 
-                    classTotal += " col-tachada"; 
-                    
-                    let partesF = historial.fecha.split('-');
-                    let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
-
-                    htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
-                        YA EN SISTEMA<br>
-                        <span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
-                    </div>`;
-                } else {
-                    cobroReal = tfaCalculada;
-                    if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+                if (!p._yaExiste && esExclusivo) {
+                    if (tarifasModificadas[id] !== undefined) {
+                        sumaEditadosExclusivos += parseFloat(tarifasModificadas[id]);
+                    } else {
+                        pesoTotalExclusivosRestantes += p._calcNube.pesoUsado;
+                        cantidadExclusivosRestantes++;
+                    }
                 }
-
-                if (tarifasModificadas[id] !== undefined) {
-                    cobroReal = parseFloat(tarifasModificadas[id]);
-                    classTotal += " tarifa-modificada"; 
-                }
-
-                tIngresosValidos += cobroReal;
-                
-                // Formateo visual y guardado inteligente
-                let stringFormateado = `${id} - ($${cobroReal.toFixed(2)})`;
-                lineasTextarea.push(stringFormateado);
-                idsParaBD.push(stringFormateado);
-                
-                let classServicio = "srv-default";
-                if(servicioMonitor.includes("NORMAL")) classServicio = "srv-normal";
-                else if(servicioMonitor.includes("EXCLUSIVO")) classServicio = "srv-exclusivo";
-
-                tbody.innerHTML += `<tr data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
-                    <td><strong>${id}</strong></td>
-                    <td style="font-size:0.85em;">${clienteStr}</td>
-                    <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
-                    <td style="font-size:0.8em; text-align:center;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
-                    <td style="text-align:center;"><span class="badge-loc badge-origen">${locOrigen}</span></td>
-                    <td style="text-align:center;"><span class="badge-loc">${cp}</span></td>
-                    <td style="color:var(--slate-500); font-size:0.85em;">${p['TipoTrayecto']}</td>
-                    <td style="text-align:center; font-weight:700;">${bultos}</td>
-                    <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
-                    <td class="col-tarifa">$${calcNube.tfaPeso.toFixed(2)}</td>
-                    <td class="col-tarifa">$${calcNube.tfaPedido.toFixed(2)}</td>
-                    <td class="col-tarifa">$${calcNube.tfaRango.toFixed(2)}</td>
-                    <td class="col-tarifa">$${calcNube.tfaMedida.toFixed(2)}</td>
-                    <td class="${classTotal}">
-                        <span>$${cobroReal.toFixed(2)}</span>
-                        <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa Manualmente">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                    </td>
-                </tr>`;
+                arrayPedidosObject.push(p);
             }
         });
 
-        // Actualizamos visualmente el área de texto
+        // Restamos lo editado manualmente al ingreso global. Evitamos que baje de 0.
+        let ingresoRestante = ingresoRepartir - sumaEditadosExclusivos;
+        if (ingresoRestante < 0) ingresoRestante = 0;
+
+        // 🔥 FASE 2: ASIGNACIÓN DE PRECIOS Y RENDERIZADO 🔥
+        arrayPedidosObject.forEach(p => {
+            let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
+            let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+            let locOrigen = String(p['Localidad_Origen'] || p['Localidad_origen'] || p['localidad_origen'] || '-').trim().toUpperCase();
+            let bultos = p['cantidad_bultos'] || p['Cantidad_Bultos'] || p['Bultos'] || 1;
+            
+            let clienteStr = String(p.Cliente || 'SIN CLIENTE').trim().toUpperCase();
+            let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
+            clientesEnTabla.add(clienteStr);
+            serviciosEnTabla.add(servicioMonitor);
+
+            let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+            p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+
+            let calcNube = p._calcNube;
+            let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
+            let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
+            
+            let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
+
+            if (p._yaExiste) {
+                // YA COBRADO EN OTRA RUTA
+                cobroReal = 0; 
+                classTotal += " col-tachada"; 
+                let historial = pedidosHistoricos[String(id).trim()];
+                let partesF = historial.fecha.split('-');
+                let fechaFmt = partesF.length === 3 ? `${partesF[2]}/${partesF[1]}/${partesF[0]}` : historial.fecha;
+
+                htmlStatus = `<div class="badge-cobrado" style="display:block; white-space:normal; line-height:1.4;">
+                    YA EN SISTEMA<br><span style="font-weight:normal; font-size:0.95em;">${fechaFmt} - <b>${historial.placa}</b></span>
+                </div>`;
+
+            } else if (tarifasModificadas[id] !== undefined) {
+                // FUE EDITADO MANUALMENTE (Normal o Exclusivo, se respeta esto siempre)
+                cobroReal = parseFloat(tarifasModificadas[id]);
+                classTotal += " tarifa-modificada"; 
+                if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+
+            } else {
+                // CÁLCULO NORMAL DEL SISTEMA
+                if (p._esExclusivo && tipoGlobal !== 'NORMAL' && ingresoRepartir > 0) {
+                    // PRORRATEO INTELIGENTE (Solo para los exclusivos que NO fueron editados)
+                    if (pesoTotalExclusivosRestantes > 0) {
+                        cobroReal = (calcNube.pesoUsado / pesoTotalExclusivosRestantes) * ingresoRestante;
+                    } else {
+                        cobroReal = cantidadExclusivosRestantes > 0 ? (ingresoRestante / cantidadExclusivosRestantes) : 0; 
+                    }
+                } else {
+                    // NORMAL O SIN INGRESO GLOBAL
+                    cobroReal = calcNube.total > 0 ? calcNube.total : 0;
+                }
+                if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
+            }
+
+            tIngresosValidos += cobroReal;
+            
+            let stringFormateado = `${id} - ($${cobroReal.toFixed(2)})`;
+            lineasTextarea.push(stringFormateado);
+            idsParaBD.push(stringFormateado);
+            
+            let classServicio = p._esExclusivo ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
+
+            tbody.innerHTML += `<tr data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
+                <td><strong>${id}</strong></td>
+                <td style="font-size:0.85em;">${clienteStr}</td>
+                <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
+                <td style="font-size:0.8em; text-align:center;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
+                <td style="text-align:center;"><span class="badge-loc badge-origen">${locOrigen}</span></td>
+                <td style="text-align:center;"><span class="badge-loc">${cp}</span></td>
+                <td style="color:var(--slate-500); font-size:0.85em;">${p['TipoTrayecto'] || '-'}</td>
+                <td style="text-align:center; font-weight:700;">${bultos}</td>
+                <td style="text-align:center;">${calcNube.pesoUsado.toFixed(2)}</td>
+                <td class="col-tarifa">$${calcNube.tfaPeso.toFixed(2)}</td>
+                <td class="col-tarifa">$${calcNube.tfaPedido.toFixed(2)}</td>
+                <td class="col-tarifa">$${calcNube.tfaRango.toFixed(2)}</td>
+                <td class="col-tarifa">$${calcNube.tfaMedida.toFixed(2)}</td>
+                <td class="${classTotal}">
+                    <span>$${cobroReal.toFixed(2)}</span>
+                    <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa Manualmente">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                </td>
+            </tr>`;
+        });
+
         document.getElementById('txtPedidos').value = lineasTextarea.join('\n');
 
         let selFiltroCliente = document.getElementById('filtroTablaCliente');
@@ -967,17 +1105,23 @@
         btnConf.disabled = true;
         
         try {
-            await fetch(SCRIPT_URL, { 
+            let res = await fetch(SCRIPT_URL, { 
                 method: 'POST', 
-                mode: 'no-cors', 
-                headers: { "Content-Type": "text/plain" }, 
                 body: JSON.stringify(rutaData) 
             });
+            let dataResp = await res.json();
             
-            // Lanza el Toast Notification Automático
+            let idsGenerados = dataResp.id_registro || "Desconocido";
+
+            // 🔥 TOAST NOTIFICACIÓN CON ID DE BD 🔥
+            document.getElementById('toastExitoText').innerHTML = `¡Ruta guardada con éxito!<br>
+            <span style="font-size:0.85em; font-weight:normal; color:var(--slate-600);">
+            <b>ID(s) Registro:</b> ${idsGenerados}
+            </span>`;
+            
             let toast = document.getElementById('toastExito');
             toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 4000);
+            setTimeout(() => { toast.classList.remove('show'); }, 6000);
             
             ids.forEach(id => {
                 pedidosHistoricos[String(id).trim()] = { fecha: fechaElegida, placa: placaVehiculo };
