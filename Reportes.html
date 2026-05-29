@@ -370,7 +370,12 @@
 
         const selU = document.getElementById('filtroUsuario');
         usuarios.forEach(u => { selU.innerHTML += `<option value="${u}">${u}</option>`; });
-        if (sesion.rol !== 'Administrador') {
+        
+        // Excepción: Administradores o Leonardo Flores tienen acceso total al filtro
+        let nombreUsuario = String(sesion.nombre).trim().toLowerCase();
+        let tieneAccesoUsuarios = (sesion.rol === 'Administrador' || nombreUsuario.includes('leonardo flores'));
+
+        if (!tieneAccesoUsuarios) {
             selU.value = sesion.nombre;
             selU.disabled = true;
         }
