@@ -859,7 +859,7 @@
 
     setTimeout(() => {
         try {
-            // 1. Mapear CPs a ID Registros (CORREGIDO: Convertimos a String para evitar el crasheo)
+            // 1. Mapear CPs a ID Registros (Convertimos a String para evitar crasheos)
             let cpAIdRegistroMap = {};
             dbRutas.forEach(r => {
                 if (r.cartaPorte && r.cartaPorte !== "SIN CARTA PORTE") {
@@ -876,10 +876,14 @@
                 if(id) monitorIdMap[id] = p;
             });
 
-            // 3. Buscar discrepancias aplicando tu lógica de "Intentos"
+            // 3. Buscar discrepancias (CON FILTROS ESTRICTOS)
             dbRutas.forEach(rutaOrigen => {
                 if (!rutaOrigen.listaIds) return;
-                
+
+                // REGLA A: Ignorar rutas de origen que no tenían Carta Porte real
+                let cpsRutaOrigen = String(rutaOrigen.cartaPorte).toUpperCase().split(',').map(x => x.trim());
+                if (cpsRutaOrigen.includes('SIN CARTA PORTE') || cpsRutaOrigen.join('') === '') return;
+
                 let idsRaw = String(rutaOrigen.listaIds).split(',').filter(x => x);
                 idsRaw.forEach(item => {
                     let partes = item.split('-');
@@ -889,25 +893,27 @@
                     let pMon = monitorIdMap[idLimpio];
                     if (pMon) {
                         let cpMonitor = String(pMon['ULTIMA_CARTA_PORTE'] || pMon['Carta_Porte'] || pMon['CARTA_PORTE'] || pMon['CARTA PORTE'] || '').trim().toUpperCase();
-                        let cpsRutaOrigen = String(rutaOrigen.cartaPorte).toUpperCase().split(',').map(x => x.trim());
 
-                        // Extraemos los intentos actuales del monitor
                         let intentosNum = parseInt(pMon['QTY_INCIDENCIAS'] || pMon['NroIntentos'] || pMon['Intentos'] || pMon['intentos']) || 1;
                         if (parseInt(pMon['QTY_INCIDENCIAS']) > 0) intentosNum += 1;
 
-                        // LÓGICA NUEVA: Si cambió de CP y el número de intentos se mantiene como 1 (no es redespacho)
+                        // REGLA B: Solo si cambió a una CP válida y tiene 1 solo intento
                         if (cpMonitor !== '' && cpMonitor !== 'SIN CARTA PORTE' && !cpsRutaOrigen.includes(cpMonitor) && intentosNum === 1) {
                             
                             let rutaDestino = cpAIdRegistroMap[cpMonitor];
-                            discrepanciasEncontradas.push({
-                                idPedido: idLimpio,
-                                precio: precioGuardado,
-                                strOriginal: item.trim(),
-                                rOrigen: rutaOrigen,
-                                cpOrigen: rutaOrigen.cartaPorte,
-                                cpDestino: cpMonitor,
-                                rDestino: rutaDestino
-                            });
+                            
+                            // REGLA C: SOLO MOSTRAR si la ruta destino YA ESTÁ INGRESADA en el sistema (existe en IDs_Pedidos)
+                            if (rutaDestino) {
+                                discrepanciasEncontradas.push({
+                                    idPedido: idLimpio,
+                                    precio: precioGuardado,
+                                    strOriginal: item.trim(),
+                                    rOrigen: rutaOrigen,
+                                    cpOrigen: rutaOrigen.cartaPorte,
+                                    cpDestino: cpMonitor,
+                                    rDestino: rutaDestino
+                                });
+                            }
                         }
                     }
                 });
@@ -916,7 +922,6 @@
             renderizarModalConciliacion();
             
         } catch (error) {
-            // Si algo falla, ahora te avisará en lugar de quedarse congelado
             console.error("Error en el motor de conciliación:", error);
             alert("Ocurrió un error al analizar las rutas: " + error.message);
             cerrarConciliador();
@@ -930,12 +935,15 @@
 
     function renderizarModalConciliacion() {
         const tbody = document.querySelector('#tblConciliacion tbody');
-        tbody.innerHTML = '';
 
         if (discrepanciasEncontradas.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--emerald-600); font-weight:bold;">¡Todo está en orden! No se detectaron pedidos movidos a otras Cartas Porte.</td></tr>`;
             return;
         }
+
+        // 🔥 LA SOLUCIÓN AL CONGELAMIENTO 🔥
+        // Acumulamos el HTML en una variable de texto en lugar de inyectarlo fila por fila
+        let filasHtml = "";
 
         discrepanciasEncontradas.forEach((disc, idx) => {
             let chkDisabled = disc.rDestino ? "" : "disabled";
@@ -945,7 +953,7 @@
             
             let idDestinoHtml = disc.rDestino ? `Ruta #${disc.rDestino.idRegistro} (${disc.cpDestino})` : `CP ${disc.cpDestino}`;
 
-            tbody.innerHTML += `
+            filasHtml += `
                 <tr style="${disc.rDestino ? '' : 'background:#f8fafc; color:#94a3b8;'}">
                     <td style="text-align:center;"><input type="checkbox" class="chk-conciliar" value="${idx}" ${chkDisabled}></td>
                     <td><b>${disc.idPedido}</b></td>
@@ -956,6 +964,9 @@
                 </tr>
             `;
         });
+
+        // Insertamos todo el bloque de una sola vez en el DOM (Cero congelamientos)
+        tbody.innerHTML = filasHtml;
 
         document.getElementById('btnAplicarConciliacion').disabled = false;
     }

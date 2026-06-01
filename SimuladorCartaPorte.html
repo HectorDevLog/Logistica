@@ -846,6 +846,7 @@
                     cExc = cFijoManual;
                 }
                 cEstibas = estManual * pEstManual;
+                体积 = 0; 
             } else {
                 cEstibas = estItsa * 30;
                 let heTarifa = parseDinero(opt['HORAS EXTRAS']);
@@ -864,14 +865,19 @@
             let costoVehiculo = cBase + cEstibas + cExc + cHE;
             totalCostos += costoVehiculo;
             
-            // 🔥 FASE 1: CLASIFICAR EXCLUSIVOS Y CALCULAR PESOS RESTANTES 🔥
+            // 🔥 FASE 1 CORREGIDA: ENCONTRAR TRAYECTO ANTES DE INVOCAR AL MOTOR DE TARIFAS 🔥
             let pesoTotalExclusivosRestantes = 0;
             let cantidadExclusivosRestantes = 0;
             
             pedidos.forEach(p => {
                 let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
+                let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
                 let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
                 let esExclusivo = servicioMonitor.includes("EXCLUSIVO");
+                
+                // Determinamos el trayecto aquí para que calcularTarifasAutomaticas tenga el dato listo
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
                 
                 p._calcNube = calcularTarifasAutomaticas(p);
                 p._esExclusivo = esExclusivo;
@@ -885,7 +891,7 @@
                 }
             });
 
-            // 🔥 FASE 2: ASIGNACIÓN DE PRECIOS Y RENDERIZADO 🔥
+            // 🔥 FASE 2: ASIGNACIÓN DE PRECIOS Y RENDERIZADO VISUAL 🔥
             let ingresosVehiculo = 0;
             let idsArrConPrecio = []; 
             let cpsDeVehiculo = [...new Set(pedidos.map(p => String(p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || p['CARTA_PORTE'] || p['CARTA PORTE'] || '').trim()).filter(Boolean))].join(', ');
@@ -902,9 +908,6 @@
                 clientesEnTabla.add(clienteStr);
                 serviciosEnTabla.add(servicioMonitor);
 
-                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
-                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
-
                 let calcNube = p._calcNube;
                 let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
                 let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
@@ -912,7 +915,6 @@
                 let cobroReal = 0; let htmlStatus = ""; let classTotal = "col-total";
 
                 if (p._yaExiste) {
-                    // YA COBRADO EN OTRA RUTA
                     cobroReal = 0; 
                     classTotal += " col-tachada"; 
                     let historial = pedidosHistoricos[String(id).trim()];
@@ -924,22 +926,18 @@
                     </div>`;
 
                 } else if (window.tarifasModificadas[id] !== undefined) {
-                    // FUE EDITADO MANUALMENTE (Normal o Exclusivo, se respeta esto siempre)
                     cobroReal = parseFloat(window.tarifasModificadas[id]);
                     classTotal += " tarifa-modificada"; 
                     if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
 
                 } else {
-                    // CÁLCULO NORMAL DEL SISTEMA
                     if (p._esExclusivo && tipoGlobal !== 'NORMAL' && ingresoRepartir > 0) {
-                        // PRORRATEO INTELIGENTE (Solo para los exclusivos que NO fueron editados)
                         if (pesoTotalExclusivosRestantes > 0) {
                             cobroReal = (calcNube.pesoUsado / pesoTotalExclusivosRestantes) * ingresoRepartir;
                         } else {
                             cobroReal = cantidadExclusivosRestantes > 0 ? (ingresoRepartir / cantidadExclusivosRestantes) : 0; 
                         }
                     } else {
-                        // NORMAL O SIN INGRESO GLOBAL
                         cobroReal = calcNube.total > 0 ? calcNube.total : 0;
                     }
                     if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -1002,10 +1000,9 @@
 
         selFiltroCliente.innerHTML = '<option value="TODOS">Todos</option>';
         [...clientesEnTabla].sort().forEach(c => { selFiltroCliente.innerHTML += `<option value="${c}">${c}</option>`; });
-        
+
         selFiltroServicio.innerHTML = '<option value="TODOS">Todos</option>';
         [...serviciosEnTabla].sort().forEach(s => { selFiltroServicio.innerHTML += `<option value="${s}">${s}</option>`; });
-
         if (clientesEnTabla.has(valPrevCliente)) selFiltroCliente.value = valPrevCliente;
         if (serviciosEnTabla.has(valPrevServicio)) selFiltroServicio.value = valPrevServicio;
 
@@ -1027,7 +1024,6 @@
 
         document.getElementById('btnSave').disabled = false;
     }
-
     async function guardarRutas() {
         if(!window.rutasAguardar || window.rutasAguardar.length === 0) return alert("Calcule las rutas primero.");
 
