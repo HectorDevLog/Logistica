@@ -141,56 +141,52 @@
                 </h3>
                 <div class="checkbox-group">
                     <strong style="color:var(--slate-900); font-weight:700;">Mostrar Tablas:</strong>
-                    <label><input type="checkbox" id="chkGeneral" checked> Detalle Operativo</label>
-                    <label><input type="checkbox" id="chkVehiculos" checked> Resumen Vehículos</label>
+                    <label><input type="checkbox" id="chkGeneral" checked onchange="aplicarFiltros()"> Detalle Operativo</label>
+                    <label><input type="checkbox" id="chkVehiculos" checked onchange="aplicarFiltros()"> Resumen Vehículos</label>
                 </div>
             </div>
 
             <div class="filter-grid">
                 <div class="form-group">
                     <label>Fecha Inicio:</label>
-                    <input type="date" id="filtroInicio">
+                    <input type="date" id="filtroInicio" onchange="aplicarFiltros()">
                 </div>
                 <div class="form-group">
                     <label>Fecha Fin:</label>
-                    <input type="date" id="filtroFin">
+                    <input type="date" id="filtroFin" onchange="aplicarFiltros()">
                 </div>
                 
                 <div class="form-group">
-                    <label>👤 Ingresado por:</label>
-                    <select id="filtroUsuario">
-                        <option value="TODOS">Todos los Usuarios</option>
+                    <label>👤 Ingresado por: <span style="font-size:0.75em; font-weight:normal; color:var(--slate-400);">(Ctrl/Cmd para varios)</span></label>
+                    <select id="filtroUsuario" multiple style="height: 85px;" onchange="aplicarFiltros()">
+                        <option value="TODOS" selected>Todos los Usuarios</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>🛣️ Tipo de Ruta:</label>
-                    <select id="filtroTipoRuta">
-                        <option value="TODAS">Todos los Tipos</option>
+                    <label>🛣️ Tipo de Ruta: <span style="font-size:0.75em; font-weight:normal; color:var(--slate-400);">(Ctrl/Cmd para varios)</span></label>
+                    <select id="filtroTipoRuta" multiple style="height: 85px;" onchange="aplicarFiltros()">
+                        <option value="TODAS" selected>Todos los Tipos</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Ciudad Operativa:</label>
-                    <select id="filtroCiudad">
-                        <option value="TODAS">Todas las Ciudades</option>
+                    <label>Ciudad Operativa: <span style="font-size:0.75em; font-weight:normal; color:var(--slate-400);">(Ctrl/Cmd para varios)</span></label>
+                    <select id="filtroCiudad" multiple style="height: 85px;" onchange="aplicarFiltros()">
+                        <option value="TODAS" selected>Todas las Ciudades</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
-                    <label>Proveedor:</label>
-                    <select id="filtroProv">
-                        <option value="TODOS">Todos los Proveedores</option>
+                    <label>Proveedor: <span style="font-size:0.75em; font-weight:normal; color:var(--slate-400);">(Ctrl/Cmd para varios)</span></label>
+                    <select id="filtroProv" multiple style="height: 85px;" onchange="aplicarFiltros()">
+                        <option value="TODOS" selected>Todos los Proveedores</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
                     <label>Placa Vehículo:</label>
-                    <input type="text" id="filtroPlaca" placeholder="Ej. GTO9407">
-                </div>
-                <div class="form-group" style="justify-content: flex-end;">
-                    <button class="btn-action btn-filter" onclick="aplicarFiltros()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        Aplicar Filtros
-                    </button>
+                    <input type="text" id="filtroPlaca" placeholder="Ej. GTO9407" oninput="aplicarFiltros()">
                 </div>
             </div>
         </div>
@@ -387,11 +383,15 @@
     function aplicarFiltros() {
         const fInicio = document.getElementById('filtroInicio').value;
         const fFin = document.getElementById('filtroFin').value;
-        const fCiudad = document.getElementById('filtroCiudad').value;
-        const fProv = document.getElementById('filtroProv').value;
         const fPlaca = document.getElementById('filtroPlaca').value.toUpperCase().trim();
-        const fUsuario = document.getElementById('filtroUsuario').value; 
-        const fTipoRuta = document.getElementById('filtroTipoRuta').value; 
+        
+        // Función auxiliar para atrapar todas las opciones que el usuario seleccionó en la cajita
+        const getValoresMultiples = (id) => Array.from(document.getElementById(id).selectedOptions).map(opt => opt.value);
+        
+        const fCiudad = getValoresMultiples('filtroCiudad');
+        const fProv = getValoresMultiples('filtroProv');
+        const fUsuario = getValoresMultiples('filtroUsuario'); 
+        const fTipoRuta = getValoresMultiples('filtroTipoRuta'); 
         
         const verGeneral = document.getElementById('chkGeneral').checked;
         const verVehiculos = document.getElementById('chkVehiculos').checked;
@@ -400,12 +400,15 @@
         document.getElementById('seccionVehiculos').style.display = verVehiculos ? 'block' : 'none';
 
         dbFiltrada = dbOriginal.filter(fila => {
+            // Filtros tradicionales (Texto y Fechas)
             let pasaFecha = (!fInicio || fila.fecha >= fInicio) && (!fFin || fila.fecha <= fFin);
-            let pasaCiudad = (fCiudad === "TODAS" || fila.ciudad === fCiudad);
             let pasaPlaca = (!fPlaca || (fila.placa && fila.placa.includes(fPlaca)));
-            let pasaProv = (fProv === "TODOS" || (fila.proveedor || "GENERAL") === fProv);
-            let pasaUsuario = (fUsuario === "TODOS" || fila.usuario === fUsuario); 
-            let pasaTipoRuta = (fTipoRuta === "TODAS" || (fila.tipoRuta || "NORMAL") === fTipoRuta); 
+            
+            // NUEVO: Filtros de selección múltiple (Pasa si tiene la palabra "TODOS", si no hay nada seleccionado, o si coincide con los datos)
+            let pasaCiudad = fCiudad.includes("TODAS") || fCiudad.length === 0 || fCiudad.includes(fila.ciudad);
+            let pasaProv = fProv.includes("TODOS") || fProv.length === 0 || fProv.includes(fila.proveedor || "GENERAL");
+            let pasaUsuario = fUsuario.includes("TODOS") || fUsuario.length === 0 || fUsuario.includes(fila.usuario); 
+            let pasaTipoRuta = fTipoRuta.includes("TODAS") || fTipoRuta.length === 0 || fTipoRuta.includes(fila.tipoRuta || "NORMAL"); 
             
             return pasaFecha && pasaCiudad && pasaPlaca && pasaProv && pasaUsuario && pasaTipoRuta;
         });

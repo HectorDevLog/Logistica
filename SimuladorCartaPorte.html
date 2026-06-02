@@ -738,16 +738,20 @@
 
         if(encontrados.length === 0) return alert("❌ No se encontraron pedidos en el Monitor para las Cartas Porte ingresadas.");
 
+        // 🔥 CAMBIO CLAVE 1: Agrupar estrictamente por Carta Porte 🔥
         let agrupado = {};
         encontrados.forEach(p => {
-            let placa = String(p['VEHICULO'] || p['Vehiculo'] || p['vehiculo'] || p['PLACA'] || p['Placa'] || 'SIN_PLACA').toUpperCase().trim();
-            if(!agrupado[placa]) agrupado[placa] = [];
-            agrupado[placa].push(p);
+            let cp = String(p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || p['CARTA_PORTE'] || p['CARTA PORTE'] || 'SIN_CP').trim().toUpperCase();
+            if(!agrupado[cp]) agrupado[cp] = [];
+            agrupado[cp].push(p);
         });
 
-        let resumenHtml = `<strong style='color:var(--blue-600); font-size:1.1em;'>Camiones Detectados (${Object.keys(agrupado).length}):</strong><ul style='margin:8px 0 0; padding-left:20px; font-size:0.95em;'>`;
+        let resumenHtml = `<strong style='color:var(--blue-600); font-size:1.1em;'>Cartas Porte Detectadas (${Object.keys(agrupado).length}):</strong><ul style='margin:8px 0 0; padding-left:20px; font-size:0.95em;'>`;
         
-        Object.keys(agrupado).forEach(placa => {
+        Object.keys(agrupado).forEach(cp => {
+            // Extraer la placa de la primera orden de esta Carta Porte
+            let placa = String(agrupado[cp][0]['VEHICULO'] || agrupado[cp][0]['Vehiculo'] || agrupado[cp][0]['vehiculo'] || agrupado[cp][0]['PLACA'] || agrupado[cp][0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
+            
             let provMatch = dTarifas.find(t => {
                 let tPlaca = String(t.PLACA || t.PLACAS || t.Placa || t.vehiculo || t[' PLACA'] || '').toUpperCase().trim();
                 return tPlaca === placa;
@@ -755,8 +759,8 @@
             
             let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
             
-            if(!provOriginal && agrupado[placa].length > 0) {
-                let p = agrupado[placa][0];
+            if(!provOriginal && agrupado[cp].length > 0) {
+                let p = agrupado[cp][0];
                 provOriginal = String(p['TRANSPORTISTA'] || p['Transportista'] || 'SIN PROVEEDOR').toUpperCase().trim();
             }
 
@@ -764,7 +768,7 @@
                 provOriginal = "ITSACOURIER";
             }
             
-            resumenHtml += `<li><b>${placa}</b> <span class="badge-prov">${provOriginal || "MANUAL"}</span> - ${agrupado[placa].length} paquetes</li>`;
+            resumenHtml += `<li><b>CP: ${cp}</b> <span class="badge-prov">${placa}</span> (${provOriginal || "MANUAL"}) - ${agrupado[cp].length} paq.</li>`;
         });
         resumenHtml += "</ul>";
         
@@ -818,9 +822,14 @@
         
         let ingresoRepartir = parseFloat(document.getElementById('ingresoRepartir').value) || 0;
 
-        Object.keys(window.agrupacionVehiculos).forEach(placa => {
-            let pedidos = window.agrupacionVehiculos[placa];
+        // 🔥 CAMBIO CLAVE 2: Memoria para no duplicar Costo Base en el mismo lote 🔥
+        let vehiculosProcesadosHoy = {};
+
+        Object.keys(window.agrupacionVehiculos).forEach(cpKey => {
+            let pedidos = window.agrupacionVehiculos[cpKey];
             
+            let placa = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
+
             let provMatch = dTarifas.find(t => {
                 let tP = String(t.PLACA || t.PLACAS || t.Placa || '').toUpperCase().trim();
                 return tP === placa;
@@ -836,7 +845,13 @@
             if (prov.includes("ENTREGAR")) prov = "ITSACOURIER";
             
             let opt = provMatch || {};
-            let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true;
+
+            // Verificamos si este vehículo ya cobró hoy (en BD o en este mismo ciclo masivo)
+            let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
+            
+            // Registramos que este vehículo ya pasó para que la siguiente CP no cobre el precio base
+            vehiculosProcesadosHoy[`${fecha}|${placa}`] = true;
+
             let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
 
             if(isManual) {
@@ -846,7 +861,6 @@
                     cExc = cFijoManual;
                 }
                 cEstibas = estManual * pEstManual;
-                体积 = 0; 
             } else {
                 cEstibas = estItsa * 30;
                 let heTarifa = parseDinero(opt['HORAS EXTRAS']);
@@ -865,7 +879,6 @@
             let costoVehiculo = cBase + cEstibas + cExc + cHE;
             totalCostos += costoVehiculo;
             
-            // 🔥 FASE 1 CORREGIDA: ENCONTRAR TRAYECTO ANTES DE INVOCAR AL MOTOR DE TARIFAS 🔥
             let pesoTotalExclusivosRestantes = 0;
             let cantidadExclusivosRestantes = 0;
             
@@ -875,7 +888,6 @@
                 let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
                 let esExclusivo = servicioMonitor.includes("EXCLUSIVO");
                 
-                // Determinamos el trayecto aquí para que calcularTarifasAutomaticas tenga el dato listo
                 let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
                 p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
                 
@@ -891,10 +903,8 @@
                 }
             });
 
-            // 🔥 FASE 2: ASIGNACIÓN DE PRECIOS Y RENDERIZADO VISUAL 🔥
             let ingresosVehiculo = 0;
             let idsArrConPrecio = []; 
-            let cpsDeVehiculo = [...new Set(pedidos.map(p => String(p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || p['CARTA_PORTE'] || p['CARTA PORTE'] || '').trim()).filter(Boolean))].join(', ');
 
             pedidos.forEach(p => {
                 let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
@@ -989,7 +999,7 @@
                 usuario: sesion.nombre,
                 proveedor: prov,
                 tipoRuta: tipoGlobal,
-                cartaPorte: cpsDeVehiculo || "SIN CARTA PORTE" 
+                cartaPorte: cpKey // 🔥 ESTO GARANTIZA QUE CADA CARTA PORTE SEA UNA FILA ÚNICA 🔥
             });
         });
 
@@ -1003,6 +1013,7 @@
 
         selFiltroServicio.innerHTML = '<option value="TODOS">Todos</option>';
         [...serviciosEnTabla].sort().forEach(s => { selFiltroServicio.innerHTML += `<option value="${s}">${s}</option>`; });
+        
         if (clientesEnTabla.has(valPrevCliente)) selFiltroCliente.value = valPrevCliente;
         if (serviciosEnTabla.has(valPrevServicio)) selFiltroServicio.value = valPrevServicio;
 
@@ -1024,6 +1035,7 @@
 
         document.getElementById('btnSave').disabled = false;
     }
+    
     async function guardarRutas() {
         if(!window.rutasAguardar || window.rutasAguardar.length === 0) return alert("Calcule las rutas primero.");
 
