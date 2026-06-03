@@ -255,6 +255,11 @@
                 EXTRAER VEHÍCULOS
             </button>
 
+            <button onclick="abrirBuscadorCP()" class="btn-main" style="background:var(--slate-700); margin-top:10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                BUSCAR CP GUARDADA
+            </button>
+
             <div id="resumenVehiculos" class="panel-dinamico" style="display:none; background:#eff6ff; border-color:#bfdbfe;"></div>
 
             <div id="panelConfiguracion" style="display:none; margin-top:20px;">
@@ -434,6 +439,57 @@
     </div>
 </div>
 
+<div id="modalEditorCP" class="modal-overlay" style="z-index: 1500;">
+    <div class="modal-content" style="max-width: 900px; padding: 25px; text-align:left;">
+        <h2 style="margin-top: 0; color: var(--slate-900); display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px;">
+            <span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:bottom; margin-right:5px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Editar Ruta: <span id="lblEditCP" style="color:var(--blue-600);"></span></span>
+            <button onclick="document.getElementById('modalEditorCP').style.display='none'" style="background:none; border:none; font-size:1.2em; cursor:pointer;">✖</button>
+        </h2>
+        
+        <div style="display:flex; gap:15px; margin-bottom:15px; background:var(--slate-50); padding:15px; border-radius:8px;">
+            <div style="flex:1"><label>Vehículo (Placa)</label><input type="text" id="editPlaca" class="filter-inline" style="width:100%;"></div>
+            <div style="flex:1"><label>Costo Base/Fijo ($)</label><input type="number" id="editBase" class="filter-inline" style="width:100%;"></div>
+            <div style="flex:1"><label>Costo Ayudantes ($)</label><input type="number" id="editEstibas" class="filter-inline" style="width:100%;"></div>
+            <div style="flex:1"><label>Costo Exclusivo ($)</label><input type="number" id="editExc" class="filter-inline" style="width:100%;"></div>
+        </div>
+
+        <div class="table-wrapper" style="max-height: 350px; border:1px solid var(--slate-200);">
+            <table id="tblEditorPedidos">
+                <thead><tr><th>ID Pedido</th><th style="text-align:right;">Tarifa Cobrada ($)</th><th style="width:50px;">Acción</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:15px; display:flex; justify-content:space-between; align-items:center; background:var(--slate-900); color:white; padding:10px 15px; border-radius:6px;">
+            <span>Total Ingresos: <b id="lblEditIngresos" style="color:var(--emerald-400); font-size:1.2em;">$0.00</b></span>
+            <span>Total Costos: <b id="lblEditCostos" style="color:var(--red-400); font-size:1.2em;">$0.00</b></span>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:20px;">
+            <button onclick="document.getElementById('modalEditorCP').style.display='none'" class="btn-main btn-outline" style="width:auto; margin-top:0;">Cancelar</button>
+            <button onclick="guardarEdicionCP()" class="btn-main btn-success" style="width:auto; margin-top:0;">Guardar Cambios en BD</button>
+        </div>
+    </div>
+</div>
+<!-- 🔥 MODAL PROMPT PERSONALIZADO (ENTRADA DE TEXTO) 🔥 -->
+<div id="modalPromptGeneral" class="modal-overlay" style="z-index: 2000;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+        <div style="width: 60px; height: 60px; background: var(--blue-50); color: var(--blue-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
+        <h2 style="justify-content: center; border: none; padding: 0; margin-bottom: 10px; font-size: 1.3em; color: var(--slate-900);">Buscar Carta Porte</h2>
+        <p id="msgPrompt" style="color:var(--slate-600); font-size:1em; margin-bottom: 15px;"></p>
+        
+        <input type="text" id="inputPrompt" style="width: 100%; padding: 12px; border: 2px solid var(--slate-300); border-radius: 8px; font-size: 1.1em; margin-bottom: 25px; text-align: center; outline: none; transition: border-color 0.2s;" placeholder="Ej. 65994">
+        
+        <div style="display:flex; justify-content:center; gap:15px;">
+            <button id="btnCancelPrompt" style="background:white; color:var(--slate-700); border:1px solid var(--slate-300); width:100%; padding:10px; border-radius:8px; cursor:pointer; font-weight:600; transition: all 0.2s;">Cancelar</button>
+            <button id="btnOkPrompt" style="background:var(--blue-600); width:100%; padding:10px; border:none; border-radius:8px; cursor:pointer; font-weight:700; color:white; transition: all 0.2s;">Buscar</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
@@ -515,6 +571,40 @@
             document.getElementById('btnCancelConfirm').onclick = function() {
                 modal.style.display = 'none';
                 resolve(false); // Usuario dijo NO
+            };
+        });
+    }
+
+    function dialogPrompt(mensaje, placeholder = "") {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modalPromptGeneral');
+            const input = document.getElementById('inputPrompt');
+            
+            document.getElementById('msgPrompt').innerHTML = mensaje;
+            input.placeholder = placeholder;
+            input.value = ''; // Limpiamos el input anterior
+            
+            modal.style.display = 'flex';
+            input.focus(); // Hacemos foco automático para que el usuario escriba directo
+
+            // Acción de confirmar
+            document.getElementById('btnOkPrompt').onclick = function() {
+                modal.style.display = 'none';
+                resolve(input.value);
+            };
+            
+            // Acción de cancelar
+            document.getElementById('btnCancelPrompt').onclick = function() {
+                modal.style.display = 'none';
+                resolve(null);
+            };
+            
+            // Permitir que funcione al presionar la tecla "Enter"
+            input.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    modal.style.display = 'none';
+                    resolve(input.value);
+                }
             };
         });
     }
@@ -1424,6 +1514,159 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         } finally { 
             btnConf.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> GUARDAR TODAS LAS RUTAS`; 
             btnConf.disabled = false;
+        }
+    }
+
+    // --- LÓGICA DEL BUSCADOR Y EDITOR DE CARTA PORTE ---
+    let rutaEnEdicion = null; // Memoria temporal para el editor
+
+    async function abrirBuscadorCP() {
+        let cpBuscada = await dialogPrompt("Ingrese el número de la Carta Porte que desea buscar y editar en el sistema:", "Ej: 65994");
+        if (!cpBuscada) return;
+        cpBuscada = cpBuscada.trim().replace(/\./g, '');
+
+        if (!dbRutasFull || dbRutasFull.length === 0) {
+            return dialogAlert("La base de datos histórica aún no se ha cargado. Intente en unos segundos.", "warning");
+        }
+        
+        // ... (el resto del código hacia abajo queda idéntico)
+
+        // Buscar en la memoria que ya se descargó al cargar la página
+        let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada.toUpperCase());
+
+        if (!rutaEncontrada) {
+            return dialogAlert(`No se encontró ninguna ruta guardada con la Carta Porte <b>${cpBuscada}</b> en la Base de Datos.`, "error");
+        }
+
+        // Si la encuentra, cargamos los datos en el Modal
+        rutaEnEdicion = JSON.parse(JSON.stringify(rutaEncontrada)); // Clonamos para no dañar el original
+        
+        document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
+        document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
+        document.getElementById('editBase').value = rutaEnEdicion.cBase || 0;
+        document.getElementById('editEstibas').value = rutaEnEdicion.cAyudantes || 0;
+        document.getElementById('editExc').value = rutaEnEdicion.cExc || 0;
+
+        // Limpiar y dibujar tabla de pedidos
+        let tbody = document.querySelector('#tblEditorPedidos tbody');
+        tbody.innerHTML = '';
+        
+        let pedidos = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
+        pedidos.forEach((p, index) => {
+            let partes = p.split('-');
+            let id = partes[0] ? partes[0].trim() : "Desconocido";
+            let valorText = partes[1] ? partes[1].replace(/[^0-9.-]+/g, "") : "0"; // Limpia el ($...)
+            let valorNum = parseFloat(valorText) || 0;
+
+            tbody.innerHTML += `
+                <tr id="editRow_${index}">
+                    <td><strong>${id}</strong></td>
+                    <td style="text-align:right;">
+                        <input type="number" id="valEdit_${index}" value="${valorNum}" step="0.01" style="width:100px; padding:4px; text-align:right;" onchange="recalcularTotalesEditor()">
+                    </td>
+                    <td style="text-align:center;">
+                        <button onclick="eliminarPedidoEditor(${index})" style="background:var(--red-50); color:var(--red-600); border:1px solid var(--red-200); border-radius:4px; cursor:pointer;" title="Quitar de la lista">✖</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        // Eventos para recalcular al escribir en los inputs de costo
+        document.getElementById('editBase').oninput = recalcularTotalesEditor;
+        document.getElementById('editEstibas').oninput = recalcularTotalesEditor;
+        document.getElementById('editExc').oninput = recalcularTotalesEditor;
+
+        recalcularTotalesEditor();
+        document.getElementById('modalEditorCP').style.display = 'flex';
+    }
+
+    function eliminarPedidoEditor(index) {
+        document.getElementById(`editRow_${index}`).style.display = 'none';
+        document.getElementById(`valEdit_${index}`).value = 'ELIMINADO'; // Marca especial
+        recalcularTotalesEditor();
+    }
+
+    function recalcularTotalesEditor() {
+        if (!rutaEnEdicion) return;
+
+        // Sumar Costos
+        let b = parseFloat(document.getElementById('editBase').value) || 0;
+        let e = parseFloat(document.getElementById('editEstibas').value) || 0;
+        let x = parseFloat(document.getElementById('editExc').value) || 0;
+        let totalCostos = b + e + x + (parseFloat(rutaEnEdicion.cHE) || 0); // cHE se mantiene oculto pero suma
+
+        // Sumar Ingresos recorriendo la tabla
+        let totalIngresos = 0;
+        let pedidosOriginales = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
+        
+        pedidosOriginales.forEach((p, index) => {
+            let input = document.getElementById(`valEdit_${index}`);
+            if (input && input.value !== 'ELIMINADO') {
+                totalIngresos += parseFloat(input.value) || 0;
+            }
+        });
+
+        document.getElementById('lblEditCostos').innerText = `$${totalCostos.toFixed(2)}`;
+        document.getElementById('lblEditIngresos').innerText = `$${totalIngresos.toFixed(2)}`;
+    }
+
+    async function guardarEdicionCP() {
+        let confirmacion = await dialogConfirm("¿Está seguro de sobrescribir estos datos en la Nube? Esta acción reemplazará la ruta original.");
+        if (!confirmacion) return;
+
+        let btn = document.querySelector('#modalEditorCP .btn-success');
+        let txtOri = btn.innerText;
+        btn.innerHTML = `<span class="loader-spinner"></span> Guardando...`;
+        btn.disabled = true;
+
+        // Reconstruir el objeto de ruta con los datos editados
+        let nuevaListaIds = [];
+        let totalIngresos = 0;
+        let pedidosOriginales = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
+        
+        pedidosOriginales.forEach((p, index) => {
+            let input = document.getElementById(`valEdit_${index}`);
+            if (input && input.value !== 'ELIMINADO') {
+                let idLimpio = p.split('-')[0].trim();
+                let valLimpio = parseFloat(input.value) || 0;
+                nuevaListaIds.push(`${idLimpio} - ($${valLimpio.toFixed(2)})`);
+                totalIngresos += valLimpio;
+            }
+        });
+
+        rutaEnEdicion.placa = document.getElementById('editPlaca').value.trim().toUpperCase();
+        rutaEnEdicion.cBase = parseFloat(document.getElementById('editBase').value) || 0;
+        rutaEnEdicion.cAyudantes = parseFloat(document.getElementById('editEstibas').value) || 0;
+        rutaEnEdicion.cExc = parseFloat(document.getElementById('editExc').value) || 0;
+        rutaEnEdicion.listaIds = nuevaListaIds.join(', ');
+        rutaEnEdicion.pedidos = nuevaListaIds.length;
+        rutaEnEdicion.ingresos = totalIngresos;
+
+        // Armamos el payload para el AppScript
+        let payloadActualizacion = { 
+            action: 'update_ruta_completa', 
+            idRegistro: rutaEnEdicion.idRegistro, 
+            datos: rutaEnEdicion 
+        };
+
+        try {
+            let res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify(payloadActualizacion) 
+            });
+            let dataResp = await res.json();
+            
+            document.getElementById('modalEditorCP').style.display = 'none';
+            dialogAlert(`La Carta Porte <b>${rutaEnEdicion.cartaPorte}</b> se ha actualizado correctamente en la base de datos.`, "success");
+            
+            // Refrescar para bajar los nuevos datos
+            setTimeout(() => { location.reload(); }, 2000);
+
+        } catch (e) {
+            dialogAlert("❌ Error de conexión al intentar guardar la edición.", "error");
+        } finally {
+            btn.innerHTML = txtOri;
+            btn.disabled = false;
         }
     }
 </script>
