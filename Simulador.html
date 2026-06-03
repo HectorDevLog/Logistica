@@ -129,11 +129,10 @@
         .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
         
         table { width: 100%; border-collapse: collapse; font-size: 0.85em; white-space: nowrap; }
-        th { background: var(--slate-50); padding: 12px 10px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; }
+        th { background: var(--slate-50); padding: 12px 10px; text-align: left; font-weight: 700; color: var(--slate-900); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10; }
         td { padding: 10px 10px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
         
         .col-tarifa { color: #64748b; font-size: 0.9em; }
-        
         .col-total { font-weight: 700; background: var(--emerald-50); color: var(--emerald-600); display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         
         .col-tachada { text-decoration: line-through; color: #94a3b8; font-weight: normal; background: transparent; }
@@ -232,7 +231,7 @@
             <input type="date" id="fechaDespacho" onchange="verificarVehiculoRepetido(); marcarCambios();">
             
             <label>🏢 Proveedor Logístico:</label>
-            <select id="selProv" onchange="actualizarVehiculos(); marcarCambios();"><option value="">Cargando proveedores...</option></select>
+            <select id="selProv" onchange="actualizarVehiculos(); marcarCambios(); evaluarMostrarProrrateo();"><option value="">Cargando proveedores...</option></select>
             
             <label>🚛 Vehículo Asignado:</label>
             <select id="selVehiculo" onchange="verificarVehiculoRepetido(); marcarCambios();"></select>
@@ -243,7 +242,7 @@
 
             <div id="panelItsa" class="panel-dinamico" style="display:none;">
                 <label>⚙️ Tipo de Servicio (ITSACOURIER):</label>
-                <select id="tipoServicioItsa" onchange="marcarCambios()">
+                <select id="tipoServicioItsa" onchange="marcarCambios(); evaluarMostrarProrrateo();">
                     <option value="NORMAL">Normal (Aplica Precio Base Día)</option>
                     <option value="EXCLUSIVO HORARIO LABORAL">Exclusivo Horario Laboral</option>
                     <option value="EXCLUSIVO FUERA HORARIO">Exclusivo Fuera Horario</option>
@@ -256,7 +255,7 @@
 
             <div id="panelOtros" class="panel-dinamico" style="display:none;">
                 <label>⚙️ Tipo de Servicio Especial:</label>
-                <select id="tipoServicioOtros" onchange="cambiarVistaOtros(); marcarCambios()">
+                <select id="tipoServicioOtros" onchange="cambiarVistaOtros(); marcarCambios(); evaluarMostrarProrrateo();">
                     <option value="EXCLUSIVO">Exclusivo</option>
                     <option value="POR RUTA">Por Ruta</option>
                     <option value="POR PUNTO">Por Punto</option>
@@ -282,12 +281,12 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="divIngresoRepartir" style="display:none; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:15px;">
                 <label style="color: var(--blue-600);">💰 Ingreso General (A prorratear entre exclusivos según peso):</label>
-                <input type="number" id="ingresoRepartir" value="0" min="0" step="0.01">
+                <input type="number" id="ingresoRepartir" value="0" min="0" step="0.01" oninput="marcarCambios()">
             </div>
-            
+
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px;">
                 <label>📦 Cargar IDs de Pedidos:</label>
                 <span id="lblCant" style="font-size:0.8em; font-weight:700; color:var(--blue-600); margin-bottom:6px;">0 Únicos</span>
@@ -420,17 +419,15 @@
         }
     }
 
-    let dMonitor = [], dTarifas = [];
-    let tfaPesoDB = [], tfaPedidoDB = [], tfaRangoDB = [], tfaMedidaDB = [], trayectoDB = [];
+    let dMonitor = [], dTarifas = [], trayectoDB = [];
     let cloudLista = false, monitorListo = false;
     let pedidosHistoricos = {}; 
     let rutasPorDiaYPlaca = {}; 
     let calculoRealizado = false; 
-    let tarifasModificadas = {}; 
+    let tarifasModificadas = {};
 
     const dbName = "SimuladorDB";
     const storeName = "MonitorStore";
-    
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(dbName, 1);
@@ -448,7 +445,7 @@
         const tx = db.transaction(storeName, "readonly");
         const request = tx.objectStore(storeName).get(id);
         return new Promise(resolve => {
-            request.onsuccess = () => resolve(request.result ? request.result : null);
+            request.onsuccess = () => resolve(request.result ? request.result.data : null);
             request.onerror = () => resolve(null);
         });
     }
@@ -690,6 +687,13 @@
     function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
     function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
 
+    function evaluarMostrarProrrateo() {
+        const prov = document.getElementById('selProv').value;
+        const isItsa = prov.toUpperCase().includes('ITSACOURIER') || prov.toUpperCase().includes('ENTREGAR');
+        const tipoGlobal = isItsa ? document.getElementById('tipoServicioItsa').value : document.getElementById('tipoServicioOtros').value;
+        document.getElementById('divIngresoRepartir').style.display = (tipoGlobal === 'NORMAL') ? 'none' : 'block';
+    }
+
     function cargarProveedores() {
         const provs = [...new Set(dTarifas.map(v => v.PROVEEDOR))];
         const sel = document.getElementById('selProv');
@@ -709,6 +713,7 @@
         document.getElementById('panelItsa').style.display = isItsa ? 'block' : 'none';
         document.getElementById('panelOtros').style.display = isItsa ? 'none' : 'block';
         if (!isItsa) cambiarVistaOtros();
+        evaluarMostrarProrrateo();
 
         c.innerHTML = '<option value="">Seleccione vehículo...</option>';
         dTarifas.filter(v => v.PROVEEDOR === p).forEach(v => {
@@ -730,9 +735,6 @@
         const tipo = document.getElementById('tipoServicioOtros').value;
         document.getElementById('subPanelManual').style.display = (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') ? 'block' : 'none';
         document.getElementById('subPanelPuntos').style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
-        
-        // 🔥 Mostrar Prorrateo si NO es NORMAL 🔥
-        document.getElementById('divIngresoRepartir').style.display = (tipo === 'NORMAL') ? 'none' : 'block';
     }
 
     function verificarVehiculoRepetido() {
@@ -923,6 +925,16 @@
                 let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
                 let esExclusivo = servicioMonitor.includes("EXCLUSIVO");
                 
+                // 🔥 ASIGNAR VARIABLES CLAVE ANTES DEL CÁLCULO 🔥
+                p['VEHICULO'] = placaVehiculo;
+                p['PLACA'] = placaVehiculo;
+                p['TRANSPORTISTA'] = prov;
+                p['PROVEEDOR'] = prov;
+
+                let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO'] || trayectoMatch['Tipo de Trayecto'] || '').trim().toUpperCase() : String(p['TipoTrayecto'] || p['Tipo_Trayecto'] || p['Trayecto'] || '-').trim().toUpperCase();
+
                 p._calcNube = calcularTarifasAutomaticas(p);
                 p._esExclusivo = esExclusivo;
                 p._yaExiste = !!pedidosHistoricos[String(id).trim()];
@@ -944,6 +956,8 @@
         if (ingresoRestante < 0) ingresoRestante = 0;
 
         // 🔥 FASE 2: ASIGNACIÓN DE PRECIOS Y RENDERIZADO 🔥
+        let cpsDeVehiculo = [...new Set(arrayPedidosObject.map(p => String(p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || p['CARTA_PORTE'] || p['CARTA PORTE'] || '').trim()).filter(Boolean))].join(', ');
+
         arrayPedidosObject.forEach(p => {
             let id = p['PEDIDOID'] || p['idpedido'] || p['2idpedido'];
             let cp = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
@@ -954,9 +968,6 @@
             let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
             clientesEnTabla.add(clienteStr);
             serviciosEnTabla.add(servicioMonitor);
-
-            let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === cp);
-            p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
 
             let calcNube = p._calcNube;
             let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
@@ -977,7 +988,7 @@
                 </div>`;
 
             } else if (tarifasModificadas[id] !== undefined) {
-                // FUE EDITADO MANUALMENTE (Normal o Exclusivo, se respeta esto siempre)
+                // FUE EDITADO MANUALMENTE
                 cobroReal = parseFloat(tarifasModificadas[id]);
                 classTotal += " tarifa-modificada"; 
                 if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -985,14 +996,12 @@
             } else {
                 // CÁLCULO NORMAL DEL SISTEMA
                 if (p._esExclusivo && tipoGlobal !== 'NORMAL' && ingresoRepartir > 0) {
-                    // PRORRATEO INTELIGENTE (Solo para los exclusivos que NO fueron editados)
                     if (pesoTotalExclusivosRestantes > 0) {
                         cobroReal = (calcNube.pesoUsado / pesoTotalExclusivosRestantes) * ingresoRestante;
                     } else {
                         cobroReal = cantidadExclusivosRestantes > 0 ? (ingresoRestante / cantidadExclusivosRestantes) : 0; 
                     }
                 } else {
-                    // NORMAL O SIN INGRESO GLOBAL
                     cobroReal = calcNube.total > 0 ? calcNube.total : 0;
                 }
                 if (intentosNum > 1) htmlStatus = `<div class="badge-redespacho">INTENTO ${intentosNum}</div>`;
@@ -1066,7 +1075,8 @@
         
         window.tempDataGuardar = { 
             cBase, cEstibas, cExc, cHE, 
-            idsFormateadosParaBD: idsParaBD.join(', ') 
+            idsFormateadosParaBD: idsParaBD.join(', '),
+            cpsDeVehiculo: cpsDeVehiculo || "SIN CARTA PORTE"
         };
         calculoRealizado = true;
         document.getElementById('alertaCambios').style.display = 'none';
@@ -1097,7 +1107,8 @@
             listaIds: window.tempDataGuardar.idsFormateadosParaBD, 
             usuario: sesion.nombre,
             proveedor: prov,
-            tipoRuta: tipoRutaFinal
+            tipoRuta: tipoRutaFinal,
+            cartaPorte: window.tempDataGuardar.cpsDeVehiculo
         };
 
         const btnConf = event.target;
