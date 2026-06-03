@@ -19,7 +19,7 @@ let tiempoInactividad;
 
 function cerrarSesionPorInactividad() {
     if(localStorage.getItem('sesionActiva')) {
-        alert("⏱️ Por tu seguridad, la sesión ha expirado tras 10 minutos de inactividad.");
+        alert("⏱️ Por tu seguridad, la sesión ha expirado tras 15 minutos de inactividad.");
         localStorage.removeItem('sesionActiva');
         window.location.href = 'index.html'; 
     }
@@ -27,7 +27,7 @@ function cerrarSesionPorInactividad() {
 
 function resetearTemporizador() {
     clearTimeout(tiempoInactividad);
-    tiempoInactividad = setTimeout(cerrarSesionPorInactividad, 600000);
+    tiempoInactividad = setTimeout(cerrarSesionPorInactividad, 900000);
 }
 
 window.onload = resetearTemporizador;
