@@ -112,16 +112,17 @@
         
         <div class="nav-menu-container">
             <div class="nav-links">
-                <a href="Inicio.html"><span>🏠</span> Menú</a>
-                <a href="Simulador.html"><span>📝</span> Sim. (IDs)</a>
-                <a href="SimuladorCartaPorte.html"><span>📄</span> Sim. (CP)</a>
-                <a href="AuditorMasivo.html" id="linkMasivo"><span>⚡</span> Carga Masiva</a>
-                <a href="AuditoriaRutas.html" id="linkAuditoria"><span>🔍</span> Auditoría</a>
-                <a href="Rentabilidad.html" class="active" id="linkRentabilidad"><span>📊</span> Rentabilidad</a>
-                <a href="RentabilidadVehiculos.html" id="linkVehiculos"><span>🚛</span> Vehículos</a>
-                <a id="linkReportes" href="Reportes.html"><span>📈</span> Dashboard</a>
-                <a href="Registro.html" id="linkRegistro"><span>🛡️</span> Accesos</a>
-            </div>
+            <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
+            <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
+            <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
+            <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
+            <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
+            <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
+            <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
+            <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
+            <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
+            <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+        </div>
         </div>
 
         <div class="user-info" id="infoUsuario"></div>
@@ -186,8 +187,71 @@
         <div id="tablasContainer"></div>
     </div>
 
+    <div class="card" id="panelComparativo" style="border-top: 4px solid var(--purple-600); margin-top: 20px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="margin: 0; border: none; padding: 0;">⚖️ Balance del Día: Proyectado vs. Ejecutado</h3>
+            <span id="lblEstadoProy" style="background: var(--slate-100); padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; color: var(--slate-600);">Buscando datos...</span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: stretch;">
+            
+            <div style="background: var(--slate-50); padding: 20px; border-radius: 10px; border: 1px solid var(--slate-200);">
+                <h4 style="text-align:center; color: var(--slate-700); margin:0 0 15px 0; font-size:1.1em;">📋 LO PLANEADO (Mañana)</h4>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Total Pedidos:</span><strong id="cpPedProy">0</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Ingresos Esperados:</span><strong id="cpIngProy" style="color:var(--blue-600)">$0.00</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Costo Flota Planeada:</span><strong id="cpCosProy" style="color:var(--red-600)">$0.00</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:1.1em; padding-top:10px; border-top:1px solid var(--slate-200);"><span>Utilidad Proyectada:</span><strong id="cpUtProy" style="color:var(--emerald-600)">$0.00</strong></div>
+                
+                <div style="background:white; padding:10px; border-radius:6px; border:1px solid var(--slate-200); font-size:0.9em;">
+                    <b style="color:var(--slate-700); display:block; margin-bottom:5px;">🚛 Flota Solicitada:</b>
+                    <span id="cpFlotaProy" style="color:var(--slate-600); line-height:1.4;">-</span>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px dashed var(--slate-300); display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="text-align:center; color: var(--slate-800); margin:0 0 20px 0; font-size:1.1em;">⚡ VARIACIÓN (Delta)</h4>
+                
+                <div style="text-align:center; margin-bottom:15px;">
+                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Diferencia en Pedidos</span>
+                    <div id="cpDifPed" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
+                </div>
+                
+                <div style="text-align:center; margin-bottom:15px;">
+                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Brecha de Ingresos</span>
+                    <div id="cpDifIng" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
+                </div>
+                
+                <div style="text-align:center; margin-bottom:15px;">
+                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Desvío de Costos</span>
+                    <div id="cpDifCos" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
+                </div>
+
+                <div style="text-align:center; margin-top:auto; padding:10px; border-radius:8px; background:var(--slate-50);">
+                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Impacto en Rentabilidad</span>
+                    <div id="cpDifUt" style="font-weight:800; font-size:1.3em; margin-top:5px;">-</div>
+                </div>
+            </div>
+
+            <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; border: 1px solid #bbf7d0;">
+                <h4 style="text-align:center; color: var(--emerald-800); margin:0 0 15px 0; font-size:1.1em;">✅ LO EJECUTADO (Cierre)</h4>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Total Pedidos Reales:</span><strong id="cpPedReal">0</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Ingresos Reales:</span><strong id="cpIngReal" style="color:var(--blue-600)">$0.00</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Costo Flota Real:</span><strong id="cpCosReal" style="color:var(--red-600)">$0.00</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:1.1em; padding-top:10px; border-top:1px solid #bbf7d0;"><span>Utilidad Neta:</span><strong id="cpUtReal" style="color:var(--emerald-600)">$0.00</strong></div>
+                
+                <div style="background:white; padding:10px; border-radius:6px; border:1px solid #bbf7d0; font-size:0.9em;">
+                    <b style="color:var(--emerald-800); display:block; margin-bottom:5px;">🚛 Flota Utilizada Realmente:</b>
+                    <span id="cpFlotaReal" style="color:var(--emerald-700); line-height:1.4;">-</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
 <script>
     let rawData = [];
+    let dbProyecciones = [];
     window.dTarifasGlobal = []; 
 
     // 🔒 RECUPERAR DATOS DE SESIÓN PARA LÓGICA INTERNA
@@ -264,8 +328,16 @@
                 }
             })();
 
-            await Promise.all([promesaRutas, promesaTarifas]);
+            // 3. CARGA DE PROYECCIONES GLOBALES
+            let promesaProy = (async () => {
+                const resProy = await fetch(`${SCRIPT_URL}?action=getProyecciones`);
+                dbProyecciones = await resProy.json();
+            })();
+
+            // Actualiza el Promise.all para que espere las 3 cosas
+            await Promise.all([promesaRutas, promesaTarifas, promesaProy]);
             renderDashboard();
+
 
         } catch (e) {
             document.getElementById('tablasContainer').innerHTML = "<h3 style='text-align:center; color:var(--red-600); padding: 40px;'>❌ Error de conexión. Verifique su internet o la URL del script.</h3>";
@@ -439,9 +511,10 @@
             dataMes = dataMes.filter(d => d.ciudad === regionSel);
         }
 
-        let sumIngresos = 0, sumCostos = 0;
+        let sumIngresos = 0, sumCostos = 0, sumPedidosReal = 0;
         dataMes.forEach(row => {
             sumIngresos += Number(row.ingresos) || 0;
+            sumPedidosReal += Number(row.pedidos) || 0; // Contamos los pedidos reales
             sumCostos += (Number(row.cBase)||0) + (Number(row.cAyudantes)||0) + (Number(row.cExc)||0) + (Number(row.cHE)||0);
         });
         let sumRentabilidad = sumIngresos - sumCostos;
@@ -569,7 +642,107 @@
         if (container.innerHTML === '') {
             container.innerHTML = `<div style='text-align:center; padding:50px; background:white; border-radius:12px; border:1px solid var(--slate-200);'><h3 style='color:var(--slate-700);'>No hay actividad operativa registrada</h3><p style='color:#94a3b8;'>No se encontraron datos entre el ${dateStart} y ${dateEnd}.</p></div>`;
         }
+        actualizarPanelComparativo(sumIngresos, sumCostos, sumPedidosReal, dataMes, dateList);
     }
+
+    // ==========================================
+// ⚖️ MOTOR COMPARATIVO: PROYECTADO VS REAL
+// ==========================================
+function actualizarPanelComparativo(ingReal, cosReal, pedReal, dataMes, dateList) {
+    let panel = document.getElementById('panelComparativo');
+    
+    // 1. Acumular las Proyecciones para las fechas seleccionadas
+    let proyeccionesFiltradas = dbProyecciones.filter(p => {
+        let fDB = String(p.Fecha).trim();
+        if(fDB.startsWith("'")) fDB = fDB.substring(1);
+        if(fDB.includes("T")) fDB = fDB.split("T")[0];
+        return dateList.includes(fDB);
+    });
+
+    if (proyeccionesFiltradas.length === 0) {
+        panel.style.display = 'block';
+        document.getElementById('lblEstadoProy').innerHTML = '⚠️ Sin proyección guardada para esta fecha';
+        document.getElementById('lblEstadoProy').style.background = '#fef2f2'; document.getElementById('lblEstadoProy').style.color = '#dc2626';
+        
+        ['cpPedProy', 'cpIngProy', 'cpCosProy', 'cpUtProy'].forEach(id => document.getElementById(id).innerText = '-');
+        ['cpDifPed', 'cpDifIng', 'cpDifCos', 'cpDifUt'].forEach(id => { document.getElementById(id).innerText = 'No hay datos base'; document.getElementById(id).style.color = 'var(--slate-400)'; });
+        document.getElementById('cpFlotaProy').innerText = 'No registrada';
+        
+    } else {
+        panel.style.display = 'block';
+        document.getElementById('lblEstadoProy').innerHTML = '✅ Cruzando Datos con Proyección...';
+        document.getElementById('lblEstadoProy').style.background = '#ecfdf5'; document.getElementById('lblEstadoProy').style.color = '#059669';
+
+        // Sumar Proyecciones
+        let pedProy = 0, ingProy = 0, cosProy = 0, utProy = 0;
+        let flotaProyArr = [];
+        proyeccionesFiltradas.forEach(p => {
+            pedProy += parseInt(p['Total Pedidos']) || 0;
+            ingProy += parseFloat(p['Ingresos Proyectados']) || 0;
+            cosProy += parseFloat(p['Costo Flota']) || 0;
+            utProy += parseFloat(p['Utilidad Proyectada']) || 0;
+            if(p['Resumen Flota']) flotaProyArr.push(p['Resumen Flota']);
+        });
+
+        let utReal = ingReal - cosReal;
+
+        // 2. Extraer Flota Real Utilizada
+        let conteoFlotaReal = {};
+        dataMes.forEach(row => {
+            if(row.placa) {
+                let p = String(row.placa).trim().toUpperCase();
+                let tarifa = window.dTarifasGlobal.find(t => String(t.PLACA || t.PLACAS).trim().toUpperCase() === p);
+                let tipo = tarifa ? (tarifa['TIPO VEHICULO'] || tarifa['TIPO'] || 'Vehículo Normal') : 'Vehículo Desconocido';
+                if(!conteoFlotaReal[tipo]) conteoFlotaReal[tipo] = new Set();
+                conteoFlotaReal[tipo].add(p); // Usamos Set para contar la placa 1 sola vez
+            }
+        });
+        
+        let flotaRealStr = Object.keys(conteoFlotaReal).map(tipo => `${conteoFlotaReal[tipo].size}x ${tipo}`).join(' | ');
+        if(!flotaRealStr) flotaRealStr = "No hay vehículos registrados";
+
+        // 3. Pintar Valores Izquierda (Proyectado)
+        document.getElementById('cpPedProy').innerText = pedProy;
+        document.getElementById('cpIngProy').innerText = `$${ingProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpCosProy').innerText = `$${cosProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpUtProy').innerText = `$${utProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpFlotaProy').innerText = flotaProyArr.join(' + ') || 'Sin detalle';
+
+        // 4. Pintar Valores Derecha (Ejecutado)
+        document.getElementById('cpPedReal').innerText = pedReal;
+        document.getElementById('cpIngReal').innerText = `$${ingReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpCosReal').innerText = `$${cosReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpUtReal').innerText = `$${utReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('cpFlotaReal').innerText = flotaRealStr;
+
+        // 5. Pintar Centro (Variación/Deltas)
+        let difPed = pedReal - pedProy;
+        let difIng = ingReal - ingProy; 
+        let difCos = cosReal - cosProy; 
+        let difUt  = utReal - utProy;   
+
+        pintarDelta('cpDifPed', difPed, false, false);
+        pintarDelta('cpDifIng', difIng, true, false); // Ingresos: + es Verde
+        pintarDelta('cpDifCos', difCos, true, true);  // Costos: + es Rojo
+        pintarDelta('cpDifUt',  difUt, true, false);  // Utilidad: + es Verde
+    }
+}
+
+function pintarDelta(id, valor, isCurrency, esGasto) {
+    let el = document.getElementById(id);
+    let absValor = Math.abs(valor);
+    let strValor = isCurrency ? `$${absValor.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : absValor;
+    
+    if (valor === 0) {
+        el.innerText = `Exacto (0)`; el.style.color = 'var(--slate-500)'; return;
+    }
+
+    let esPositivo = valor > 0;
+    let esBueno = esGasto ? !esPositivo : esPositivo; // Si es gasto, subir es malo. Si es ingreso, subir es bueno.
+
+    el.innerText = (esPositivo ? '↑ +' : '↓ -') + strValor;
+    el.style.color = esBueno ? 'var(--emerald-600)' : 'var(--red-600)';
+}
 </script>
 
 </body>

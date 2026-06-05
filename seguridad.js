@@ -128,3 +128,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 })();
+
+// C. AUTO-ILUMINAR EL BOTÓN DEL MENÚ ACTUAL
+        let navLinks = document.querySelectorAll('.nav-links a');
+        navLinks.forEach(link => {
+            if(link.getAttribute('href') === paginaActual) link.classList.add('active');
+        });
