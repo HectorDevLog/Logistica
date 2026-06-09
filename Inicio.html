@@ -5,6 +5,7 @@
     <title>FlexNet - Centro de Operaciones</title>
     <script src="config.js"></script>
     <script src="seguridad.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { 
             --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
@@ -224,6 +225,21 @@
         <div id="msgBloqueo">
             ⏳ Verificando si hay cambios en la nube...
         </div>
+
+        <div id="bannerEmergencia" style="display: none; margin-top: 20px; padding: 15px 25px; background: #fff1f2; color: #991b1b; border: 2px dashed #f87171; border-radius: 12px; max-width: 700px; margin-left: auto; margin-right: auto; text-align: left; box-shadow: 0 10px 15px -3px rgba(239,68,68,0.2);">
+            <h3 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Fallo de Sincronización Detectado
+            </h3>
+            <p style="margin: 0 0 15px 0; font-size: 0.95em; line-height: 1.5; color: #7f1d1d;">
+                Querido usuario, el sistema detecta que la Base Operativa no se ha actualizado en más de 2 horas (posible fallo en la compu matriz). Para no detener la operación, <b>por favor descargue el Monitor en formato Excel y súbalo manualmente aquí:</b>
+            </p>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="file" id="fileMonitorManual" accept=".xlsx, .xls, .csv" style="flex: 1; padding: 8px; background: white; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer;">
+                <button onclick="procesarMonitorManual()" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cargar Monitor</button>
+            </div>
+            <div id="statusCargaManual" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; color: #b91c1c;"></div>
+        </div>
     </div>
 
     <div class="menu-grid locked" id="menuGrid">
@@ -324,6 +340,27 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalUploadExcel">
+        <div class="modal-box">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> 
+                Actualización Manual
+            </h3>
+            <p style="font-size: 0.9em; color: var(--slate-600); margin-bottom: 15px; line-height: 1.4;">
+                ¿Hiciste cambios recientes en el sistema (TMS) y no quieres esperar la actualización automática? Sube tu archivo Excel del Monitor aquí para aplicarlos de inmediato.
+            </p>
+            
+            <input type="file" id="fileMonitorVoluntario" accept=".xlsx, .xls, .csv" style="background: var(--slate-50); padding: 10px; border-radius: 6px; border: 1px dashed var(--slate-400); width: 100%;">
+            
+            <div id="statusCargaVoluntaria" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; text-align: center;"></div>
+            
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn btn-cancel" onclick="cerrarModalExcel()">Cancelar</button>
+                <button class="modal-btn btn-save" onclick="procesarMonitorVoluntario()">Subir y Actualizar</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
 
@@ -366,7 +403,8 @@
             <span>📍 ${sesion.ciudad}</span>
             <span style="opacity:0.5;">|</span>
             <span>👤 <b id="uiNombre">${sesion.nombre}</b> (${sesion.rol})</span>
-            <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Ignorar caché y descargar todo">🔄 Actualizar Nube</button>
+            <button onclick="abrirModalExcel()" class="btn-nav" style="background: var(--blue-600); border-color: var(--blue-600);" title="Subir Monitor desde tu PC">📂 Subir Excel</button>
+            <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Sincronizar todo desde la Nube">🔄 Actualizar Nube</button>
             <button onclick="abrirModal()" class="btn-nav">⚙️ Perfil</button>
             <button onclick="cerrarSesion()" class="btn-nav btn-logout">Salir</button>
         `;
@@ -423,6 +461,26 @@
             
             // 3. DECISIÓN: ¿NECESITAMOS DESCARGAR ALGO?
             let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
+
+            // 🔥 DETECCIÓN INTELIGENTE DE 2 HORAS DE RETRASO 🔥
+            let limiteHoras = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
+            let tiempoActual = new Date().getTime();
+            let monitorMuyViejo = false;
+
+            if (ping.monitorTs) {
+                // Si el ping del servidor nos da un timestamp muy viejo
+                if (tiempoActual - ping.monitorTs > limiteHoras) monitorMuyViejo = true;
+            } else if (cacheMonitorObj && cacheMonitorObj.timestamp) {
+                // Si no hay ping, revisamos el caché local
+                if (tiempoActual - cacheMonitorObj.timestamp > limiteHoras) monitorMuyViejo = true;
+            } else {
+                monitorMuyViejo = true; // Si no hay nada, está viejo por defecto
+            }
+
+            if (monitorMuyViejo) {
+                document.getElementById('bannerEmergencia').style.display = 'block';
+            }
+
             let necesitaMonitor = !cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0 || cacheMonitorObj.timestamp !== ping.monitorTs;
 
             // CASO A: NO HUBO CAMBIOS, DESBLOQUEO INSTANTÁNEO
@@ -615,6 +673,133 @@
     function cerrarSesion() {
         localStorage.removeItem('sesionActiva');
         window.location.href = 'index.html';
+    }
+
+    // =========================================================================
+    // 🔥 MODO SUPERVIVENCIA: CARGA MANUAL DE EXCEL AL INDEXED-DB 🔥
+    // =========================================================================
+    async function procesarMonitorManual() {
+        let fileInput = document.getElementById('fileMonitorManual');
+        let statusDiv = document.getElementById('statusCargaManual');
+        let file = fileInput.files[0];
+
+        if (!file) {
+            statusDiv.innerText = "⚠️ Por favor, selecciona un archivo Excel (.xlsx) primero.";
+            return;
+        }
+
+        statusDiv.style.color = "#059669";
+        statusDiv.innerText = "⏳ Leyendo archivo Excel... Por favor espere.";
+
+        let reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: 'array' });
+                
+                // Asumimos que los datos están en la primera pestaña del Excel
+                let firstSheet = workbook.SheetNames[0];
+                let worksheet = workbook.Sheets[firstSheet];
+                
+                // Convertir el Excel a JSON (El formato que usa el sistema)
+                let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (jsonData.length === 0) {
+                    throw new Error("El archivo Excel parece estar vacío.");
+                }
+
+                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria...`;
+
+                // Guardar en IndexedDB usando un Timestamp actual forzado
+                let nuevoTimestamp = new Date().getTime();
+                await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
+
+                statusDiv.innerText = "✅ ¡Monitor cargado con éxito! Recargando sistema...";
+                
+                // Recargamos la página para que los botones se desbloqueen
+                setTimeout(() => { location.reload(); }, 1500);
+
+            } catch (error) {
+                statusDiv.style.color = "#dc2626";
+                statusDiv.innerText = "❌ Error al leer el archivo: " + error.message;
+            }
+        };
+
+        reader.onerror = function() {
+            statusDiv.style.color = "#dc2626";
+            statusDiv.innerText = "❌ Error al intentar abrir el archivo en su computadora.";
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+
+    // =========================================================================
+    // 🔥 ACTUALIZACIÓN MANUAL POR PARTE DEL USUARIO (VOLUNTARIA) 🔥
+    // =========================================================================
+    function abrirModalExcel() {
+        document.getElementById('modalUploadExcel').style.display = 'flex';
+        document.getElementById('statusCargaVoluntaria').innerText = '';
+        document.getElementById('fileMonitorVoluntario').value = '';
+    }
+
+    function cerrarModalExcel() {
+        document.getElementById('modalUploadExcel').style.display = 'none';
+    }
+
+    async function procesarMonitorVoluntario() {
+        let fileInput = document.getElementById('fileMonitorVoluntario');
+        let statusDiv = document.getElementById('statusCargaVoluntaria');
+        let file = fileInput.files[0];
+
+        if (!file) {
+            statusDiv.style.color = "var(--red-600)";
+            statusDiv.innerText = "⚠️ Por favor, selecciona un archivo Excel (.xlsx) primero.";
+            return;
+        }
+
+        // Cambiamos el texto para mostrar que está procesando
+        statusDiv.style.color = "var(--emerald-600)";
+        statusDiv.innerText = "⏳ Leyendo archivo Excel... Por favor espere.";
+
+        let reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                // Leemos el Excel con la librería SheetJS
+                let workbook = XLSX.read(data, { type: 'array' });
+                
+                let firstSheet = workbook.SheetNames[0];
+                let worksheet = workbook.Sheets[firstSheet];
+                
+                // Convertir el Excel a datos para la base de datos
+                let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (jsonData.length === 0) throw new Error("El archivo Excel parece estar vacío.");
+
+                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria de la PC...`;
+
+                // Lo inyectamos a la base de datos IndexedDB y le ponemos un timestamp actual
+                let nuevoTimestamp = new Date().getTime();
+                await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
+
+                statusDiv.innerText = "✅ ¡Monitor actualizado con éxito! Recargando...";
+                
+                // Recargamos la página
+                setTimeout(() => { location.reload(); }, 1200);
+
+            } catch (error) {
+                statusDiv.style.color = "var(--red-600)";
+                statusDiv.innerText = "❌ Error al leer el archivo: " + error.message;
+            }
+        };
+
+        reader.onerror = function() {
+            statusDiv.style.color = "var(--red-600)";
+            statusDiv.innerText = "❌ Error al intentar abrir el archivo.";
+        };
+
+        // Arranca la lectura
+        reader.readAsArrayBuffer(file);
     }
 </script>
 </body>
