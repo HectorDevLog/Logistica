@@ -236,7 +236,7 @@
             </p>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="file" id="fileMonitorManual" accept=".xlsx, .xls, .csv" style="flex: 1; padding: 8px; background: white; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer;">
-                <button onclick="procesarMonitorManual()" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cargar Monitor</button>
+                <button onclick="procesarMonitorExcel('fileMonitorManual', 'statusCargaManual')" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cargar Monitor</button>
             </div>
             <div id="statusCargaManual" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; color: #b91c1c;"></div>
         </div>
@@ -356,13 +356,48 @@
             
             <div class="modal-buttons" style="margin-top: 20px;">
                 <button class="modal-btn btn-cancel" onclick="cerrarModalExcel()">Cancelar</button>
-                <button class="modal-btn btn-save" onclick="procesarMonitorVoluntario()">Subir y Actualizar</button>
+                <button class="modal-btn btn-save" onclick="procesarMonitorExcel('fileMonitorVoluntario', 'statusCargaVoluntaria')">Subir y Actualizar</button>
             </div>
         </div>
     </div>
 
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+
+    // =========================================================================
+    // 🚀 MOTOR DE DESCARGA DIRECTA E INTELIGENTE (A NIVEL GLOBAL)
+    // =========================================================================
+    const dbNamePreload = "SimuladorDB";
+    const storeNamePreload = "MonitorStore";
+
+    function initDBPreload() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbNamePreload, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeNamePreload)) { db.createObjectStore(storeNamePreload, { keyPath: "id" }); }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function obtenerDatoDBPreload(id) {
+        const db = await initDBPreload();
+        const tx = db.transaction(storeNamePreload, "readonly");
+        const request = tx.objectStore(storeNamePreload).get(id);
+        return new Promise(resolve => {
+            request.onsuccess = () => resolve(request.result ? request.result : null);
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    async function guardarDatoDBPreload(id, data, timestamp) {
+        const db = await initDBPreload();
+        const tx = db.transaction(storeNamePreload, "readwrite");
+        tx.objectStore(storeNamePreload).put({ id: id, data: data, timestamp: timestamp });
+        return new Promise(resolve => tx.oncomplete = resolve);
+    }
 
     // Función auxiliar para cambiar el estado de las píldoras
     function setPillStatus(id, state, text) {
@@ -385,12 +420,10 @@
             setTimeout(() => { msg.style.display = 'none'; }, 500); 
         }, 3000);
 
-        // Si se descargaron datos nuevos (mostrarAlerta es true), lanzamos el Toast explicativo
         if(mostrarAlerta) {
             setTimeout(() => {
                 let toast = document.getElementById('toastInfo');
                 toast.classList.add('show');
-                // Se oculta después de 12 segundos para dar tiempo a leerlo bien
                 setTimeout(() => { toast.classList.remove('show'); }, 12000);
             }, 1000);
         }
@@ -410,41 +443,6 @@
         `;
         
         document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${sesion.nombre}!`;
-
-        // =========================================================================
-        // 🚀 MOTOR DE DESCARGA DIRECTA E INTELIGENTE
-        // =========================================================================
-        const dbNamePreload = "SimuladorDB";
-        const storeNamePreload = "MonitorStore";
-
-        function initDBPreload() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbNamePreload, 1);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(storeNamePreload)) { db.createObjectStore(storeNamePreload, { keyPath: "id" }); }
-                };
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function obtenerDatoDBPreload(id) {
-            const db = await initDBPreload();
-            const tx = db.transaction(storeNamePreload, "readonly");
-            const request = tx.objectStore(storeNamePreload).get(id);
-            return new Promise(resolve => {
-                request.onsuccess = () => resolve(request.result ? request.result : null);
-                request.onerror = () => resolve(null);
-            });
-        }
-
-        async function guardarDatoDBPreload(id, data, timestamp) {
-            const db = await initDBPreload();
-            const tx = db.transaction(storeNamePreload, "readwrite");
-            tx.objectStore(storeNamePreload).put({ id: id, data: data, timestamp: timestamp });
-            return new Promise(resolve => tx.oncomplete = resolve);
-        }
 
         try {
             // 🔥 1. PING INTELIGENTE AL SERVIDOR 🔥
@@ -468,26 +466,35 @@
             let monitorMuyViejo = false;
 
             if (ping.monitorTs) {
-                // Si el ping del servidor nos da un timestamp muy viejo
                 if (tiempoActual - ping.monitorTs > limiteHoras) monitorMuyViejo = true;
             } else if (cacheMonitorObj && cacheMonitorObj.timestamp) {
-                // Si no hay ping, revisamos el caché local
                 if (tiempoActual - cacheMonitorObj.timestamp > limiteHoras) monitorMuyViejo = true;
             } else {
-                monitorMuyViejo = true; // Si no hay nada, está viejo por defecto
+                monitorMuyViejo = true;
             }
 
             if (monitorMuyViejo) {
                 document.getElementById('bannerEmergencia').style.display = 'block';
             }
 
-            let necesitaMonitor = !cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0 || cacheMonitorObj.timestamp !== ping.monitorTs;
+            // 🔥 CORRECCIÓN: SOLO DESCARGAR SI LA NUBE ES MÁS NUEVA QUE EL ARCHIVO LOCAL 🔥
+            let necesitaMonitor = false;
+            
+            // 1. Si no hay nada en memoria, obvio necesita descargar
+            if (!cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0) {
+                necesitaMonitor = true;
+            } 
+            // 2. Si la Nube tiene una actualización MÁS NUEVA que la que tú subiste
+            else if (ping.monitorTs && ping.monitorTs > cacheMonitorObj.timestamp) {
+                necesitaMonitor = true;
+            }
+            // (Si tu caché local es más nuevo porque lo acabas de subir manual, necesitaMonitor se queda en false y NO DESCARGA NADA).
 
             // CASO A: NO HUBO CAMBIOS, DESBLOQUEO INSTANTÁNEO
             if (!necesitaTarifas && !necesitaMonitor) {
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
                 setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
-                desbloquearMenu(false); // Desbloquea sin alerta extra
+                desbloquearMenu(false);
                 return; 
             }
 
@@ -498,51 +505,54 @@
             const promesas = [];
             
             if (necesitaTarifas) {
-                setPillStatus('Tarifas', 'loading', 'Descargando Tarifario Nuevo...');
-                promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
-                    const dbData = allData.db || [];
-                    const dTarifas = allData.tarifas || []; 
-                    const tfaPesoDB = allData.peso || [];
-                    const tfaPedidoDB = allData.pedido || []; 
-                    const tfaRangoDB = allData.rango || [];
-                    const tfaMedidaDB = allData.medida || []; 
-                    const trayectoDB = allData.trayecto || [];
+                    setPillStatus('Tarifas', 'loading', 'Descargando Tarifario Nuevo...');
+                    promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
+                        const dbData = allData.db || [];
+                        const dTarifas = allData.tarifas || []; 
+                        const tfaPesoDB = allData.peso || [];
+                        const tfaPedidoDB = allData.pedido || []; 
+                        const tfaRangoDB = allData.rango || [];
+                        const tfaMedidaDB = allData.medida || []; 
+                        const trayectoDB = allData.trayecto || [];
+                        
+                        // 🔥 1. AGREGAMOS EL TARIFARIO GLOBAL AQUÍ 🔥
+                        const tarifarioGlobalDB = allData.tarifarioGlobal || [];
 
-                    let pedidosHistoricosArray = [];
-                    let rutasPorDiaYPlaca = {};
-                    let trackPedidosUnicos = new Set();
-                    
-                    dbData.forEach(row => { 
-                        if (row.fecha && row.placa) {
-                            let fLimpia = String(row.fecha).trim();
-                            if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
-                            if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
-                            let pLimpia = String(row.placa).trim().toUpperCase();
-                            
-                            rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
+                        let pedidosHistoricosArray = [];
+                        let rutasPorDiaYPlaca = {};
+                        let trackPedidosUnicos = new Set();
+                        
+                        dbData.forEach(row => { 
+                            if (row.fecha && row.placa) {
+                                let fLimpia = String(row.fecha).trim();
+                                if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
+                                if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
+                                let pLimpia = String(row.placa).trim().toUpperCase();
+                                
+                                rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
 
-                            if (row.listaIds) {
-                                // Soporta IDs que vengan con el precio histórico pegado
-                                row.listaIds.split(',').forEach(item => {
-                                    let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
-                                    if(cleanId && !trackPedidosUnicos.has(cleanId)) {
-                                        trackPedidosUnicos.add(cleanId);
-                                        pedidosHistoricosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
-                                    }
-                                });
+                                if (row.listaIds) {
+                                    row.listaIds.split(',').forEach(item => {
+                                        let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
+                                        if(cleanId && !trackPedidosUnicos.has(cleanId)) {
+                                            trackPedidosUnicos.add(cleanId);
+                                            pedidosHistoricosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                        }
+                                    });
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    // 🔥 GUARDAMOS EL CACHÉ CON LA NUEVA ESTAMPA DE TIEMPO 🔥
-                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                        dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                        rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
+                        // 🔥 2. LO GUARDAMOS EN LA MEMORIA PARA QUE LAS OTRAS PANTALLAS LO USEN 🔥
+                        sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                            dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
+                            tarifarioGlobalDB, // <-- Añadido aquí
+                            rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
+                        }));
+                        
+                        setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
                     }));
-                    
-                    setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
-                }));
-            } else {
+                } else {
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
             }
 
@@ -550,7 +560,6 @@
                 setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
-                        // 🔥 GUARDAMOS EL CACHÉ CON LA NUEVA ESTAMPA DE TIEMPO 🔥
                         await guardarDatoDBPreload("monitorCargado", jsonResponse, ping.monitorTs);
                         setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${jsonResponse.length} reg)`);
                     } else {
@@ -562,8 +571,6 @@
             }
 
             await Promise.all(promesas);
-            
-            // TODO CARGADO -> DESBLOQUEAMOS Y MOSTRAMOS LA ALERTA EDUCATIVA
             desbloquearMenu(true);
 
         } catch(e) { 
@@ -579,25 +586,20 @@
         }
     };
 
-    // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAAL
+    // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAL
     async function forzarDescarga() {
         if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
-            
             setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
             setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
             
             sessionStorage.removeItem('cacheTarifarioFull');
             
             try {
-                const dbNamePreload = "SimuladorDB";
-                const storeNamePreload = "MonitorStore";
                 const request = indexedDB.open(dbNamePreload, 1);
-                
                 request.onsuccess = (e) => {
                     const db = e.target.result;
                     const tx = db.transaction(storeNamePreload, "readwrite");
                     tx.objectStore(storeNamePreload).delete("monitorCargado");
-                    
                     tx.oncomplete = () => { location.reload(); };
                 };
             } catch(e) {
@@ -606,7 +608,9 @@
         }
     }
 
-    // FUNCIONES DEL MODAL
+    // =========================================================================
+    // MODAL PERFIL
+    // =========================================================================
     function abrirModal() {
         document.getElementById('inpNombre').value = sesion.nombre;
         document.getElementById('inpUsrOriginal').value = sesion.usuario || '';
@@ -631,29 +635,20 @@
         }
 
         let btn = document.getElementById('btnGuardar');
-        btn.innerText = "Guardando..."; 
-        btn.disabled = true;
+        btn.innerText = "Guardando..."; btn.disabled = true;
 
         let dataToSave = {
-            action: 'edit_user',
-            usuarioOriginal: uOrig,
-            nombre: nNom,
-            usuario: nUsr,
-            password: nPass,
-            rol: sesion.rol,      
-            ciudad: sesion.ciudad 
+            action: 'edit_user', usuarioOriginal: uOrig, nombre: nNom,
+            usuario: nUsr, password: nPass, rol: sesion.rol, ciudad: sesion.ciudad 
         };
 
         try {
             await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(dataToSave)
+                method: 'POST', mode: 'no-cors',
+                headers: { "Content-Type": "text/plain" }, body: JSON.stringify(dataToSave)
             });
 
-            sesion.nombre = nNom;
-            sesion.usuario = nUsr;
+            sesion.nombre = nNom; sesion.usuario = nUsr;
             localStorage.setItem('sesionActiva', JSON.stringify(sesion));
             
             document.getElementById('uiNombre').innerText = nNom;
@@ -665,8 +660,7 @@
         } catch (error) {
             alert("❌ Hubo un error de conexión al intentar guardar. Inténtalo de nuevo.");
         } finally {
-            btn.innerText = "Guardar Cambios"; 
-            btn.disabled = false;
+            btn.innerText = "Guardar Cambios"; btn.disabled = false;
         }
     }
 
@@ -676,14 +670,25 @@
     }
 
     // =========================================================================
-    // 🔥 MODO SUPERVIVENCIA: CARGA MANUAL DE EXCEL AL INDEXED-DB 🔥
+    // 🔥 CARGA MANUAL DE EXCEL AL INDEXED-DB (SIRVE PARA AMBOS BOTONES) 🔥
     // =========================================================================
-    async function procesarMonitorManual() {
-        let fileInput = document.getElementById('fileMonitorManual');
-        let statusDiv = document.getElementById('statusCargaManual');
+    function abrirModalExcel() {
+        document.getElementById('modalUploadExcel').style.display = 'flex';
+        if(document.getElementById('statusCargaVoluntaria')) document.getElementById('statusCargaVoluntaria').innerText = '';
+        if(document.getElementById('fileMonitorVoluntario')) document.getElementById('fileMonitorVoluntario').value = '';
+    }
+
+    function cerrarModalExcel() {
+        document.getElementById('modalUploadExcel').style.display = 'none';
+    }
+
+    async function procesarMonitorExcel(idInput, idStatus) {
+        let fileInput = document.getElementById(idInput);
+        let statusDiv = document.getElementById(idStatus);
         let file = fileInput.files[0];
 
         if (!file) {
+            statusDiv.style.color = "#dc2626";
             statusDiv.innerText = "⚠️ Por favor, selecciona un archivo Excel (.xlsx) primero.";
             return;
         }
@@ -697,27 +702,21 @@
                 let data = new Uint8Array(e.target.result);
                 let workbook = XLSX.read(data, { type: 'array' });
                 
-                // Asumimos que los datos están en la primera pestaña del Excel
                 let firstSheet = workbook.SheetNames[0];
                 let worksheet = workbook.Sheets[firstSheet];
                 
-                // Convertir el Excel a JSON (El formato que usa el sistema)
                 let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-                if (jsonData.length === 0) {
-                    throw new Error("El archivo Excel parece estar vacío.");
-                }
+                if (jsonData.length === 0) throw new Error("El archivo Excel parece estar vacío.");
 
-                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria...`;
+                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria local...`;
 
-                // Guardar en IndexedDB usando un Timestamp actual forzado
                 let nuevoTimestamp = new Date().getTime();
                 await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
 
                 statusDiv.innerText = "✅ ¡Monitor cargado con éxito! Recargando sistema...";
                 
-                // Recargamos la página para que los botones se desbloqueen
-                setTimeout(() => { location.reload(); }, 1500);
+                setTimeout(() => { location.reload(); }, 1200);
 
             } catch (error) {
                 statusDiv.style.color = "#dc2626";
@@ -730,75 +729,6 @@
             statusDiv.innerText = "❌ Error al intentar abrir el archivo en su computadora.";
         };
 
-        reader.readAsArrayBuffer(file);
-    }
-
-    // =========================================================================
-    // 🔥 ACTUALIZACIÓN MANUAL POR PARTE DEL USUARIO (VOLUNTARIA) 🔥
-    // =========================================================================
-    function abrirModalExcel() {
-        document.getElementById('modalUploadExcel').style.display = 'flex';
-        document.getElementById('statusCargaVoluntaria').innerText = '';
-        document.getElementById('fileMonitorVoluntario').value = '';
-    }
-
-    function cerrarModalExcel() {
-        document.getElementById('modalUploadExcel').style.display = 'none';
-    }
-
-    async function procesarMonitorVoluntario() {
-        let fileInput = document.getElementById('fileMonitorVoluntario');
-        let statusDiv = document.getElementById('statusCargaVoluntaria');
-        let file = fileInput.files[0];
-
-        if (!file) {
-            statusDiv.style.color = "var(--red-600)";
-            statusDiv.innerText = "⚠️ Por favor, selecciona un archivo Excel (.xlsx) primero.";
-            return;
-        }
-
-        // Cambiamos el texto para mostrar que está procesando
-        statusDiv.style.color = "var(--emerald-600)";
-        statusDiv.innerText = "⏳ Leyendo archivo Excel... Por favor espere.";
-
-        let reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                let data = new Uint8Array(e.target.result);
-                // Leemos el Excel con la librería SheetJS
-                let workbook = XLSX.read(data, { type: 'array' });
-                
-                let firstSheet = workbook.SheetNames[0];
-                let worksheet = workbook.Sheets[firstSheet];
-                
-                // Convertir el Excel a datos para la base de datos
-                let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-                if (jsonData.length === 0) throw new Error("El archivo Excel parece estar vacío.");
-
-                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria de la PC...`;
-
-                // Lo inyectamos a la base de datos IndexedDB y le ponemos un timestamp actual
-                let nuevoTimestamp = new Date().getTime();
-                await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
-
-                statusDiv.innerText = "✅ ¡Monitor actualizado con éxito! Recargando...";
-                
-                // Recargamos la página
-                setTimeout(() => { location.reload(); }, 1200);
-
-            } catch (error) {
-                statusDiv.style.color = "var(--red-600)";
-                statusDiv.innerText = "❌ Error al leer el archivo: " + error.message;
-            }
-        };
-
-        reader.onerror = function() {
-            statusDiv.style.color = "var(--red-600)";
-            statusDiv.innerText = "❌ Error al intentar abrir el archivo.";
-        };
-
-        // Arranca la lectura
         reader.readAsArrayBuffer(file);
     }
 </script>

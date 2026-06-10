@@ -303,27 +303,21 @@
         document.getElementById('indicadorStatus').style.color = "var(--amber-600)";
 
         let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
-        let cacheMonitorObj = await obtenerDatoDB("monitorCargado"); 
-
-        let dMonitorCache = null;
-        if (cacheMonitorObj) {
-            if (Array.isArray(cacheMonitorObj)) dMonitorCache = cacheMonitorObj;
-            else if (cacheMonitorObj.data) dMonitorCache = cacheMonitorObj.data;
-            else dMonitorCache = cacheMonitorObj;
-        }
+        let dMonitorCache = await obtenerDatoDB("monitorCargado"); // Retorna el array de IndexedDB
 
         let necesitaTarifas = true;
         let cache = null;
 
         if (cacheTarifasStr) {
             cache = JSON.parse(cacheTarifasStr);
+            // Si el caché tiene el tarifario de vehículos, no necesitamos descargar nada de tarifas
             if (cache.tarifarioGlobalDB && cache.tarifarioGlobalDB.length > 0) necesitaTarifas = false; 
         }
 
         let necesitaMonitor = !dMonitorCache || dMonitorCache.length === 0;
 
         if (necesitaTarifas || necesitaMonitor) {
-            document.getElementById('indicadorStatus').innerText = "☁️ Descargando de la Nube...";
+            document.getElementById('indicadorStatus').innerText = "☁️ Sincronizando con la Nube...";
             
             try {
                 if (necesitaTarifas) {
@@ -338,7 +332,6 @@
                     trayectoDB = allData.trayecto || [];
                     tarifarioGlobalDB = allData.tarifarioGlobal || [];
                     
-                    // 🔥 EXTRAEMOS EL HISTORIAL DE BD_SIMULADOR 🔥
                     let dbData = allData.db || [];
                     let arrHist = [];
                     dbData.forEach(row => {
@@ -350,13 +343,17 @@
                         }
                     });
 
+                    // Guardamos todo en memoria por si abrió esta pantalla primero
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, tarifarioGlobalDB, arrHist
                     }));
                 } else {
-                    dTarifas = cache.dTarifas; window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
-                    window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
-                    window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; trayectoDB = cache.trayectoDB;
+                    dTarifas = cache.dTarifas; 
+                    window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
+                    window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; 
+                    window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
+                    window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; 
+                    trayectoDB = cache.trayectoDB;
                     tarifarioGlobalDB = cache.tarifarioGlobalDB;
                     if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
                 }
@@ -368,20 +365,29 @@
                         dMonitor = jsonM;
                         await guardarDatoDB("monitorCargado", dMonitor, new Date().getTime());
                     }
-                } else { dMonitor = dMonitorCache; }
+                } else { 
+                    dMonitor = dMonitorCache; 
+                }
             } catch (error) {
-                document.getElementById('indicadorStatus').innerText = "❌ Error al descargar."; return;
+                document.getElementById('indicadorStatus').innerText = "❌ Error al descargar de la nube."; 
+                return;
             }
         } else {
-            dTarifas = cache.dTarifas; window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
-            window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
-            window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; trayectoDB = cache.trayectoDB;
-            tarifarioGlobalDB = cache.tarifarioGlobalDB || [];
+            // 🔥 CARGA INSTANTÁNEA (0.1 SEGUNDOS) 🔥
+            dTarifas = cache.dTarifas; 
+            window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
+            window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; 
+            window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
+            window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; 
+            trayectoDB = cache.trayectoDB;
+            tarifarioGlobalDB = cache.tarifarioGlobalDB;
             if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
+            
             dMonitor = dMonitorCache; 
         }
 
         document.getElementById('indicadorStatus').innerText = `✅ Listos. Monitor: ${dMonitor.length} filas.`;
+        document.getElementById('indicadorStatus').style.color = "var(--emerald-600)";
         cargarOpcionesSelectFlota();
     }
 
