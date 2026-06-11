@@ -187,61 +187,85 @@
         <div id="tablasContainer"></div>
     </div>
 
-    <div class="card" id="panelComparativo" style="border-top: 4px solid var(--purple-600); margin-top: 20px; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px; margin-bottom: 15px;">
-            <h3 style="margin: 0; border: none; padding: 0;">⚖️ Balance del Día: Proyectado vs. Ejecutado</h3>
-            <span id="lblEstadoProy" style="background: var(--slate-100); padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; color: var(--slate-600);">Buscando datos...</span>
+    <div class="card" id="panelComparativo" style="margin-top: 30px; display: none; padding: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--slate-200); padding-bottom: 15px; margin-bottom: 25px;">
+            <h3 style="margin: 0; border: none; padding: 0; font-size: 1.3em; color: var(--slate-900);">⚖️ Balance Operativo: Planeado vs. Realidad</h3>
+            <span id="lblEstadoProy" style="background: var(--slate-100); padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 700; color: var(--slate-600); box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">Buscando datos...</span>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: stretch;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; align-items: stretch;">
             
-            <div style="background: var(--slate-50); padding: 20px; border-radius: 10px; border: 1px solid var(--slate-200);">
-                <h4 style="text-align:center; color: var(--slate-700); margin:0 0 15px 0; font-size:1.1em;">📋 LO PLANEADO (Mañana)</h4>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Total Pedidos:</span><strong id="cpPedProy">0</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Ingresos Esperados:</span><strong id="cpIngProy" style="color:var(--blue-600)">$0.00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Costo Flota Planeada:</span><strong id="cpCosProy" style="color:var(--red-600)">$0.00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:1.1em; padding-top:10px; border-top:1px solid var(--slate-200);"><span>Utilidad Proyectada:</span><strong id="cpUtProy" style="color:var(--emerald-600)">$0.00</strong></div>
-                
-                <div style="background:white; padding:10px; border-radius:6px; border:1px solid var(--slate-200); font-size:0.9em;">
-                    <b style="color:var(--slate-700); display:block; margin-bottom:5px;">🚛 Flota Solicitada:</b>
-                    <span id="cpFlotaProy" style="color:var(--slate-600); line-height:1.4;">-</span>
+            <div style="background: white; border-radius: 12px; border: 1px solid var(--slate-200); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); overflow: hidden; display: flex; flex-direction: column;">
+                <div style="background: var(--slate-50); padding: 15px; border-bottom: 1px solid var(--slate-200); text-align: center;">
+                    <h4 style="margin: 0; color: var(--slate-700); font-size: 0.95em; text-transform: uppercase; letter-spacing: 1px;">📋 Lo Planeado (Mañana)</h4>
+                </div>
+                <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed var(--slate-200); padding-bottom: 12px; margin-bottom: 12px;">
+                        <span style="color: var(--slate-500); font-weight: 500;">Total Pedidos:</span><strong id="cpPedProy" style="font-size: 1.1em; color: var(--slate-800);">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed var(--slate-200); padding-bottom: 12px; margin-bottom: 12px;">
+                        <span style="color: var(--slate-500); font-weight: 500;">Ingresos Esperados:</span><strong id="cpIngProy" style="color: var(--blue-600); font-size: 1.1em;">$0.00</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed var(--slate-200); padding-bottom: 12px; margin-bottom: 15px;">
+                        <span style="color: var(--slate-500); font-weight: 500;">Costo Flota Planeada:</span><strong id="cpCosProy" style="color: var(--red-600); font-size: 1.1em;">$0.00</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background: var(--slate-50); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <span style="color: var(--slate-700); font-weight: 700;">Utilidad Proyectada:</span><strong id="cpUtProy" style="color: var(--emerald-600); font-size: 1.25em;">$0.00</strong>
+                    </div>
+                    
+                    <div style="margin-top: auto;">
+                        <span style="display: block; font-size: 0.8em; text-transform: uppercase; color: var(--slate-400); font-weight: 700; margin-bottom: 8px;">🚛 Flota Solicitada</span>
+                        <div id="cpFlotaProy" style="line-height: 1.6;">-</div>
+                    </div>
                 </div>
             </div>
 
-            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px dashed var(--slate-300); display:flex; flex-direction:column; justify-content:center;">
-                <h4 style="text-align:center; color: var(--slate-800); margin:0 0 20px 0; font-size:1.1em;">⚡ VARIACIÓN (Delta)</h4>
-                
-                <div style="text-align:center; margin-bottom:15px;">
-                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Diferencia en Pedidos</span>
-                    <div id="cpDifPed" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
+            <div style="background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--slate-200); position: relative; z-index: 2; transform: scale(1.03); display: flex; flex-direction: column;">
+                <div style="background: var(--slate-900); padding: 15px; border-radius: 12px 12px 0 0; text-align: center;">
+                    <h4 style="margin: 0; color: white; font-size: 0.95em; text-transform: uppercase; letter-spacing: 1px;">⚡ Variación (Delta)</h4>
                 </div>
-                
-                <div style="text-align:center; margin-bottom:15px;">
-                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Brecha de Ingresos</span>
-                    <div id="cpDifIng" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
-                </div>
-                
-                <div style="text-align:center; margin-bottom:15px;">
-                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Desvío de Costos</span>
-                    <div id="cpDifCos" style="font-weight:800; font-size:1.2em; margin-top:5px;">-</div>
-                </div>
-
-                <div style="text-align:center; margin-top:auto; padding:10px; border-radius:8px; background:var(--slate-50);">
-                    <span style="font-size:0.85em; color:var(--slate-500); text-transform:uppercase; font-weight:bold;">Impacto en Rentabilidad</span>
-                    <div id="cpDifUt" style="font-weight:800; font-size:1.3em; margin-top:5px;">-</div>
+                <div style="padding: 25px 20px; display: flex; flex-direction: column; justify-content: center; gap: 20px; flex-grow: 1;">
+                    <div style="text-align:center;">
+                        <div style="font-size:0.75em; color:var(--slate-400); text-transform:uppercase; font-weight:800; letter-spacing:1px; margin-bottom:6px;">Diferencia en Pedidos</div>
+                        <div id="cpDifPed">-</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.75em; color:var(--slate-400); text-transform:uppercase; font-weight:800; letter-spacing:1px; margin-bottom:6px;">Brecha de Ingresos</div>
+                        <div id="cpDifIng">-</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.75em; color:var(--slate-400); text-transform:uppercase; font-weight:800; letter-spacing:1px; margin-bottom:6px;">Desvío de Costos</div>
+                        <div id="cpDifCos">-</div>
+                    </div>
+                    <div style="text-align:center; padding-top: 15px; border-top: 1px solid var(--slate-100);">
+                        <div style="font-size:0.8em; color:var(--slate-500); text-transform:uppercase; font-weight:800; letter-spacing:1px; margin-bottom:8px;">Impacto en Rentabilidad</div>
+                        <div id="cpDifUt">-</div>
+                    </div>
                 </div>
             </div>
 
-            <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; border: 1px solid #bbf7d0;">
-                <h4 style="text-align:center; color: var(--emerald-800); margin:0 0 15px 0; font-size:1.1em;">✅ LO EJECUTADO (Cierre)</h4>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Total Pedidos Reales:</span><strong id="cpPedReal">0</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Ingresos Reales:</span><strong id="cpIngReal" style="color:var(--blue-600)">$0.00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:1.05em;"><span>Costo Flota Real:</span><strong id="cpCosReal" style="color:var(--red-600)">$0.00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:1.1em; padding-top:10px; border-top:1px solid #bbf7d0;"><span>Utilidad Neta:</span><strong id="cpUtReal" style="color:var(--emerald-600)">$0.00</strong></div>
-                
-                <div style="background:white; padding:10px; border-radius:6px; border:1px solid #bbf7d0; font-size:0.9em;">
-                    <b style="color:var(--emerald-800); display:block; margin-bottom:5px;">🚛 Flota Utilizada Realmente:</b>
-                    <span id="cpFlotaReal" style="color:var(--emerald-700); line-height:1.4;">-</span>
+            <div style="background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0; box-shadow: 0 4px 6px -1px rgba(16,185,129,0.05); overflow: hidden; display: flex; flex-direction: column;">
+                <div style="background: #d1fae5; padding: 15px; border-bottom: 1px solid #bbf7d0; text-align: center;">
+                    <h4 style="margin: 0; color: #065f46; font-size: 0.95em; text-transform: uppercase; letter-spacing: 1px;">✅ Lo Ejecutado (Cierre)</h4>
+                </div>
+                <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #a7f3d0; padding-bottom: 12px; margin-bottom: 12px;">
+                        <span style="color: #047857; font-weight: 500;">Total Pedidos Reales:</span><strong id="cpPedReal" style="font-size: 1.1em; color: #064e3b;">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #a7f3d0; padding-bottom: 12px; margin-bottom: 12px;">
+                        <span style="color: #047857; font-weight: 500;">Ingresos Reales:</span><strong id="cpIngReal" style="color: var(--blue-600); font-size: 1.1em;">$0.00</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #a7f3d0; padding-bottom: 12px; margin-bottom: 15px;">
+                        <span style="color: #047857; font-weight: 500;">Costo Flota Real:</span><strong id="cpCosReal" style="color: var(--red-600); font-size: 1.1em;">$0.00</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <span style="color: #065f46; font-weight: 700;">Utilidad Neta:</span><strong id="cpUtReal" style="color: var(--emerald-600); font-size: 1.25em;">$0.00</strong>
+                    </div>
+                    
+                    <div style="margin-top: auto;">
+                        <span style="display: block; font-size: 0.8em; text-transform: uppercase; color: #047857; font-weight: 700; margin-bottom: 8px;">🚛 Flota Utilizada Realmente</span>
+                        <div id="cpFlotaReal" style="line-height: 1.6;">-</div>
+                    </div>
                 </div>
             </div>
             
@@ -686,35 +710,49 @@ function actualizarPanelComparativo(ingReal, cosReal, pedReal, dataMes, dateList
 
         let utReal = ingReal - cosReal;
 
-        // 2. Extraer Flota Real Utilizada
-        let conteoFlotaReal = {};
+        // 2. Extraer Flota Real Utilizada (Con Placas)
+        let conteoFlotaReal = new Set();
+        let placasConTipo = [];
+
         dataMes.forEach(row => {
             if(row.placa) {
                 let p = String(row.placa).trim().toUpperCase();
-                let tarifa = window.dTarifasGlobal.find(t => String(t.PLACA || t.PLACAS).trim().toUpperCase() === p);
-                let tipo = tarifa ? (tarifa['TIPO VEHICULO'] || tarifa['TIPO'] || 'Vehículo Normal') : 'Vehículo Desconocido';
-                if(!conteoFlotaReal[tipo]) conteoFlotaReal[tipo] = new Set();
-                conteoFlotaReal[tipo].add(p); // Usamos Set para contar la placa 1 sola vez
+                
+                // Si la placa aún no la hemos registrado, la buscamos y la guardamos
+                if(!conteoFlotaReal.has(p) && p !== 'SIN_PLACA') {
+                    conteoFlotaReal.add(p);
+                    
+                    // Buscar el tipo de vehículo en el tarifario
+                    let tarifa = window.dTarifasGlobal.find(t => String(t.PLACA || t.PLACAS).trim().toUpperCase() === p);
+                    let tipoVehiculo = tarifa ? String(tarifa['Tipo Vehiculo'] || tarifa['TIPO VEHICULO'] || 'DESCONOCIDO').toUpperCase() : 'DESCONOCIDO';
+                    
+                    placasConTipo.push(`${p} (${tipoVehiculo})`);
+                }
             }
         });
         
-        let flotaRealStr = Object.keys(conteoFlotaReal).map(tipo => `${conteoFlotaReal[tipo].size}x ${tipo}`).join(' | ');
+        let flotaRealStr = placasConTipo.join(' | ');
         if(!flotaRealStr) flotaRealStr = "No hay vehículos registrados";
+
 
         // 3. Pintar Valores Izquierda (Proyectado)
         document.getElementById('cpPedProy').innerText = pedProy;
         document.getElementById('cpIngProy').innerText = `$${ingProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('cpCosProy').innerText = `$${cosProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('cpUtProy').innerText = `$${utProy.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('cpFlotaProy').innerText = flotaProyArr.join(' + ') || 'Sin detalle';
+        
+        // 🔥 AQUÍ APLICAMOS LA MAGIA VISUAL A LA FLOTA PROYECTADA 🔥
+        let proyStringUnida = flotaProyArr.join(' | ');
+        document.getElementById('cpFlotaProy').innerHTML = formatearFlotaConIconos(proyStringUnida);
 
         // 4. Pintar Valores Derecha (Ejecutado)
         document.getElementById('cpPedReal').innerText = pedReal;
         document.getElementById('cpIngReal').innerText = `$${ingReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('cpCosReal').innerText = `$${cosReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('cpUtReal').innerText = `$${utReal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('cpFlotaReal').innerText = flotaRealStr;
-
+        
+        // 🔥 AQUÍ APLICAMOS LA MAGIA VISUAL A LA FLOTA REAL 🔥
+        document.getElementById('cpFlotaReal').innerHTML = formatearFlotaConIconos(flotaRealStr);
         // 5. Pintar Centro (Variación/Deltas)
         let difPed = pedReal - pedProy;
         let difIng = ingReal - ingProy; 
@@ -728,20 +766,61 @@ function actualizarPanelComparativo(ingReal, cosReal, pedReal, dataMes, dateList
     }
 }
 
+// ==========================================
+// 🎨 FORMATEADOR VISUAL DE DELTAS (PÍLDORAS DE VARIACIÓN)
+// ==========================================
 function pintarDelta(id, valor, isCurrency, esGasto) {
     let el = document.getElementById(id);
     let absValor = Math.abs(valor);
     let strValor = isCurrency ? `$${absValor.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : absValor;
     
     if (valor === 0) {
-        el.innerText = `Exacto (0)`; el.style.color = 'var(--slate-500)'; return;
+        el.innerHTML = `<span style="background: var(--slate-100); color: var(--slate-600); padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 1.1em; display: inline-block;">Exacto (0)</span>`; 
+        return;
     }
 
     let esPositivo = valor > 0;
-    let esBueno = esGasto ? !esPositivo : esPositivo; // Si es gasto, subir es malo. Si es ingreso, subir es bueno.
+    // Si es un Gasto (Costo de Flota), subir (+) es Malo (Rojo). Si es Ingreso/Utilidad, subir (+) es Bueno (Verde).
+    let esBueno = esGasto ? !esPositivo : esPositivo; 
 
-    el.innerText = (esPositivo ? '↑ +' : '↓ -') + strValor;
-    el.style.color = esBueno ? 'var(--emerald-600)' : 'var(--red-600)';
+    let colorFondo = esBueno ? '#d1fae5' : '#fee2e2';
+    let colorTexto = esBueno ? '#047857' : '#b91c1c';
+    let flecha = esPositivo ? '↗ +' : '↘ -';
+
+    el.innerHTML = `<span style="background: ${colorFondo}; color: ${colorTexto}; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 1.15em; display: inline-block; border: 1px solid ${esBueno ? '#a7f3d0' : '#fca5a5'}; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${flecha}${strValor}</span>`;
+}
+
+// ==========================================
+// 🎨 FORMATEADOR VISUAL DE VEHÍCULOS (ETIQUETAS MODERNAS)
+// ==========================================
+function formatearFlotaConIconos(flotaStr) {
+    if (!flotaStr || flotaStr === 'Sin detalle' || flotaStr === 'No hay vehículos registrados') {
+        return `<span style="color:var(--slate-400); font-style:italic;">${flotaStr || 'Sin detalle'}</span>`;
+    }
+
+    let items = flotaStr.replace(/\+/g, '|').split('|');
+    let html = '';
+    
+    items.forEach(item => {
+        let t = item.trim().toUpperCase();
+        if (!t) return;
+        
+        let icono = '🚛'; 
+        if (t.includes('MOTO')) icono = '🏍️';
+        else if (t.includes('CAMIONETA') || t.includes('AUTO') || t.includes('FURGONETA') || t.includes('CHASIS')) icono = '🚐';
+        else if (t.includes('2,5') || t.includes('3,5') || t.includes('TON') || t.includes('1T')) icono = '🚚';
+        
+        // Extraemos la placa limpia para la pantalla
+        let textoVisual = t;
+        let textoHover = t;
+        if (t.includes('(') && t.includes(')')) {
+            textoVisual = t.split('(')[0].trim();
+        }
+
+        html += `<span title="${textoHover}" style="display:inline-flex; align-items:center; background:white; padding:4px 10px; border-radius:6px; margin:3px 4px 3px 0; font-size:0.85em; font-weight:700; border:1px solid var(--slate-200); color:var(--slate-700); box-shadow:0 1px 2px rgba(0,0,0,0.04); cursor:help; transition: border-color 0.2s;"><b style="font-size:1.15em; margin-right:6px; background:var(--slate-50); border-radius:4px; padding:2px;">${icono}</b> ${textoVisual}</span>`;
+    });
+    
+    return html;
 }
 </script>
 
