@@ -135,16 +135,16 @@
             transform: rotate(45deg);
         }
 
-        /* Animación de Saludo (Infinita al abrir) */
+        /* 🔥 Animación de Saludo (Ciclo de 6s: 1.5s saluda suave, 4.5s pausa) 🔥 */
         @keyframes waveHello {
             0% { transform: translateY(10px) rotate(15deg); }
-            20% { transform: translateY(-10px) rotate(75deg); }
-            40% { transform: translateY(10px) rotate(0deg); }
-            60% { transform: translateY(-10px) rotate(75deg); }
-            80% { transform: translateY(10px) rotate(0deg); }
-            100% { transform: translateY(10px) rotate(15deg); }
+            6% { transform: translateY(-10px) rotate(75deg); }
+            12% { transform: translateY(10px) rotate(5deg); }
+            18% { transform: translateY(-10px) rotate(75deg); }
+            25% { transform: translateY(10px) rotate(15deg); }
+            100% { transform: translateY(10px) rotate(15deg); } /* Reposo por el resto del ciclo */
         }
-        .owl-wing.right.waving { animation: waveHello 2s ease-in-out infinite; }
+        .owl-wing.right.waving { animation: waveHello 6s ease-in-out infinite; }
 
         /* Animación de Despedida (Muy rápida) */
         @keyframes waveGoodbye {
