@@ -15,6 +15,9 @@
             --purple-600: #7c3aed; --purple-50: #f5f3ff;
             --teal-600: #0d9488; --teal-50: #f0fdfa;
             --red-600: #dc2626;
+            
+            /* Colores del búho */
+            --owl-body: #1e293b; --owl-belly: #cbd5e1; --owl-beak: #f59e0b;
         }
         
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; color: var(--slate-700); }
@@ -23,6 +26,7 @@
         .navbar { 
             background-color: var(--slate-900); color: white; padding: 20px 40px; 
             display: flex; align-items: center; justify-content: space-between; 
+            position: relative; z-index: 20; 
         }
         .navbar-brand { font-size: 1.4em; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
         .user-info { display: flex; align-items: center; gap: 12px; font-size: 0.9em; font-weight: 500; }
@@ -35,12 +39,80 @@
         .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
 
         /* HERO SECTION (Fondo oscuro) */
-        .hero { background-color: var(--slate-900); padding: 40px 20px 140px; text-align: center; color: white; position: relative;}
-        .hero h1 { font-size: 2.2em; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px; }
-        .hero p { color: #94a3b8; font-size: 1.1em; max-width: 600px; margin: 0 auto; }
+        .hero { 
+            background-color: var(--slate-900); padding: 40px 20px 140px; 
+            text-align: center; color: white; position: relative; overflow: hidden;
+        }
+        .hero h1 { font-size: 2.2em; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px; animation: fadeInDown 0.8s ease-out forwards; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
+        .hero p { color: #94a3b8; font-size: 1.1em; max-width: 600px; margin: 0 auto; animation: fadeInDown 0.8s ease-out forwards 0.2s; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
+
+        @keyframes fadeInDown {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 🔥 BÚHO MASCOTA (Ajustado para no chocar feo con las tarjetas) 🔥 */
+        .mascot-container {
+            position: absolute;
+            bottom: 75px;  /* La altura exacta donde empiezan las tarjetas blancas */
+            right: 40px;   /* Fijo al borde derecho para esquivar las tarjetas centrales */
+            width: 100px;
+            height: 90px;
+            z-index: 15;   /* Menor a 20 (menu-grid) para asomarse POR DETRÁS si chocan */
+            animation: fadeInDown 0.8s ease-out forwards 0.6s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .owl-body {
+            position: absolute; bottom: 0; left: 10px; width: 80px; height: 80px;
+            background: var(--owl-body); border-radius: 40px 40px 20px 20px; overflow: hidden;
+            z-index: 1;
+        }
+        
+        .owl-belly {
+            position: absolute; bottom: -10px; left: 15px; width: 50px; height: 55px;
+            background: var(--owl-belly); border-radius: 50%;
+        }
+
+        .owl-eye {
+            position: absolute; top: 20px; width: 24px; height: 24px;
+            background: white; border-radius: 50%; display: flex;
+            justify-content: center; align-items: center; overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .owl-eye.left { left: 12px; }
+        .owl-eye.right { right: 12px; }
+
+        .owl-pupil {
+            width: 10px; height: 10px; background: var(--slate-900); border-radius: 50%;
+            position: relative; transition: transform 0.1s ease-out;
+        }
+        .owl-pupil::after {
+            content: ''; position: absolute; top: 2px; right: 2px; width: 3px; height: 3px;
+            background: white; border-radius: 50%;
+        }
+
+        .owl-beak {
+            position: absolute; top: 38px; left: 35px; width: 10px; height: 12px;
+            background: var(--owl-beak); border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
+            z-index: 3;
+        }
+
+        /* Párpados para el parpadeo */
+        .owl-eyelid {
+            position: absolute; top: -24px; left: 0; width: 24px; height: 24px;
+            background: var(--owl-body); z-index: 5;
+            animation: blink 4s infinite; /* Parpadea cada 4 segundos */
+        }
+
+        @keyframes blink {
+            0%, 96%, 98%, 100% { transform: translateY(0); }
+            97%, 99% { transform: translateY(24px); } 
+        }
 
         /* 🔥 PANEL DE ESTADO EN VIVO (Píldoras) 🔥 */
-        .status-dashboard { display: flex; justify-content: center; gap: 15px; margin-top: 25px; flex-wrap: wrap; }
+        .status-dashboard { display: flex; justify-content: center; gap: 15px; margin-top: 25px; flex-wrap: wrap; animation: fadeInDown 0.8s ease-out forwards 0.4s; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
         .status-pill {
             background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 8px 18px; border-radius: 50px; font-size: 0.85em; font-weight: 600;
@@ -63,13 +135,13 @@
             margin-top: 15px; padding: 10px 25px; background: #fffbeb; color: #d97706; 
             border: 1px solid #fcd34d; border-radius: 50px; display: inline-block; 
             font-weight: 700; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: all 0.5s ease;
+            transition: all 0.5s ease; position: relative; z-index: 10;
         }
 
         /* 🔥 CONTENEDOR SÚPER DINÁMICO (Flexbox avanzado) 🔥 */
         .menu-grid { 
             display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; 
-            max-width: 1200px; margin: -80px auto 60px; padding: 0 20px; position: relative; z-index: 10;
+            max-width: 1200px; margin: -80px auto 60px; padding: 0 20px; position: relative; z-index: 20;
             transition: all 0.5s ease;
         }
 
@@ -95,6 +167,7 @@
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
             display: flex; flex-direction: column; align-items: flex-start;
             opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            background-color: #ffffff; /* Asegura fondo blanco sólido para el efecto de traslape */
         }
         
         .menu-card:nth-child(1) { animation-delay: 0.05s; }
@@ -151,11 +224,16 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
             background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
             display: none; align-items: center; justify-content: center; z-index: 1000; 
+            opacity: 0; transition: opacity 0.3s;
         }
+        .modal-overlay.active { opacity: 1; }
         .modal-box { 
             background: white; width: 100%; max-width: 400px; padding: 30px; 
             border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        
         .modal-box h3 { margin-top: 0; margin-bottom: 20px; color: var(--slate-900); display: flex; align-items: center; gap: 8px; }
         .modal-box label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--slate-700); }
         .modal-box input { 
@@ -185,6 +263,11 @@
         }
         .toast-container.show { transform: translateX(0); }
         .toast-container strong { color: var(--slate-900); display: block; margin-bottom: 5px; font-size: 1.05em; }
+
+        /* Oculta el búho en pantallas menores a 950px para evitar que se monte encima del texto de las tarjetas centradas */
+        @media (max-width: 950px) {
+            .mascot-container { display: none; }
+        }
 
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 15px; padding: 20px; text-align: center; }
@@ -239,6 +322,21 @@
                 <button onclick="procesarMonitorExcel('fileMonitorManual', 'statusCargaManual')" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cargar Monitor</button>
             </div>
             <div id="statusCargaManual" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; color: #b91c1c;"></div>
+        </div>
+
+        <div class="mascot-container">
+            <div class="owl-body">
+                <div class="owl-belly"></div>
+                <div class="owl-eye left" id="eye-left">
+                    <div class="owl-eyelid"></div>
+                    <div class="owl-pupil" id="pupil-left"></div>
+                </div>
+                <div class="owl-eye right" id="eye-right">
+                    <div class="owl-eyelid"></div>
+                    <div class="owl-pupil" id="pupil-right"></div>
+                </div>
+                <div class="owl-beak"></div>
+            </div>
         </div>
     </div>
 
@@ -364,6 +462,30 @@
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
 
+    // 🔥 SEGUIMIENTO DEL MOUSE PARA EL BÚHO MASCOTA 🔥
+    const pupilLeft = document.getElementById('pupil-left');
+    const pupilRight = document.getElementById('pupil-right');
+    const eyeLeft = document.querySelector('.owl-eye.left');
+    const eyeRight = document.querySelector('.owl-eye.right');
+
+    document.addEventListener('mousemove', (e) => {
+        if(window.innerWidth <= 950) return; // Si está oculto por CSS, no calcula
+
+        const rectL = eyeLeft.getBoundingClientRect();
+        const rectR = eyeRight.getBoundingClientRect();
+        const cxL = rectL.left + rectL.width / 2;
+        const cyL = rectL.top + rectL.height / 2;
+        const cxR = rectR.left + rectR.width / 2;
+        const cyR = rectR.top + rectR.height / 2;
+        
+        const angleL = Math.atan2(e.clientY - cyL, e.clientX - cxL);
+        const angleR = Math.atan2(e.clientY - cyR, e.clientX - cxR);
+        const maxDist = 4; 
+
+        pupilLeft.style.transform = `translate(${Math.cos(angleL) * maxDist}px, ${Math.sin(angleL) * maxDist}px)`;
+        pupilRight.style.transform = `translate(${Math.cos(angleR) * maxDist}px, ${Math.sin(angleR) * maxDist}px)`;
+    });
+
     // =========================================================================
     // 🚀 MOTOR DE DESCARGA DIRECTA E INTELIGENTE (A NIVEL GLOBAL)
     // =========================================================================
@@ -430,7 +552,7 @@
     }
 
     window.onload = async function() {
-        if(!sesion) return;
+        if(!sesion) return window.location.href = 'index.html';
 
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad}</span>
@@ -445,23 +567,19 @@
         document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${sesion.nombre}!`;
 
         try {
-            // 🔥 1. PING INTELIGENTE AL SERVIDOR 🔥
             const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
             const ping = await resPing.json();
             
             if (ping.error) throw new Error(ping.error);
 
-            // 2. OBTENER CACHÉS LOCALES
             let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
             let cacheMonitorObj = await obtenerDatoDBPreload("monitorCargado");
             
             let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
             
-            // 3. DECISIÓN: ¿NECESITAMOS DESCARGAR ALGO?
             let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
 
-            // 🔥 DETECCIÓN INTELIGENTE DE 2 HORAS DE RETRASO 🔥
-            let limiteHoras = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
+            let limiteHoras = 2 * 60 * 60 * 1000; 
             let tiempoActual = new Date().getTime();
             let monitorMuyViejo = false;
 
@@ -477,20 +595,15 @@
                 document.getElementById('bannerEmergencia').style.display = 'block';
             }
 
-            // 🔥 CORRECCIÓN: SOLO DESCARGAR SI LA NUBE ES MÁS NUEVA QUE EL ARCHIVO LOCAL 🔥
             let necesitaMonitor = false;
             
-            // 1. Si no hay nada en memoria, obvio necesita descargar
             if (!cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0) {
                 necesitaMonitor = true;
             } 
-            // 2. Si la Nube tiene una actualización MÁS NUEVA que la que tú subiste
             else if (ping.monitorTs && ping.monitorTs > cacheMonitorObj.timestamp) {
                 necesitaMonitor = true;
             }
-            // (Si tu caché local es más nuevo porque lo acabas de subir manual, necesitaMonitor se queda en false y NO DESCARGA NADA).
 
-            // CASO A: NO HUBO CAMBIOS, DESBLOQUEO INSTANTÁNEO
             if (!necesitaTarifas && !necesitaMonitor) {
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
                 setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
@@ -498,7 +611,6 @@
                 return; 
             }
 
-            // CASO B: HAY CAMBIOS, DESCARGAMOS LO QUE FALTE EN PARALELO
             let msg = document.getElementById('msgBloqueo');
             msg.innerHTML = '⏳ Hay cambios en la nube. Sincronizando bases de datos...';
             
@@ -515,7 +627,6 @@
                         const tfaMedidaDB = allData.medida || []; 
                         const trayectoDB = allData.trayecto || [];
                         
-                        // 🔥 1. AGREGAMOS EL TARIFARIO GLOBAL AQUÍ 🔥
                         const tarifarioGlobalDB = allData.tarifarioGlobal || [];
 
                         let pedidosHistoricosArray = [];
@@ -543,10 +654,9 @@
                             }
                         });
 
-                        // 🔥 2. LO GUARDAMOS EN LA MEMORIA PARA QUE LAS OTRAS PANTALLAS LO USEN 🔥
                         sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                             dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                            tarifarioGlobalDB, // <-- Añadido aquí
+                            tarifarioGlobalDB, 
                             rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
                         }));
                         
@@ -616,11 +726,15 @@
         document.getElementById('inpUsrOriginal').value = sesion.usuario || '';
         document.getElementById('inpUsuario').value = sesion.usuario || '';
         document.getElementById('inpPassword').value = '';
-        document.getElementById('modalPerfil').style.display = 'flex';
+        const modal = document.getElementById('modalPerfil');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
     }
 
     function cerrarModal() {
-        document.getElementById('modalPerfil').style.display = 'none';
+        const modal = document.getElementById('modalPerfil');
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 
     async function guardarPerfil() {
@@ -666,7 +780,9 @@
 
     function cerrarSesion() {
         localStorage.removeItem('sesionActiva');
-        window.location.href = 'index.html';
+        document.body.style.transition = "opacity 0.5s ease";
+        document.body.style.opacity = "0";
+        setTimeout(() => { window.location.href = 'index.html'; }, 500);
     }
 
     // =========================================================================
