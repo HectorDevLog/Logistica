@@ -169,6 +169,24 @@
             z-index: 9999; font-weight: 600; font-size: 0.95em; color: var(--slate-800); max-width: 350px; line-height: 1.4;
         }
         #toastExito.show { transform: translateX(0); }
+
+        /* ================= MODAL TARIFAS FIJAS ================= */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1500; 
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; }
+        .modal-box { 
+            background: white; width: 100%; max-width: 600px; padding: 30px; 
+            border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+
+
     </style>
     
     <script src="config.js"></script>
@@ -300,6 +318,11 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 CONFIRMAR Y GUARDAR
             </button>
+
+            <button onclick="abrirModalTarifasEspeciales()" class="btn-main" style="background: var(--purple-600); margin-top: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8M8 12h8"/></svg>
+                FIJAR TARIFAS MANUALES
+            </button>
         </div>
     </aside>
 
@@ -385,6 +408,49 @@
 <div id="toastExito" class="toast-container">
     <span style="font-size: 2em; line-height: 1; padding-top: 5px;">✅</span>
     <div id="toastExitoText">¡Ruta guardada con éxito!</div>
+</div>
+
+<div id="modalTarifasEspeciales" class="modal-overlay">
+    <div class="modal-box" style="width: 95%; max-width: 1200px;">
+        <h2 style="margin-top: 0; color: var(--slate-900); display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px;">
+            <span>📋 Pre-Carga de Tarifas Fijas / Especiales</span>
+            <button onclick="cerrarModalTarifas()" style="background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--slate-500);">&times;</button>
+        </h2>
+        
+        <div id="pasoIngresoIDs">
+            <label>📦 Ingrese los IDs de Pedidos (Pegue la columna desde Excel o separe con comas):</label>
+            <textarea id="txtIdsEspeciales" rows="6" placeholder="Ej. 1222073&#10;1222024&#10;1221347..." style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; resize: vertical; margin-bottom:15px; font-family:inherit;"></textarea>
+            <button onclick="procesarYPrecalcularTarifas()" class="btn-main" style="width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">ANALIZAR PEDIDOS E INYECTAR</button>
+        </div>
+
+        <div id="pasoTablaPrecios" style="display:none;">
+            <p style="font-size:0.95em; color:var(--slate-600); margin-bottom:15px;">A continuación se muestran los pedidos encontrados. Aquellos marcados en <strong style="color:var(--red-600);">ROJO</strong> no tienen una tarifa automática base en el sistema, es obligatorio asignarles un precio manual antes de guardar.</p>
+            
+            <div class="table-wrapper" style="max-height: 450px; border:1px solid var(--slate-200); overflow-y: auto; border-radius: 6px;">
+                <table id="tblTarifasEspeciales" style="width:100%; border-collapse: collapse; text-align: left; font-size: 0.9em; white-space: nowrap;">
+                    <thead style="background: var(--slate-50); position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">ID Pedido</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">Cliente</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">Servicio Monitor</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">Loc. Origen</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">Loc. Destino (CP)</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200);">Trayecto Base</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200); text-align:center;">Bultos</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200); text-align:center;">Peso (Kg)</th>
+                            <th style="padding: 10px; border-bottom: 2px solid var(--slate-200); text-align:right; width:120px;">Tarifa a Fijar ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:20px;">
+                <button onclick="regresarAInputIDs()" style="padding: 10px 15px; background: white; color: var(--slate-700); border: 1px solid var(--slate-300); font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Volver a Editar Lista</button>
+                <button onclick="enviarTarifasFijadasAlServidor()" id="btnGuardarEspeciales" style="padding: 10px 15px; background: var(--emerald-600); color: white; border: none; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">GUARDAR TARIFAS EN SISTEMA</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1163,6 +1229,171 @@
             btnConf.disabled = false; 
         }
     }
+
+    // --- 🛠️ CONTROLADOR DE TARIFAS FIJADAS CENTRALIZADAS ---
+    let listaPedidosAnalizadosGlobal = [];
+
+    function abrirModalTarifasEspeciales() {
+        const modal = document.getElementById('modalTarifasEspeciales');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        regresarAInputIDs();
+    }
+
+    function cerrarModalTarifas() {
+        const modal = document.getElementById('modalTarifasEspeciales');
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+
+    function regresarAInputIDs() {
+        document.getElementById('pasoIngresoIDs').style.display = 'block';
+        document.getElementById('pasoTablaPrecios').style.display = 'none';
+        document.getElementById('txtIdsEspeciales').value = '';
+    }
+
+    function procesarYPrecalcularTarifas() {
+        let rawIds = document.getElementById('txtIdsEspeciales').value;
+        let pajas = rawIds.split(/[\n,\t]+/);
+        let idsUnicos = [];
+        
+        pajas.forEach(item => {
+            let strId = item.trim().replace(/\D/g, '');
+            if(strId) idsUnicos.push(strId);
+        });
+        idsUnicos = [...new Set(idsUnicos)];
+
+        if(idsUnicos.length === 0) return alert("⚠️ Por favor ingrese al menos un ID de pedido.");
+
+        let tbody = document.querySelector('#tblTarifasEspeciales tbody');
+        tbody.innerHTML = '';
+        listaPedidosAnalizadosGlobal = [];
+
+        // Buscamos cada ID en el monitor completo descargado
+        idsUnicos.forEach(idBusqueda => {
+            let pMonitor = dMonitor.find(m => String(m['PEDIDOID'] || m['idpedido'] || m['2idpedido'] || '').trim() === idBusqueda);
+            
+            // Valores por defecto
+            let cliente = "NO EN MONITOR";
+            let servicio = "-";
+            let origen = "-";
+            let destino = "-";
+            let trayecto = "-";
+            let bultos = "0";
+            let peso = "0.00";
+            let precioSugerido = 0;
+
+            if (pMonitor) {
+                cliente = String(pMonitor.Cliente || pMonitor.CLIENTE || 'DESCONOCIDO').trim().toUpperCase();
+                servicio = String(pMonitor.Servicio || pMonitor.Tipo_Servicio || '-').trim().toUpperCase();
+                origen = String(pMonitor.Origen || pMonitor.ORIGEN || pMonitor.Ciudad || '-').trim().toUpperCase();
+                destino = String(pMonitor.CP || pMonitor.Localidad || pMonitor.LOCALIDAD || '').trim().toUpperCase();
+                bultos = String(pMonitor.Bultos || pMonitor.BULTOS || pMonitor.Cajas || '1');
+                peso = parseFloat(pMonitor.Peso || pMonitor.PESO || pMonitor.Peso_Facturado || 0).toFixed(2);
+
+                // 🔥 CORRECCIÓN: Asignar el Tipo de Trayecto ANTES de enviar al motor 🔥
+                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === destino);
+                trayecto = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+                
+                pMonitor['TipoTrayecto'] = trayecto;
+                pMonitor['VEHICULO'] = 'PRE-CARGA'; // Simular placa para que el motor no falle
+                
+                // Ejecutamos cálculo dinámico usando el motor
+                let mockup = calcularTarifasAutomaticas(pMonitor);
+                precioSugerido = mockup && mockup.total > 0 ? mockup.total : 0;
+            }
+
+            // Si el precio da 0, preparamos el color de alerta rojo
+            let styleAlertaRow = precioSugerido === 0 ? "background-color: var(--red-50); color: var(--red-600);" : "";
+            let styleInput = precioSugerido === 0 ? "border-color: var(--red-600); box-shadow: 0 0 5px var(--red-100);" : "";
+
+            tbody.innerHTML += `
+                <tr style="${styleAlertaRow}">
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200);"><strong>${idBusqueda}</strong></td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); font-size: 0.85em;">${cliente}</td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200);"><span style="background:var(--slate-200); color:var(--slate-700); padding:3px 6px; border-radius:4px; font-size:0.8em; font-weight:600;">${servicio}</span></td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); font-size: 0.85em;">${origen}</td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200);"><span style="background:white; border:1px solid var(--slate-300); padding:3px 6px; border-radius:4px; font-size:0.8em; font-weight:600;">${destino}</span></td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); font-size: 0.85em;">${trayecto}</td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); text-align:center;">${bultos}</td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); text-align:center;">${peso}</td>
+                    <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); text-align:right;">
+                        <input type="number" id="inputEsp_${idBusqueda}" value="${precioSugerido.toFixed(2)}" step="0.01" min="0" style="width:100px; text-align:right; padding:6px; font-weight:bold; border-radius:6px; border:1px solid var(--slate-300); ${styleInput}" oninput="validarColorAlCambiar(this)">
+                    </td>
+                </tr>
+            `;
+
+            listaPedidosAnalizadosGlobal.push(idBusqueda);
+        });
+
+        document.getElementById('pasoIngresoIDs').style.display = 'none';
+        document.getElementById('pasoTablaPrecios').style.display = 'block';
+    }
+
+    function validarColorAlCambiar(inputNode) {
+        let fila = inputNode.parentNode.parentNode;
+        let val = parseFloat(inputNode.value) || 0;
+        if (val > 0) {
+            fila.style.backgroundColor = "transparent";
+            fila.style.color = "inherit";
+            inputNode.style.borderColor = "";
+            inputNode.style.boxShadow = "";
+        } else {
+            fila.style.backgroundColor = "var(--red-50)";
+            fila.style.color = "var(--red-600)";
+            inputNode.style.borderColor = "var(--red-600)";
+        }
+    }
+
+    async function enviarTarifasFijadasAlServidor() {
+        let payloadTarifas = [];
+        let tieneErroresCero = false;
+
+        for (let id of listaPedidosAnalizadosGlobal) {
+            let nodoInput = document.getElementById(`inputEsp_${id}`);
+            let valorTarifa = parseFloat(nodoInput.value) || 0;
+
+            if (valorTarifa <= 0) {
+                tieneErroresCero = true;
+                nodoInput.style.borderColor = "var(--red-600)";
+                nodoInput.focus();
+            }
+
+            payloadTarifas.push({
+                id: id,
+                tarifa: valorTarifa,
+                usuario: sesion.nombre
+            });
+        }
+
+        if (tieneErroresCero) {
+            alert("❌ Hay pedidos con tarifa $0.00. Es obligatorio asignarles un precio real antes de procesar.");
+            return;
+        }
+
+        let btn = document.getElementById('btnGuardarEspeciales');
+        btn.innerHTML = "Guardando en la Nube..."; btn.disabled = true;
+
+        try {
+            let res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'save_tarifas_fijadas', tarifas: payloadTarifas })
+            });
+            let responseData = await res.json();
+
+            alert("✅ Tarifas especiales indexadas con éxito. Ahora estarán blindadas al despachar.");
+            cerrarModalTarifas();
+            // Refrescamos base local silenciosamente si es necesario
+            if(window.location.reload) location.reload();
+
+        } catch (e) {
+            alert("❌ Error de comunicación con los servidores de Google.");
+        } finally {
+            btn.innerHTML = "GUARDAR TARIFAS EN SISTEMA"; btn.disabled = false;
+        }
+    }
+
+
 </script>
 </body>
 </html>

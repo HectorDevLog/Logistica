@@ -141,20 +141,26 @@
 
         /* 🔥 ESTADOS DE ANIMACIÓN DEL BÚHO 🔥 */
 
-        /* 1. ESTADO "PENSANDO / DESCARGANDO" (Brazo palpitando y ojos leyendo) */
+        /* 🔥 ESTADOS DE ANIMACIÓN DEL BÚHO 🔥 */
+
+        /* 1. PENSANDO / DESCARGANDO (Aleteo sutil y ojos leyendo) */
+        @keyframes flapWings {
+            0%, 100% { transform: translateY(5px) rotate(15deg); }
+            50% { transform: translateY(-5px) rotate(35deg); } /* Levanta un poco las alas */
+        }
+        @keyframes flapWingsRight {
+            0%, 100% { transform: translateY(5px) rotate(-15deg); }
+            50% { transform: translateY(-5px) rotate(-35deg); }
+        }
         @keyframes lookReading {
             0%, 100% { transform: translateX(-4px); }
             50% { transform: translateX(4px); }
         }
-        @keyframes tapFinger {
-            0%, 100% { transform: translateY(10px) rotate(15deg); }
-            50% { transform: translateY(5px) rotate(20deg); }
-        }
         
-        body.state-loading .owl-wing.left { transform: translateY(10px) rotate(-15deg); } /* Brazo izquierdo quieto en reposo */
-        body.state-loading .owl-wing.right { animation: tapFinger 0.4s infinite; } /* Brazo derecho "tamborilea" */
-        body.state-loading .owl-pupil { animation: lookReading 1.2s infinite ease-in-out !important; } /* Ojos leyendo de izq a der */
-        body.state-loading .owl-eyelid { display: block; transform: translateY(8px); animation: none; } /* Ojos entrecerrados de concentración */
+        body.state-loading .owl-wing.left { animation: flapWings 0.3s infinite ease-in-out; } 
+        body.state-loading .owl-wing.right { animation: flapWingsRight 0.3s infinite ease-in-out; } 
+        body.state-loading .owl-pupil { animation: lookReading 1.2s infinite ease-in-out !important; } 
+        body.state-loading .owl-eyelid { display: block; transform: translateY(8px); animation: none; } 
 
         /* 2. ESTADO "FELIZ / COMPLETADO" */
         @keyframes jumpHappy {
@@ -459,7 +465,7 @@
         <a href="AuditoriaRutas.html" class="menu-card card-auditor" id="cardAuditoria">
             <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
             <div class="card-title">Auditoría de Rutas</div>
-            <p class="card-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</p>
+            <p class="card-desc">Revisa y ajusta manually los ingresos de rutas despachadas en fechas anteriores.</p>
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
@@ -691,15 +697,22 @@
                 necesitaMonitor = true;
             }
 
+            // Conseguir el texto amigable de "Hace X minutos"
+            let ultimaHoraTs = ping.monitorTs || (cacheMonitorObj ? cacheMonitorObj.timestamp : null);
+            let textoTiempo = obtenerTextoTiempo(ultimaHoraTs);
+
             if (!necesitaTarifas && !necesitaMonitor) {
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
                 setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
                 desbloquearMenu(false);
+                
+                // Búho da un tip de que todo está OK y muestra la hora
+                mostrarMensajeBuho(`✅ Todo al día.<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoTiempo}</b></span>`, 6000, true);
                 return; 
             }
 
             // 🔥 BÚHO PIENSA Y AVISA QUE DESCARGA 🔥
-            mostrarMensajeBuho('⏳ Sincronizando bases de datos...');
+            mostrarMensajeBuho(`⏳ Sincronizando bases de datos...<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoTiempo}</b></span>`);
             bodyState.classList.add('state-loading');
 
             const promesas = [];
@@ -772,8 +785,13 @@
             // 🔥 BÚHO CELEBRA EL ÉXITO 🔥
             bodyState.classList.remove('state-loading');
             bodyState.classList.add('state-success');
-            mostrarMensajeBuho('✅ ¡Bases de datos listas!', 3000); // Se oculta tras 3s
-            setTimeout(() => { bodyState.classList.remove('state-success'); }, 3000); 
+            
+            // Calcula la hora nueva recién descargada
+            let nuevaHoraTs = ping.monitorTs || new Date().getTime();
+            let textoNuevoTiempo = obtenerTextoTiempo(nuevaHoraTs);
+            
+            mostrarMensajeBuho(`✅ ¡Bases actualizadas!<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoNuevoTiempo}</b></span>`, 5000, true); 
+            setTimeout(() => { bodyState.classList.remove('state-success'); }, 2000); 
             
             desbloquearMenu(true);
 
@@ -786,6 +804,23 @@
             bodyState.classList.remove('state-loading');
         }
     };
+
+    // 🔥 FUNCIÓN PARA CALCULAR HACE CUÁNTO SE ACTUALIZÓ 🔥
+    function obtenerTextoTiempo(timestampLocal) {
+        if (!timestampLocal) return "desconocido";
+        const ahora = new Date().getTime();
+        const diferenciaMs = Math.max(0, ahora - timestampLocal); // Evitar negativos
+        
+        const minutos = Math.floor(diferenciaMs / 1000 / 60);
+        
+        if (minutos < 1) return "hace un momento";
+        if (minutos === 1) return "hace 1 minuto";
+        if (minutos < 60) return `hace ${minutos} minutos`;
+        
+        const horas = Math.floor(minutos / 60);
+        if (horas === 1) return "hace 1 hora";
+        return `hace ${horas} horas`;
+    }
 
     // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAL
     async function forzarDescarga() {

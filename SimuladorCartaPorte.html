@@ -191,7 +191,7 @@
         <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
         <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
         <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
-        <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
+        <a href="SimuladorCartaPorte.html" id="linkSimCP" class="active">📄 Sim. (CP)</a>
         <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
         <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
         <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
@@ -256,6 +256,11 @@
                 EXTRAER VEHÍCULOS
             </button>
 
+            <button onclick="abrirActualizadorCP()" class="btn-main" style="background:var(--emerald-600); margin-top:10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+                🔄 ACTUALIZAR RUTAS DEL DÍA
+            </button>
+
             <button onclick="abrirBuscadorCP()" class="btn-main" style="background:var(--slate-700); margin-top:10px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:5px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 BUSCAR CP GUARDADA
@@ -307,9 +312,8 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     CALCULAR COSTOS Y RUTAS
                 </button>
-                </div> <!-- CIERRE DEL PANEL DE CONFIGURACIÓN VIEJO -->
+                </div> 
 
-            <!-- 🔥 EL BOTÓN DE GUARDAR AHORA ESTÁ AFUERA Y SIEMPRE VISIBLE 🔥 -->
             <button id="btnSave" class="btn-main btn-success" onclick="guardarRutas()" disabled style="height: 50px; font-size: 1.1em; margin-top: 20px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 GUARDAR TODAS LAS RUTAS
@@ -318,7 +322,6 @@
     </aside>
 
     <main>
-        <!-- 🔥 KPIs GLOBALES RESTAURADOS 🔥 -->
         <div class="stats-grid">
             <div class="stat-box box-ing"><h4>Ingresos Brutos</h4><span id="vIng">$0.00</span></div>
             <div class="stat-box box-cos"><h4>Costo Operativo Total</h4><span id="vCos">$0.00</span></div>
@@ -326,7 +329,6 @@
             <div class="stat-box"><h4>Vehículos Extraídos</h4><span id="vVeh">0</span></div>
         </div>
 
-        <!-- 🔥 BARRA DE FILTROS RESTAURADA 🔥 -->
         <div class="card" id="panelFiltrosGlobales" style="display:none; padding: 15px 20px; margin-bottom: 20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 15px;">
                 <h3 style="margin: 0; border: none; padding: 0; font-size: 1.1em;">🔍 Filtros de Visualización:</h3>
@@ -353,7 +355,6 @@
 
         <div id="contenedorComparativo" style="display:none; background:#f0fdfa; padding:20px; border-bottom:2px solid var(--teal-600); margin-bottom: 20px; border-radius: 8px;"></div>
 
-        <!-- 🔥 AQUÍ SE INYECTARÁN LAS TARJETAS (CARDS) DE CADA CAMIÓN 🔥 -->
         <div id="contenedorTarjetas" style="display: flex; flex-direction: column; gap: 20px;">
             <div class="card" style="display:flex; justify-content:center; align-items:center; min-height: 300px; color: var(--slate-400); font-size: 1.1em; text-align: center;">
                 <div>
@@ -365,24 +366,22 @@
     </main>
 </div>
 
-<!-- 🔥 MODAL PARA ACTUALIZACIÓN DE CP DETECTADA 🔥 -->
 <div id="modalCambiosCP" class="modal-overlay">
     <div class="modal-content">
         <h2>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--amber-600)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            Modificación en Carta Porte Detectada
+            Modificación de Rutas Detectada
         </h2>
-        <div id="detallesCambiosCP" style="margin: 15px 0; line-height: 1.6; font-size: 1.05em; color: var(--slate-700);"></div>
-        <p style="font-size: 0.9em; color: var(--slate-500); margin-top: 15px;"><i>Si procedes, el sistema recalculará los precios considerando los nuevos paquetes y sobrescribirá la información anterior guardada en la Base de Datos.</i></p>
+        <div id="detallesCambiosCP" style="margin: 15px 0; line-height: 1.6; font-size: 1.05em; color: var(--slate-700); max-height: 50vh; overflow-y: auto;"></div>
+        <p style="font-size: 0.9em; color: var(--slate-500); margin-top: 15px;"><i>Si procedes, el sistema actualizará las ubicaciones de los pedidos nuevos en las rutas asignadas y las dejará listas para recalcular en tu panel.</i></p>
         
         <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:25px;">
             <button onclick="cerrarModalCambios()" style="background:white; color:var(--slate-700); border:1px solid var(--slate-300); width:auto; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
-            <button class="btn-success" onclick="procederActualizacionCP()" style="width:auto; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-weight:600; color:white;">Sí, Actualizar Ruta</button>
+            <button class="btn-success" onclick="procederActualizacionCP()" style="width:auto; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-weight:600; color:white;">Cargar Rutas Afectadas</button>
         </div>
     </div>
 </div>
 
-<!-- 🔥 MODAL DE INFORMACIÓN (TODO AL DÍA) 🔥 -->
 <div id="modalInfoCP" class="modal-overlay">
     <div class="modal-content" style="max-width: 400px; text-align: center; padding: 40px 30px;">
         <div style="width: 60px; height: 60px; background: var(--emerald-100); color: var(--emerald-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -455,28 +454,41 @@
         </div>
     </div>
 </div>
-<!-- 🔥 MODAL PROMPT PERSONALIZADO (ENTRADA DE TEXTO) 🔥 -->
+
 <div id="modalPromptGeneral" class="modal-overlay" style="z-index: 2000;">
     <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
-        <div style="width: 60px; height: 60px; background: var(--blue-50); color: var(--blue-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+        <div id="iconPrompt" style="width: 60px; height: 60px; background: var(--blue-50); color: var(--blue-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </div>
-        <h2 style="justify-content: center; border: none; padding: 0; margin-bottom: 10px; font-size: 1.3em; color: var(--slate-900);">Buscar Carta Porte</h2>
+        <h2 id="tituloPrompt" style="justify-content: center; border: none; padding: 0; margin-bottom: 10px; font-size: 1.3em; color: var(--slate-900);">Buscar Carta Porte</h2>
         <p id="msgPrompt" style="color:var(--slate-600); font-size:1em; margin-bottom: 15px;"></p>
         
         <input type="text" id="inputPrompt" style="width: 100%; padding: 12px; border: 2px solid var(--slate-300); border-radius: 8px; font-size: 1.1em; margin-bottom: 25px; text-align: center; outline: none; transition: border-color 0.2s;" placeholder="Ej. 65994">
         
         <div style="display:flex; justify-content:center; gap:15px;">
             <button id="btnCancelPrompt" style="background:white; color:var(--slate-700); border:1px solid var(--slate-300); width:100%; padding:10px; border-radius:8px; cursor:pointer; font-weight:600; transition: all 0.2s;">Cancelar</button>
-            <button id="btnOkPrompt" style="background:var(--blue-600); width:100%; padding:10px; border:none; border-radius:8px; cursor:pointer; font-weight:700; color:white; transition: all 0.2s;">Buscar</button>
+            <button id="btnOkPrompt" style="background:var(--blue-600); width:100%; padding:10px; border:none; border-radius:8px; cursor:pointer; font-weight:700; color:white; transition: all 0.2s;">Aceptar</button>
         </div>
     </div>
 </div>
 
-
 <script>
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+
+    // 🔥 VARIABLES GLOBALES REPARADAS 🔥
+    let dMonitor = [], dTarifas = [], trayectoDB = [];
+    let dbRutasFull = []; 
+    let cpsEnActualizacion = {}; 
+    let pedidosHistoricos = {}; 
+    let rutasPorDiaYPlaca = {}; 
+    let preciosHistoricos = {}; 
+    let cloudLista = false, monitorListo = false;
+    
+    window.agrupacionVehiculos = {};
+    window.rutasAguardar = [];
+    window.tarifasModificadas = {}; 
+    window.tarifasFijadasDB = []; // Memoria global para Tarifas Fijas
 
     function setPillStatus(id, state, text) {
         let pill = document.getElementById('pill' + id);
@@ -550,40 +562,51 @@
 
             document.getElementById('btnOkConfirm').onclick = function() {
                 modal.style.display = 'none';
-                resolve(true); // Usuario dijo SÍ
+                resolve(true); 
             };
             document.getElementById('btnCancelConfirm').onclick = function() {
                 modal.style.display = 'none';
-                resolve(false); // Usuario dijo NO
+                resolve(false); 
             };
         });
     }
 
-    function dialogPrompt(mensaje, placeholder = "") {
+    function dialogPrompt(titulo, mensaje, placeholder = "", isUpdate = false) {
         return new Promise((resolve) => {
             const modal = document.getElementById('modalPromptGeneral');
             const input = document.getElementById('inputPrompt');
+            const titleEl = document.getElementById('tituloPrompt');
+            const icon = document.getElementById('iconPrompt');
+            const btnOk = document.getElementById('btnOkPrompt');
             
+            titleEl.innerText = titulo;
             document.getElementById('msgPrompt').innerHTML = mensaje;
             input.placeholder = placeholder;
-            input.value = ''; // Limpiamos el input anterior
+            input.value = ''; 
+
+            if(isUpdate) {
+                icon.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>';
+                icon.style.color = "var(--emerald-600)"; icon.style.background = "var(--emerald-50)";
+                btnOk.style.background = "var(--emerald-600)"; btnOk.innerText = "Actualizar";
+            } else {
+                icon.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+                icon.style.color = "var(--blue-600)"; icon.style.background = "var(--blue-50)";
+                btnOk.style.background = "var(--blue-600)"; btnOk.innerText = "Buscar";
+            }
             
             modal.style.display = 'flex';
-            input.focus(); // Hacemos foco automático para que el usuario escriba directo
+            input.focus(); 
 
-            // Acción de confirmar
             document.getElementById('btnOkPrompt').onclick = function() {
                 modal.style.display = 'none';
                 resolve(input.value);
             };
             
-            // Acción de cancelar
             document.getElementById('btnCancelPrompt').onclick = function() {
                 modal.style.display = 'none';
                 resolve(null);
             };
             
-            // Permitir que funcione al presionar la tecla "Enter"
             input.onkeypress = function(e) {
                 if (e.key === 'Enter') {
                     modal.style.display = 'none';
@@ -592,18 +615,6 @@
             };
         });
     }
-
-    let dMonitor = [], dTarifas = [], trayectoDB = [];
-    let dbRutasFull = []; 
-    let cpEnActualizacion = null; 
-
-    let pedidosHistoricos = {}; 
-    let rutasPorDiaYPlaca = {}; 
-    let cloudLista = false, monitorListo = false;
-    
-    window.agrupacionVehiculos = {};
-    window.rutasAguardar = [];
-    window.tarifasModificadas = {}; 
 
     const dbName = "SimuladorDB";
     const storeName = "MonitorStore";
@@ -648,6 +659,22 @@
         if (str.charAt(0) === "'") str = str.substring(1);
         if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
         return str;
+    }
+
+    function obtenerTextoTiempo(timestampLocal) {
+        if (!timestampLocal) return "desconocido";
+        const ahora = new Date().getTime();
+        const diferenciaMs = Math.max(0, ahora - timestampLocal); 
+        
+        const minutos = Math.floor(diferenciaMs / 1000 / 60);
+        
+        if (minutos < 1) return "hace un momento";
+        if (minutos === 1) return "hace 1 minuto";
+        if (minutos < 60) return `hace ${minutos} minutos`;
+        
+        const horas = Math.floor(minutos / 60);
+        if (horas === 1) return "hace 1 hora";
+        return `hace ${horas} horas`;
     }
 
     function iniciarPingFondo() {
@@ -696,6 +723,8 @@
     }
 
     window.onload = async function() {
+        if(!sesion) return window.location.href = 'index.html';
+
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
@@ -706,6 +735,10 @@
         let cacheMonitorObj = await obtenerDatoDB("monitorCargado");
         
         let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+        window.cacheTarifarioFullObj = cacheTarifas; 
+        
+        // 🔥 CARGAR TARIFAS FIJADAS DESDE CACHÉ 🔥
+        window.tarifasFijadasDB = cacheTarifas && cacheTarifas.tarifasFijadas ? cacheTarifas.tarifasFijadas : [];
         
         let dMonitorCache = null;
         let tsMonitorCache = null;
@@ -734,8 +767,12 @@
             rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
             
             pedidosHistoricos = {};
+            preciosHistoricos = {}; 
             if(cacheTarifas.pedidosHistoricosArray) {
-                cacheTarifas.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
+                cacheTarifas.pedidosHistoricosArray.forEach(p => {
+                    pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa};
+                    if(p.precio !== undefined) preciosHistoricos[p.id] = p.precio;
+                });
             }
             setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
         } else {
@@ -748,9 +785,13 @@
                 window.tfaRangoDB = allData.rango || [];
                 window.tfaMedidaDB = allData.medida || []; 
                 trayectoDB = allData.trayecto || [];
+                
+                // 🔥 GUARDAR TARIFAS FIJADAS DESDE LA NUBE 🔥
+                window.tarifasFijadasDB = allData.tarifasFijadas || []; 
 
                 pedidosHistoricos = {};
                 rutasPorDiaYPlaca = {};
+                preciosHistoricos = {}; 
                 let pedidosArray = [];
                 
                 dbData.forEach(row => { 
@@ -761,10 +802,17 @@
 
                         if (row.listaIds) {
                             row.listaIds.split(',').forEach(item => {
-                                let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
+                                let partes = item.split('-');
+                                let cleanId = partes[0] ? partes[0].trim().replace(/\D/g, '') : "";
+                                let precioExtraido = 0;
+                                if (partes[1]) {
+                                    precioExtraido = parseFloat(partes[1].replace(/[^0-9.-]+/g, "")) || 0;
+                                }
+
                                 if(cleanId && !pedidosHistoricos[cleanId]) {
                                     pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
-                                    pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                    preciosHistoricos[cleanId] = precioExtraido; 
+                                    pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia, precio: precioExtraido });
                                 }
                             });
                         }
@@ -772,10 +820,14 @@
                 });
 
                 fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
-                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                    let cacheDataToSave = {
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, timestamp: ping.tarifarioTs
-                    }));
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, 
+                        tarifasFijadas: window.tarifasFijadasDB, // 🔥 GUARDAMOS EN CACHÉ 🔥
+                        timestamp: ping.tarifarioTs
+                    };
+                    window.cacheTarifarioFullObj = cacheDataToSave;
+                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify(cacheDataToSave));
                 });
 
                 setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
@@ -814,6 +866,9 @@
             let tTs = cacheTarifas ? cacheTarifas.timestamp : null;
             let mTs = tsMonitorCache;
 
+            let ultimaHoraTs = ping.monitorTs || (cacheMonitorObj ? cacheMonitorObj.timestamp : null);
+            let textoTiempo = obtenerTextoTiempo(ultimaHoraTs);
+
             if ((tTs && tTs !== ping.tarifarioTs) || (mTs && mTs !== ping.monitorTs)) {
                 let alerta = document.getElementById('alertaCambios');
                 if(alerta) {
@@ -844,9 +899,6 @@
         }
     }
 
-    function checkReady() { if(cloudLista && monitorListo) document.getElementById('btnCalc').disabled = false; }
-    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
-
     function toggleModo() {
         let modo = document.querySelector('input[name="modoCP"]:checked').value;
         document.getElementById('divIndividual').style.display = modo === 'individual' ? 'block' : 'none';
@@ -869,11 +921,7 @@
     }
 
     function editarTarifaManual(idPedido, tarifaActual) {
-        let nuevoValor = prompt(`EDITAR TARIFA MANUAL
-
-ID Pedido: ${idPedido}
-
-Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
+        let nuevoValor = prompt(`EDITAR TARIFA MANUAL\n\nID Pedido: ${idPedido}\n\nIngrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         if (nuevoValor === null) return; 
         
         let parsed = parseFloat(nuevoValor.replace(',', '.'));
@@ -886,36 +934,111 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         ejecutarCalculo(); 
     }
 
-    function filtrarTabla() {
-        let fCliente = document.getElementById('filtroTablaCliente').value;
-        let fServicio = document.getElementById('filtroTablaServicio').value;
-        let fTarifa = document.getElementById('filtroTablaTarifa').value;
-        
-        let filas = document.querySelectorAll('#tblD tbody tr');
-        
-        filas.forEach(fila => {
-            if (fila.children.length <= 1) return; 
+    async function abrirActualizadorCP() {
+        let fechaSel = document.getElementById('fechaDespacho').value;
+        if(!fechaSel) return dialogAlert("⚠️ Seleccione una fecha de despacho primero en el campo 'Fecha de Despacho'.", "warning");
+
+        if (!dbRutasFull || dbRutasFull.length === 0) {
+            return dialogAlert("La base de datos histórica aún no se ha cargado. Intente en unos segundos.", "warning");
+        }
+
+        let rutasBD = dbRutasFull.filter(r => String(r.fecha) === fechaSel);
+        if(rutasBD.length === 0) {
+            return dialogAlert(`No hay rutas guardadas en la base de datos para la fecha seleccionada (<b>${fechaSel}</b>). No hay nada que actualizar.`, "info");
+        }
+
+        let agrupadoCambios = {};
+        cpsEnActualizacion = {}; 
+        let msgHTML = `<p style="font-size:1.05em; color:var(--slate-800); border-bottom:1px solid var(--slate-200); padding-bottom:10px;">Se analizaron <b>${rutasBD.length} rutas</b> registradas el <b>${fechaSel}</b> y se detectaron las siguientes diferencias en la Nube:</p>`;
+        let cambiosEncontrados = 0;
+
+        rutasBD.forEach(rutaDB => {
+            let cpBuscada = String(rutaDB.cartaPorte).trim().toUpperCase();
             
-            let valCliente = fila.getAttribute('data-cliente');
-            let valServicio = fila.getAttribute('data-servicio');
-            let valTarifa = parseFloat(fila.getAttribute('data-tarifa')) || 0;
-            
-            let pasaCliente = (fCliente === "TODOS" || valCliente === fCliente);
-            let pasaServicio = (fServicio === "TODOS" || valServicio === fServicio);
-            let pasaTarifa = true;
-            if (fTarifa === "CERO") pasaTarifa = (valTarifa === 0);
-            if (fTarifa === "MAYOR") pasaTarifa = (valTarifa > 0);
-            
-            if (pasaCliente && pasaServicio && pasaTarifa) {
-                fila.style.display = '';
-            } else {
-                fila.style.display = 'none';
+            let encontrados = dMonitor.filter(x => {
+                let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim().toUpperCase();
+                return cpMonitor === cpBuscada;
+            });
+
+            if(encontrados.length === 0) return; 
+
+            let placaDB = String(rutaDB.placa).trim().toUpperCase();
+            let placaMonitor = String(encontrados[0]['VEHICULO'] || encontrados[0]['Vehiculo'] || encontrados[0]['vehiculo'] || encontrados[0]['PLACA'] || encontrados[0]['Placa'] || '').toUpperCase().trim();
+
+            let idsMonitor = encontrados.map(p => String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido']).trim());
+            let idsDBRaw = String(rutaDB.listaIds).split(',').map(x => x.split('-')[0].trim()).filter(Boolean);
+
+            let nuevos = idsMonitor.filter(x => !idsDBRaw.includes(x));
+            let eliminados = idsDBRaw.filter(x => !idsMonitor.includes(x));
+
+            if (placaDB !== placaMonitor || nuevos.length > 0 || eliminados.length > 0) {
+                cambiosEncontrados++;
+                agrupadoCambios[cpBuscada] = encontrados;
+                
+                cpsEnActualizacion[cpBuscada] = {
+                    idRegistro: rutaDB.idRegistro,
+                    nuevosIds: nuevos,
+                    viejosIds: idsDBRaw,
+                    rutaAntigua: rutaDB
+                };
+
+                msgHTML += `<div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 12px;">`;
+                msgHTML += `<h4 style="margin: 0 0 8px 0; color: var(--blue-700); font-size:1.1em;">📄 Carta Porte: ${cpBuscada}</h4>`;
+                
+                if (placaDB !== placaMonitor) msgHTML += `🚛 <b>Vehículo Asignado:</b> Cambió de <span style="color:var(--red-600); text-decoration:line-through;">${placaDB}</span> a <span style="color:var(--emerald-600); font-weight:bold;">${placaMonitor}</span><br>`;
+                
+                if (nuevos.length > 0) {
+                    msgHTML += `📦 <b style="color:var(--emerald-700);">Nuevos pedidos ingresados (+${nuevos.length}):</b><ul style="margin: 5px 0 10px 20px; padding: 0; font-size: 0.9em;">`;
+                    nuevos.forEach(idNuevo => {
+                        let origenDB = dbRutasFull.find(r => r.listaIds && String(r.listaIds).includes(idNuevo));
+                        if (origenDB) {
+                            msgHTML += `<li>ID <b>${idNuevo}</b> ➔ Movido desde la CP <b>${origenDB.cartaPorte}</b>.</li>`;
+                        } else {
+                            let dest = encontrados.find(e => String(e['PEDIDOID'] || e['idpedido'] || e['2idpedido']).trim() === idNuevo);
+                            let locDest = dest ? String(dest['CP'] || dest['Localidad'] || '').trim().toUpperCase() : 'N/A';
+                            msgHTML += `<li>ID <b>${idNuevo}</b> ➔ Carga nueva (Destino: ${locDest}).</li>`;
+                        }
+                    });
+                    msgHTML += `</ul>`;
+                }
+                
+                if (eliminados.length > 0) {
+                    msgHTML += `❌ <b style="color:var(--red-700);">Pedidos removidos de la ruta (-${eliminados.length}):</b><ul style="margin: 5px 0 0 20px; padding: 0; font-size: 0.9em;">`;
+                    eliminados.forEach(idEliminado => {
+                        let rastro = dMonitor.find(m => String(m['PEDIDOID'] || m['idpedido'] || m['2idpedido']).trim() === idEliminado);
+                        if (rastro) {
+                            let nuevaCP = String(rastro['ULTIMA_CARTA_PORTE'] || rastro['Carta_Porte'] || rastro['CARTA_PORTE'] || 'Otra').trim();
+                            
+                            let existeNuevaCP = dbRutasFull.some(r => String(r.cartaPorte).trim() === nuevaCP);
+                            
+                            if (existeNuevaCP) {
+                                msgHTML += `<li>ID <b>${idEliminado}</b> ➔ Movido a la CP <b>${nuevaCP}</b>.</li>`;
+                            } else {
+                                msgHTML += `<li>ID <b>${idEliminado}</b> ➔ Movido a la CP <b>${nuevaCP}</b> (Aún no registrada en este sistema).</li>`;
+                            }
+                        } else {
+                            msgHTML += `<li>ID <b>${idEliminado}</b> ➔ Eliminado del monitor.</li>`;
+                        }
+                    });
+                    msgHTML += `</ul>`;
+                }
+                msgHTML += `</div>`;
             }
         });
+
+        if (cambiosEncontrados === 0) {
+            document.getElementById('msgInfoCP').innerHTML = `Se revisaron minuciosamente las <b>${rutasBD.length} Cartas Porte</b> registradas en la fecha <b>${fechaSel}</b> y todas están completamente al día. No hay cambios de vehículos ni de paquetes respecto al Monitor en la nube.`;
+            document.getElementById('modalInfoCP').style.display = 'flex';
+            return;
+        }
+
+        document.getElementById('detallesCambiosCP').innerHTML = msgHTML;
+        window.tempAgrupadoCambios = agrupadoCambios;
+        document.getElementById('modalCambiosCP').style.display = 'flex';
     }
 
     function analizarCPs() {
-        cpEnActualizacion = null; 
+        cpsEnActualizacion = {}; 
         
         document.getElementById('btnCalc').innerHTML = `
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -928,7 +1051,7 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         let rawItems = cpsRaw.split(/[\n,\t]+/);
         let cps = [];
         rawItems.forEach(item => {
-            let strCp = item.trim().replace(/\./g, '');
+            let strCp = item.trim().toUpperCase().replace(/\./g, '');
             if(strCp) cps.push(strCp);
         });
         cps = [...new Set(cps)];
@@ -936,7 +1059,7 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         if(cps.length === 0) return alert("Ingrese al menos una Carta Porte.");
 
         let encontrados = dMonitor.filter(x => {
-            let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim();
+            let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim().toUpperCase();
             return cps.includes(cpMonitor);
         });
 
@@ -949,107 +1072,29 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             agrupado[cp].push(p);
         });
 
-        let cpConsultada = Object.keys(agrupado)[0]; 
-        let rutaDB = dbRutasFull.find(r => String(r.cartaPorte).includes(cpConsultada));
-
-        if (rutaDB) {
-            let placaDB = String(rutaDB.placa).trim().toUpperCase();
-            let placaMonitor = String(agrupado[cpConsultada][0]['VEHICULO'] || agrupado[cpConsultada][0]['Vehiculo'] || agrupado[cpConsultada][0]['vehiculo'] || agrupado[cpConsultada][0]['PLACA'] || agrupado[cpConsultada][0]['Placa'] || '').toUpperCase().trim();
-
-            let idsMonitor = agrupado[cpConsultada].map(p => String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido']).trim());
-            let idsDBRaw = String(rutaDB.listaIds).split(',').map(x => x.split('-')[0].trim()).filter(Boolean);
-
-            let nuevos = idsMonitor.filter(x => !idsDBRaw.includes(x));
-            let eliminados = idsDBRaw.filter(x => !idsMonitor.includes(x));
-
-            if (placaDB === placaMonitor && nuevos.length === 0 && eliminados.length === 0) {
-                document.getElementById('msgInfoCP').innerHTML = `La Carta Porte <b>${cpConsultada}</b> ya se encuentra registrada en el sistema de Rentabilidad y no presenta ningún cambio nuevo en el Monitor.`;
-                document.getElementById('modalInfoCP').style.display = 'flex';
-                return; 
-            } else {
-                let msg = `Se detectó que la Carta Porte <b>${cpConsultada}</b> ya fue guardada previamente (ID #${rutaDB.idRegistro}), pero se hicieron modificaciones en el TMS:<br><br>`;
-                
-                if (placaDB !== placaMonitor) msg += `🚛 <b>Vehículo Asignado:</b> Cambió de <span style="color:var(--red-600); text-decoration:line-through;">${placaDB}</span> a <span style="color:var(--emerald-600); font-weight:bold;">${placaMonitor}</span><br>`;
-                
-                // 🔥 NUEVA LÓGICA DE RASTREO DE AÑADIDOS (NUEVOS) 🔥
-                if (nuevos.length > 0) {
-                    msg += `📦 <b>Nuevos pedidos ingresados (${nuevos.length}):</b><ul style="margin: 5px 0 15px 20px; padding: 0; font-size: 0.9em; color: var(--emerald-700);">`;
-                    
-                    nuevos.forEach(idNuevo => {
-                        // Buscamos de dónde vino este ID revisando la base de datos histórica
-                        let origenDB = dbRutasFull.find(r => r.listaIds && String(r.listaIds).includes(idNuevo));
-                        
-                        if (origenDB) {
-                            msg += `<li>ID <b>${idNuevo}</b> ➔ Vino de la Carta Porte <b>${origenDB.cartaPorte}</b>.</li>`;
-                        } else {
-                            msg += `<li>ID <b>${idNuevo}</b> ➔ Carga nueva (Nunca antes facturada).</li>`;
-                        }
-                    });
-                    
-                    msg += `</ul>`;
-                }
-                
-                // LÓGICA DE RASTREO DE ELIMINADOS
-                if (eliminados.length > 0) {
-                    msg += `❌ <b>Pedidos removidos (${eliminados.length}):</b><ul style="margin: 5px 0 15px 20px; padding: 0; font-size: 0.9em; color: var(--red-700);">`;
-                    
-                    eliminados.forEach(idEliminado => {
-                        // Buscamos a dónde se fue este ID en todo el monitor
-                        let rastro = dMonitor.find(m => String(m['PEDIDOID'] || m['idpedido'] || m['2idpedido']).trim() === idEliminado);
-                        
-                        if (rastro) {
-                            let nuevaCP = String(rastro['ULTIMA_CARTA_PORTE'] || rastro['Carta_Porte'] || rastro['CARTA_PORTE'] || rastro['CARTA PORTE'] || 'Desconocida').trim();
-                            msg += `<li>ID <b>${idEliminado}</b> ➔ Movido a la Carta Porte <b>${nuevaCP}</b>.</li>`;
-                        } else {
-                            msg += `<li>ID <b>${idEliminado}</b> ➔ Eliminado del monitor (Sin CP asignada).</li>`;
-                        }
-                    });
-                    
-                    msg += `</ul>`;
-                }
-
-                document.getElementById('detallesCambiosCP').innerHTML = msg;
-                
-                cpEnActualizacion = { 
-                    idRegistro: rutaDB.idRegistro, 
-                    nuevosIds: nuevos, 
-                    viejosIds: idsDBRaw, 
-                    rutaAntigua: rutaDB,
-                    agrupadoMemoria: agrupado 
-                };
-                
-                document.getElementById('modalCambiosCP').style.display = 'flex';
-                return; 
-            }
-        }
-
         continuarProcesoCP(agrupado);
     }
 
     function cerrarModalCambios() {
         document.getElementById('modalCambiosCP').style.display = 'none';
-        cpEnActualizacion = null;
+        cpsEnActualizacion = {};
+        window.tempAgrupadoCambios = null;
     }
 
     function procederActualizacionCP() {
         document.getElementById('modalCambiosCP').style.display = 'none';
-        if (cpEnActualizacion && cpEnActualizacion.agrupadoMemoria) {
-            continuarProcesoCP(cpEnActualizacion.agrupadoMemoria);
+        if (window.tempAgrupadoCambios) {
+            continuarProcesoCP(window.tempAgrupadoCambios);
             
-            // Restauramos el botón azul a su función original
             document.getElementById('btnCalc').innerHTML = `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 RECALCULAR COSTOS
             `;
             
-            // 🔥 CAMBIAMOS EL BOTÓN VERDE PARA QUE SEPAS DÓNDE GUARDAR 🔥
             document.getElementById('btnSave').innerHTML = `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                CONFIRMAR Y ACTUALIZAR BD
+                CONFIRMAR Y ACTUALIZAR MASIVAMENTE BD
             `;
-            
-            // Ejecutamos el cálculo inicial de forma automática
-            ejecutarCalculo();
         }
     }
 
@@ -1081,13 +1126,11 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         document.getElementById('resumenVehiculos').innerHTML = resumenHtml;
         document.getElementById('resumenVehiculos').style.display = 'block';
         
-        // 🔥 VOLVEMOS A HACER VISIBLE EL PANEL GLOBAL 🔥
         let panelConfig = document.getElementById('panelConfiguracion');
         if (panelConfig) panelConfig.style.display = 'block';
         
         window.agrupacionVehiculos = agrupado;
         
-        // Ejecutamos el cálculo automáticamente con los valores por defecto
         ejecutarCalculo();
     }
 
@@ -1108,7 +1151,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         window.rutasAguardar = [];
         let vehiculosProcesadosHoy = {};
 
-        // 🔥 LEER VALORES DEL PANEL GLOBAL IZQUIERDO 🔥
         let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
         let estItsaG = document.getElementById('estibasItsa').value || 0;
         let heItsaG = document.getElementById('heItsa').value || 0;
@@ -1137,8 +1179,9 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
 
             let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
             
-            if (cpEnActualizacion && placa === cpEnActualizacion.rutaAntigua.placa) {
-                if (Number(cpEnActualizacion.rutaAntigua.cBase) > 0) yaSalioHoy = false; 
+            let esActualizacionData = cpsEnActualizacion[cpKey];
+            if (esActualizacionData && placa === esActualizacionData.rutaAntigua.placa) {
+                if (Number(esActualizacionData.rutaAntigua.cBase) > 0) yaSalioHoy = false; 
             }
             vehiculosProcesadosHoy[`${fecha}|${placa}`] = true;
 
@@ -1148,7 +1191,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             let valExcFuer = opt['EXCLUSIVO FUERA HORARIO'] || 0;
             let valHE = opt['HORAS EXTRAS'] || 6.25;
 
-            // Seleccionar automáticamente en base al Global
             let selNormal = tipoGlobal === 'NORMAL' ? 'selected' : '';
             let selLab = tipoGlobal === 'EXCLUSIVO HORARIO LABORAL' ? 'selected' : '';
             let selFuer = tipoGlobal === 'EXCLUSIVO FUERA HORARIO' ? 'selected' : '';
@@ -1157,21 +1199,21 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
 
             let controlesHtml = isItsa ? `
                 <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')">
+                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')">
                     <option value="NORMAL" ${selNormal}>Normal</option>
                     <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
                     <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
                 </select></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
+                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
+                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
             ` : `
                 <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)">
+                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)">
                     <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
                     <option value="POR PUNTO" ${selPunto}>Por Punto</option>
                 </select></div>
-                <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo / P.Base ($):</label><input type="number" id="costo_${idTarjeta}" value="${cFijoManualG}" min="0" style="padding:6px;" oninput="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
+                <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo / P.Base ($):</label><input type="number" id="costo_${idTarjeta}" value="${cFijoManualG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
+                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
             `;
 
             let tarjetaHTML = `
@@ -1195,8 +1237,11 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
                                     <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Cliente</th>
                                     <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Int</th>
                                     <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Servicio</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Destino</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Peso</th>
+                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Origen</th>
+                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Destino (CP)</th>
+                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Trayecto Base</th>
+                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Bultos</th>
+                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Peso (Kg)</th>
                                     <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Tarifa Nube</th>
                                     <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:right;">Tarifa Final</th>
                                 </tr>
@@ -1213,44 +1258,70 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         let panelFiltros = document.getElementById('panelFiltrosGlobales');
         if (panelFiltros) panelFiltros.style.display = 'block';
 
-        // Forzamos el recálculo inicial para dibujar tarifas y actualizar el array de guardado
         Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
             let elSelect = document.getElementById(`tipo_tarjeta_${index}`);
             if(elSelect) elSelect.dispatchEvent(new Event('change')); 
         });
 
         document.getElementById('btnSave').disabled = false;
-        if (cpEnActualizacion) dibujarComparativoGeneral();
+        
+        let esActualizacionGlobal = Object.keys(cpsEnActualizacion).length > 0;
+        if (esActualizacionGlobal) dibujarComparativoGeneral();
     }
 
     function recalcularTarjeta(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, valBaseD, valExcLab, valExcFuer, valHe) {
         let pedidos = window.agrupacionVehiculos[cpKey];
-        let tipo = document.getElementById(`tipo_${idTarjeta}`).value;
+        let elTipo = document.getElementById(`tipo_${idTarjeta}`);
+        let tipo = elTipo ? elTipo.value : '';
         
         let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
+        
+        let esActualizacionData = cpsEnActualizacion[cpKey];
+        let esRutaManualRestaurada = false;
 
-        if (isItsa) {
-            let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
-            let he = parseFloat(document.getElementById(`he_${idTarjeta}`).value) || 0;
-            cEstibas = est * 30;
-            let heTarifa = parseDinero(valHe) || 6.25;
-            cHE = he * heTarifa;
-            
-            if (tipo === 'NORMAL') cBase = yaSalioHoy ? 0 : parseDinero(valBaseD);
-            else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(valExcLab);
-            else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(valExcFuer);
-        } else {
-            let costoInput = parseFloat(document.getElementById(`costo_${idTarjeta}`).value) || 0;
-            let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
-            cEstibas = est * 15; 
-            
-            if (tipo === 'POR PUNTO') cExc = costoInput; 
-            else cExc = costoInput;
+        if (esActualizacionData && (!elTipo || elTipo.dataset.modificado !== "true")) {
+            let rutaAntigua = esActualizacionData.rutaAntigua;
+            if (rutaAntigua.tipoRuta === 'EXCLUSIVO' || rutaAntigua.tipoRuta === 'POR RUTA' || rutaAntigua.tipoRuta === 'POR PUNTO') {
+                esRutaManualRestaurada = true;
+                tipo = rutaAntigua.tipoRuta;
+                cBase = Number(rutaAntigua.cBase) || 0;
+                cEstibas = Number(rutaAntigua.cAyudantes) || 0;
+                cExc = Number(rutaAntigua.cExc) || 0;
+                cHE = Number(rutaAntigua.cHE) || 0;
+                
+                if (elTipo) elTipo.value = tipo;
+                let inputCosto = document.getElementById(`costo_${idTarjeta}`);
+                let inputEstibas = document.getElementById(`estibas_${idTarjeta}`);
+                if(inputCosto) inputCosto.value = cExc; 
+                if(inputEstibas) inputEstibas.value = cEstibas / 15; 
+            }
+        }
+
+        if (!esRutaManualRestaurada) {
+            if (isItsa) {
+                let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
+                let he = parseFloat(document.getElementById(`he_${idTarjeta}`).value) || 0;
+                cEstibas = est * 30;
+                let heTarifa = parseDinero(valHe) || 6.25;
+                cHE = he * heTarifa;
+                
+                if (tipo === 'NORMAL') cBase = yaSalioHoy ? 0 : parseDinero(valBaseD);
+                else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(valExcLab);
+                else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(valExcFuer);
+            } else {
+                let costoInput = parseFloat(document.getElementById(`costo_${idTarjeta}`).value) || 0;
+                let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
+                cEstibas = est * 15; 
+                
+                if (tipo === 'POR PUNTO' || tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') {
+                    cExc = costoInput; 
+                }
+            }
         }
 
         let costoVehiculo = cBase + cEstibas + cExc + cHE;
         let ingresosVehiculo = 0;
-        let pesoTotalVehiculo = 0; // 🔥 NUEVA VARIABLE PARA SUMAR EL PESO 🔥
+        let pesoTotalVehiculo = 0; 
         let tbody = document.getElementById(`tbody_${idTarjeta}`);
         tbody.innerHTML = '';
         
@@ -1264,28 +1335,74 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0);
             let intentosNum = incidencias > 0 && p['QTY_INCIDENCIAS'] ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
             
-            let esDeRutaVieja = cpEnActualizacion && cpEnActualizacion.viejosIds.includes(id);
+            let esActualizacionLocalData = cpsEnActualizacion[cpKey];
+            let esDeRutaVieja = esActualizacionLocalData && esActualizacionLocalData.viejosIds.includes(id);
             let yaExiste = !!pedidosHistoricos[id] && !esDeRutaVieja;
-            let esNuevoActualizacion = cpEnActualizacion && cpEnActualizacion.nuevosIds.includes(id);
+            let esNuevoActualizacion = esActualizacionLocalData && esActualizacionLocalData.nuevosIds.includes(id);
 
             // Inyectamos datos antes de calcular
             p['VEHICULO'] = placa;
             p['PLACA'] = placa;
+            
+            let origen = String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase();
+            let bultos = String(p.Bultos || p.BULTOS || p.Cajas || '1');
+            
             let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
             p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
 
             p._calcNube = calcularTarifasAutomaticas(p); 
             
-            let cobroReal = 0; let classTotal = "col-total"; let htmlStatus = "";
+            // =========================================================================
+            // 🔥 JERARQUÍA SAGRADA DE COBRO EN RENTABILIDAD 🔥
+            // =========================================================================
+            
+            // 🛡️ BÚSQUEDA BLINDADA DE TARIFA FIJA
+            let tarifaFijaObj = null;
+            if (window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
+                tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
+                    let idFound = "";
+                    for (let key in tf) {
+                        if (key.toUpperCase().includes("PEDIDO") || key.toUpperCase() === "ID") {
+                            idFound = String(tf[key]).trim();
+                            break;
+                        }
+                    }
+                    return idFound === id;
+                });
+            }
+
+            let cobroReal = 0; 
+            let classTotal = "col-total"; 
+            let htmlStatus = "";
             let styleFila = esNuevoActualizacion ? "background-color: #ecfdf5;" : "";
 
             if (yaExiste) {
-                cobroReal = 0; classTotal += " col-tachada";
+                cobroReal = 0; 
+                classTotal += " col-tachada";
                 htmlStatus = `<div class="badge-cobrado" style="display:block; font-size:0.7em;">YA EN SISTEMA</div>`;
-            } else if (window.tarifasModificadas[id] !== undefined) {
-                cobroReal = parseFloat(window.tarifasModificadas[id]); classTotal += " tarifa-modificada";
+            } 
+            else if (window.tarifasModificadas[id] !== undefined) {
+                cobroReal = parseFloat(window.tarifasModificadas[id]); 
+                classTotal += " tarifa-modificada";
                 if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-            } else {
+            } 
+            else if (tarifaFijaObj) {
+                let montoFijo = 0;
+                for (let key in tarifaFijaObj) {
+                    if (key.toUpperCase().includes("TARIFA")) {
+                        montoFijo = parseFloat(String(tarifaFijaObj[key]).replace(',', '.')) || 0;
+                        break;
+                    }
+                }
+                cobroReal = montoFijo;
+                classTotal += " tarifa-modificada"; 
+                htmlStatus = `<div class="badge-cobrado" style="display:block; background:#e0f2fe; color:#0369a1; border-color:#bae6fd; font-size:0.7em;">TARIFA FIJADA</div>`;
+            } 
+            else if (esDeRutaVieja || (esNuevoActualizacion && preciosHistoricos[id] !== undefined)) {
+                cobroReal = parseFloat(preciosHistoricos[id]) || 0;
+                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+            } 
+            else {
                 if (servicioMonitor.includes("EXCLUSIVO") && tipo !== 'NORMAL') {
                     cobroReal = 0; 
                 } else {
@@ -1295,7 +1412,7 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             }
 
             ingresosVehiculo += cobroReal;
-            pesoTotalVehiculo += p._calcNube.pesoUsado; // 🔥 SUMAMOS EL PESO DE CADA PAQUETE 🔥
+            pesoTotalVehiculo += p._calcNube.pesoUsado; 
             idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
 
             let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
@@ -1306,7 +1423,10 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); font-size:0.85em;">${clienteStr}</td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100);"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
-                    <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); text-align:center;"><span class="badge-loc">${locDestino}</span></td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); font-size:0.85em;">${origen}</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100);"><span style="background:white; border:1px solid var(--slate-300); padding:3px 6px; border-radius:4px; font-size:0.8em; font-weight:600;">${locDestino}</span></td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); font-size:0.85em;">${p.TipoTrayecto}</td>
+                    <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); text-align:center;">${bultos}</td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); text-align:center;">${p._calcNube.pesoUsado.toFixed(2)}</td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); color:var(--slate-500);">$${p._calcNube.total.toFixed(2)}</td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); text-align:right;" class="${classTotal}">
@@ -1339,7 +1459,7 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             proveedor: isItsa ? "ITSACOURIER" : "MANUAL",
             tipoRuta: tipo,
             cartaPorte: cpKey,
-            pesoTotal: pesoTotalVehiculo // 🔥 AÑADIMOS EL PESO AL JSON QUE VIAJA A LA NUBE 🔥
+            pesoTotal: pesoTotalVehiculo 
         };
 
         if (indiceGuardar > -1) {
@@ -1349,10 +1469,11 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         }
 
         actualizarGlobales();
-        if (cpEnActualizacion) dibujarComparativoGeneral();
+        
+        let esActualizacionGlobal = Object.keys(cpsEnActualizacion).length > 0;
+        if (esActualizacionGlobal) dibujarComparativoGeneral();
     }
 
-    // 🔥 ESTA FUNCIÓN ALIMENTA LOS KPIs Y LOS FILTROS 🔥
     function actualizarGlobales() {
         let totalIngresos = 0, totalCostos = 0;
         
@@ -1417,11 +1538,16 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         let totalNuevosCostos = window.rutasAguardar.reduce((sum, r) => sum + r.cBase + r.cAyudantes + r.cExc + r.cHE, 0);
         let nuevaUtilidad = totalNuevosIngresos - totalNuevosCostos;
 
-        let oldIng = Number(cpEnActualizacion.rutaAntigua.ingresos) || 0;
-        let oldCos = (Number(cpEnActualizacion.rutaAntigua.cBase)||0) + (Number(cpEnActualizacion.rutaAntigua.cAyudantes)||0) + (Number(cpEnActualizacion.rutaAntigua.cExc)||0) + (Number(cpEnActualizacion.rutaAntigua.cHE)||0);
+        let oldIng = 0, oldCos = 0;
+        
+        Object.values(cpsEnActualizacion).forEach(act => {
+            oldIng += Number(act.rutaAntigua.ingresos) || 0;
+            oldCos += (Number(act.rutaAntigua.cBase)||0) + (Number(act.rutaAntigua.cAyudantes)||0) + (Number(act.rutaAntigua.cExc)||0) + (Number(act.rutaAntigua.cHE)||0);
+        });
+        
         let oldUtil = oldIng - oldCos;
-
         let difIng = totalNuevosIngresos - oldIng; let difCos = totalNuevosCostos - oldCos; let difUtil = nuevaUtilidad - oldUtil;
+        let rutasAfectadas = Object.keys(cpsEnActualizacion).length;
 
         function formatDiff(val) {
             if (val > 0.001) return `<span style="color:var(--emerald-600); font-weight:bold;">(+$${val.toFixed(2)})</span>`;
@@ -1432,12 +1558,12 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         panelComp.innerHTML = `
             <h4 style="margin:0 0 15px 0; color:var(--teal-800); font-size:1.2em; display:flex; align-items:center; gap:8px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
-                Resumen de Actualización en Base de Datos
+                Resumen de Actualización Masiva
             </h4>
             <div style="display:flex; gap:15px; font-size:1em; flex-wrap: wrap;">
                 <div style="flex:1; background:white; padding:12px; border-radius:6px; border:1px solid var(--slate-200);">
-                    <span style="color:var(--slate-500); font-size:0.85em; display:block;">Vehículo Asignado</span>
-                    <b style="font-size:1.1em;">${cpEnActualizacion.rutaAntigua.placa}</b> ➔ <b style="font-size:1.1em; color:var(--blue-600);">${window.rutasAguardar[0].placa}</b>
+                    <span style="color:var(--slate-500); font-size:0.85em; display:block;">Rutas Afectadas</span>
+                    <b style="font-size:1.4em; color:var(--blue-600);">${rutasAfectadas}</b>
                 </div>
                 <div style="flex:1; background:white; padding:12px; border-radius:6px; border:1px solid var(--slate-200);">
                     <span style="color:var(--slate-500); font-size:0.85em; display:block;">Ingresos Totales</span>
@@ -1456,62 +1582,68 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         panelComp.style.display = 'block';
     }
 
-    
-
     async function guardarRutas() {
         if(!window.rutasAguardar || window.rutasAguardar.length === 0) {
             dialogAlert("Calcule las rutas primero antes de intentar guardar.", "warning");
             return;
         }
 
-        let esActualizacion = (cpEnActualizacion !== null);
+        let esActualizacion = Object.keys(cpsEnActualizacion).length > 0;
         let mensajeConfirmacion = esActualizacion 
-            ? `Va a <b>SOBRESCRIBIR</b> la ruta guardada anteriormente para la CP <b>${window.rutasAguardar[0].cartaPorte}</b>.<br><br>¿Está seguro de continuar?` 
+            ? `Va a <b>SOBRESCRIBIR</b> las ${Object.keys(cpsEnActualizacion).length} ruta(s) en la base de datos.<br><br>¿Está seguro de continuar?` 
             : `¿Desea enviar <b>${window.rutasAguardar.length} ruta(s)</b> a la base de datos central?`;
 
-        // Llamamos a nuestra ventana personalizada y pausamos el código hasta que el usuario responda (gracias a 'await')
         let usuarioConfirma = await dialogConfirm(mensajeConfirmacion, esActualizacion);
         
-        if (!usuarioConfirma) return; // Si dio clic en Cancelar, se detiene todo.
+        if (!usuarioConfirma) return; 
 
-        // A PARTIR DE AQUÍ EL CÓDIGO SIGUE IGUAL:
         const btnConf = document.getElementById('btnSave');
         btnConf.innerHTML = `<span class="loader-spinner" style="border-top-color:white; margin-right:8px;"></span> GUARDANDO...`;
         btnConf.disabled = true;
-        // ...
         
         try {
-            let payloadDatos = esActualizacion 
-                ? { action: 'update_ruta_completa', idRegistro: cpEnActualizacion.idRegistro, datos: window.rutasAguardar[0] }
-                : window.rutasAguardar;
-
-            let res = await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify(payloadDatos) 
-            });
-            let dataResp = await res.json();
-            
-            let idsGenerados = dataResp.id_registro || (esActualizacion ? cpEnActualizacion.idRegistro : "Desconocido");
-
-            let cpsGuardadas = [...new Set(window.rutasAguardar.map(r => r.cartaPorte))].join(', ');
-            document.getElementById('toastExitoText').innerHTML = `¡Ruta(s) guardadas con éxito!<br>
-            <span style="font-size:0.85em; font-weight:normal; color:var(--slate-600);">
-            <b>ID(s) Registro:</b> ${idsGenerados}<br>
-            <b>CPs:</b> ${cpsGuardadas}
-            </span>`;
+            if (esActualizacion) {
+                let promesasGuardado = window.rutasAguardar.map(ruta => {
+                    let idReg = cpsEnActualizacion[ruta.cartaPorte] ? cpsEnActualizacion[ruta.cartaPorte].idRegistro : null;
+                    
+                    if(idReg) {
+                        return fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: idReg, datos: ruta })
+                        }).then(r => r.json());
+                    } else {
+                        return fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify([ruta]) }).then(r=>r.json());
+                    }
+                });
+                
+                await Promise.all(promesasGuardado);
+                
+                document.getElementById('toastExitoText').innerHTML = `¡Actualización masiva completada con éxito!`;
+                
+            } else {
+                let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(window.rutasAguardar) });
+                let dataResp = await res.json();
+                
+                let idsGenerados = dataResp.id_registro || "Múltiples";
+                let cpsGuardadas = [...new Set(window.rutasAguardar.map(r => r.cartaPorte))].join(', ');
+                document.getElementById('toastExitoText').innerHTML = `¡Ruta(s) guardadas con éxito!<br>
+                <span style="font-size:0.85em; font-weight:normal; color:var(--slate-600);">
+                <b>ID(s) Registro:</b> ${idsGenerados}<br>
+                <b>CPs:</b> ${cpsGuardadas}
+                </span>`;
+            }
             
             let toast = document.getElementById('toastExito');
             toast.classList.add('show');
             setTimeout(() => { toast.classList.remove('show'); }, 6000); 
             
-            // 🔥 LIMPIEZA DE LA NUEVA INTERFAZ (TARJETAS) 🔥
             let contenedorT = document.getElementById('contenedorTarjetas');
             if (contenedorT) {
                 contenedorT.innerHTML = `
                 <div class="card" style="display:flex; justify-content:center; align-items:center; min-height: 300px; color: var(--slate-400); font-size: 1.1em; text-align: center;">
                     <div>
                         <span style="font-size: 3em; display: block; margin-bottom: 15px;">✅</span>
-                        ¡Operación Exitosa! Extraiga nuevas Cartas Porte.
+                        ¡Operación Exitosa! Puede procesar más rutas si lo desea.
                     </div>
                 </div>`;
             }
@@ -1532,9 +1664,8 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
 
             window.rutasAguardar = [];
             window.tarifasModificadas = {}; 
-            cpEnActualizacion = null; 
+            cpsEnActualizacion = {}; 
             
-            // Re-establecer el texto base del botón calcular
             document.getElementById('btnCalc').innerHTML = `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 CALCULAR COSTOS Y RUTAS
@@ -1558,29 +1689,24 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         }
     }
 
-    // --- LÓGICA DEL BUSCADOR Y EDITOR DE CARTA PORTE ---
-    let rutaEnEdicion = null; // Memoria temporal para el editor
+    let rutaEnEdicion = null; 
 
     async function abrirBuscadorCP() {
-        let cpBuscada = await dialogPrompt("Ingrese el número de la Carta Porte que desea buscar y editar en el sistema:", "Ej: 65994");
+        let cpBuscada = await dialogPrompt("Buscar Carta Porte", "Ingrese el número de la Carta Porte que desea buscar y editar en el sistema:", "Ej: 65994", false);
         if (!cpBuscada) return;
         cpBuscada = cpBuscada.trim().replace(/\./g, '');
 
         if (!dbRutasFull || dbRutasFull.length === 0) {
             return dialogAlert("La base de datos histórica aún no se ha cargado. Intente en unos segundos.", "warning");
         }
-        
-        // ... (el resto del código hacia abajo queda idéntico)
 
-        // Buscar en la memoria que ya se descargó al cargar la página
         let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada.toUpperCase());
 
         if (!rutaEncontrada) {
             return dialogAlert(`No se encontró ninguna ruta guardada con la Carta Porte <b>${cpBuscada}</b> en la Base de Datos.`, "error");
         }
 
-        // Si la encuentra, cargamos los datos en el Modal
-        rutaEnEdicion = JSON.parse(JSON.stringify(rutaEncontrada)); // Clonamos para no dañar el original
+        rutaEnEdicion = JSON.parse(JSON.stringify(rutaEncontrada)); 
         
         document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
         document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
@@ -1588,7 +1714,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         document.getElementById('editEstibas').value = rutaEnEdicion.cAyudantes || 0;
         document.getElementById('editExc').value = rutaEnEdicion.cExc || 0;
 
-        // Limpiar y dibujar tabla de pedidos
         let tbody = document.querySelector('#tblEditorPedidos tbody');
         tbody.innerHTML = '';
         
@@ -1596,7 +1721,7 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         pedidos.forEach((p, index) => {
             let partes = p.split('-');
             let id = partes[0] ? partes[0].trim() : "Desconocido";
-            let valorText = partes[1] ? partes[1].replace(/[^0-9.-]+/g, "") : "0"; // Limpia el ($...)
+            let valorText = partes[1] ? partes[1].replace(/[^0-9.-]+/g, "") : "0"; 
             let valorNum = parseFloat(valorText) || 0;
 
             tbody.innerHTML += `
@@ -1612,7 +1737,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             `;
         });
 
-        // Eventos para recalcular al escribir en los inputs de costo
         document.getElementById('editBase').oninput = recalcularTotalesEditor;
         document.getElementById('editEstibas').oninput = recalcularTotalesEditor;
         document.getElementById('editExc').oninput = recalcularTotalesEditor;
@@ -1623,20 +1747,18 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
 
     function eliminarPedidoEditor(index) {
         document.getElementById(`editRow_${index}`).style.display = 'none';
-        document.getElementById(`valEdit_${index}`).value = 'ELIMINADO'; // Marca especial
+        document.getElementById(`valEdit_${index}`).value = 'ELIMINADO'; 
         recalcularTotalesEditor();
     }
 
     function recalcularTotalesEditor() {
         if (!rutaEnEdicion) return;
 
-        // Sumar Costos
         let b = parseFloat(document.getElementById('editBase').value) || 0;
         let e = parseFloat(document.getElementById('editEstibas').value) || 0;
         let x = parseFloat(document.getElementById('editExc').value) || 0;
-        let totalCostos = b + e + x + (parseFloat(rutaEnEdicion.cHE) || 0); // cHE se mantiene oculto pero suma
+        let totalCostos = b + e + x + (parseFloat(rutaEnEdicion.cHE) || 0); 
 
-        // Sumar Ingresos recorriendo la tabla
         let totalIngresos = 0;
         let pedidosOriginales = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
         
@@ -1660,7 +1782,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         btn.innerHTML = `<span class="loader-spinner"></span> Guardando...`;
         btn.disabled = true;
 
-        // Reconstruir el objeto de ruta con los datos editados
         let nuevaListaIds = [];
         let totalIngresos = 0;
         let pedidosOriginales = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
@@ -1683,7 +1804,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
         rutaEnEdicion.pedidos = nuevaListaIds.length;
         rutaEnEdicion.ingresos = totalIngresos;
 
-        // Armamos el payload para el AppScript
         let payloadActualizacion = { 
             action: 'update_ruta_completa', 
             idRegistro: rutaEnEdicion.idRegistro, 
@@ -1700,7 +1820,6 @@ Ingrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
             document.getElementById('modalEditorCP').style.display = 'none';
             dialogAlert(`La Carta Porte <b>${rutaEnEdicion.cartaPorte}</b> se ha actualizado correctamente en la base de datos.`, "success");
             
-            // Refrescar para bajar los nuevos datos
             setTimeout(() => { location.reload(); }, 2000);
 
         } catch (e) {
