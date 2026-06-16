@@ -5,6 +5,7 @@
     <title>FlexNet - Despacho por Carta Porte</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="seguridad.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { 
             --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
@@ -483,6 +484,13 @@
     let rutasPorDiaYPlaca = {}; 
     let preciosHistoricos = {}; 
     let cloudLista = false, monitorListo = false;
+
+    // 🔥 NUEVO: Función para limpiar símbolos extraños de la BD y asegurar números reales
+    const parsearCosto = (valor) => {
+        if (valor === undefined || valor === null || valor === '') return 0;
+        if (typeof valor === 'number') return valor;
+        return parseFloat(String(valor).replace(/[^0-9.-]+/g, "")) || 0;
+    };
     
     window.agrupacionVehiculos = {};
     window.rutasAguardar = [];
@@ -1237,7 +1245,7 @@
 
             let controlesHtml = isItsa ? `
                 <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')">
+                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="if(event && event.isTrusted) this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')">
                     <option value="NORMAL" ${selNormal}>Normal</option>
                     <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
                     <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
@@ -1246,7 +1254,7 @@
                 <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
             ` : `
                 <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)">
+                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="if(event && event.isTrusted) this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)">
                     <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
                     <option value="POR PUNTO" ${selPunto}>Por Punto</option>
                 </select></div>
@@ -1322,10 +1330,11 @@
             if (rutaAntigua.tipoRuta === 'EXCLUSIVO' || rutaAntigua.tipoRuta === 'POR RUTA' || rutaAntigua.tipoRuta === 'POR PUNTO') {
                 esRutaManualRestaurada = true;
                 tipo = rutaAntigua.tipoRuta;
-                cBase = Number(rutaAntigua.cBase) || 0;
-                cEstibas = Number(rutaAntigua.cAyudantes) || 0;
-                cExc = Number(rutaAntigua.cExc) || 0;
-                cHE = Number(rutaAntigua.cHE) || 0;
+                cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
+                console.log("🔍 RADIOGRAFÍA DE LA RUTA:", rutaAntigua);
+                cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
+                cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
+                cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
                 
                 if (elTipo) elTipo.value = tipo;
                 let inputCosto = document.getElementById(`costo_${idTarjeta}`);
@@ -1749,9 +1758,9 @@
         
         document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
         document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
-        document.getElementById('editBase').value = rutaEnEdicion.cBase || 0;
-        document.getElementById('editEstibas').value = rutaEnEdicion.cAyudantes || 0;
-        document.getElementById('editExc').value = rutaEnEdicion.cExc || 0;
+        document.getElementById('editBase').value = parsearCosto(rutaEnEdicion.cBase || rutaEnEdicion.cbase);
+        document.getElementById('editEstibas').value = parsearCosto(rutaEnEdicion.cAyudantes || rutaEnEdicion.cayudantes);
+        document.getElementById('editExc').value = parsearCosto(rutaEnEdicion.cExc || rutaEnEdicion.cexc);
 
         let tbody = document.querySelector('#tblEditorPedidos tbody');
         tbody.innerHTML = '';
@@ -1796,7 +1805,8 @@
         let b = parseFloat(document.getElementById('editBase').value) || 0;
         let e = parseFloat(document.getElementById('editEstibas').value) || 0;
         let x = parseFloat(document.getElementById('editExc').value) || 0;
-        let totalCostos = b + e + x + (parseFloat(rutaEnEdicion.cHE) || 0); 
+        let heLimpias = parsearCosto(rutaEnEdicion.cHE || rutaEnEdicion.che);
+        let totalCostos = b + e + x + heLimpias;
 
         let totalIngresos = 0;
         let pedidosOriginales = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
@@ -1867,6 +1877,141 @@
             btn.innerHTML = txtOri;
             btn.disabled = false;
         }
+    }
+
+   // --- 🚀 DETECCIÓN EN TIEMPO REAL CON HISTORIAL Y LISTA DE PEDIDOS 🚀 ---
+    document.getElementById('txtCPIndividual').addEventListener('blur', function() {
+        let cpBuscada = this.value.trim().toUpperCase().replace(/\./g, '');
+        if (!cpBuscada) return;
+
+        // Verificamos si la base de datos de la Nube ya cargó
+        if (!dbRutasFull || dbRutasFull.length === 0) return;
+
+        // Buscamos la carta porte
+        let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada);
+
+        if (rutaEncontrada) {
+            let usuario = rutaEncontrada.usuario || "Desconocido";
+            let fecha = rutaEncontrada.fechaCreacion || rutaEncontrada.fecha || "Fecha no registrada";
+            
+            // --- 1. PROCESAR HISTORIAL DE CAMBIOS ---
+            let htmlCambios = '';
+            if (rutaEncontrada.historial) {
+                let listaCambios = rutaEncontrada.historial.split('\n').filter(Boolean);
+                htmlCambios = `
+                    <div style="background: #fff5f5; padding: 12px; border-radius: 8px; border: 1px solid #feb2b2; margin: 15px 0;">
+                        <p style="margin: 0 0 8px 0; color: #9b2c2c;"><strong>⚠️ Historial de cambios detectados:</strong></p>
+                        <ul style="margin: 0; padding-left: 20px; color: #dc2626; font-size: 13px; line-height: 1.5;">`;
+                
+                listaCambios.forEach(cambio => {
+                    htmlCambios += `<li style="margin-bottom: 5px;">${cambio}</li>`;
+                });
+                htmlCambios += `</ul></div>`;
+            } else {
+                htmlCambios = `
+                    <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; margin: 15px 0;">
+                        <p style="margin: 0; color: var(--emerald-700); font-size: 13px;"><strong>✓ Registro Original:</strong> Esta carta porte no ha sufrido modificaciones desde su ingreso.</p>
+                    </div>`;
+            }
+
+            // --- 2. EXTRAER Y DIBUJAR LA LISTA DE PEDIDOS ---
+            let listaPedidosHtml = "<span style='color:var(--slate-400);'>No se encontraron pedidos detallados.</span>";
+            if (rutaEncontrada.listaIds) {
+                // Separamos los pedidos por coma
+                let arrPedidos = String(rutaEncontrada.listaIds).split(',').filter(Boolean);
+                
+                // Creamos una lista con scroll por si son muchísimos paquetes
+                listaPedidosHtml = `<ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 13px; color: var(--slate-600); max-height: 110px; overflow-y: auto;">`;
+                arrPedidos.forEach(pedido => {
+                    listaPedidosHtml += `<li style="margin-bottom: 3px;">📦 <b>${pedido.trim()}</b></li>`;
+                });
+                listaPedidosHtml += `</ul>`;
+            }
+
+            // --- 3. DISEÑO FINAL DEL MODAL ---
+            let msgHtml = `
+                <div style="text-align: left; font-size: 14px;">
+                    <p>Esta Carta Porte ya fue agregada por <strong style="color:var(--blue-600);">${usuario}</strong> el <strong>${fecha}</strong>.</p>
+                    
+                    ${htmlCambios}
+
+                    <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 15px;">
+                        <p style="margin: 0 0 5px 0; color: var(--slate-800);"><strong>📋 Pedidos registrados actualmente (${rutaEncontrada.pedidos}):</strong></p>
+                        ${listaPedidosHtml}
+                        <hr style="border: none; border-top: 1px solid var(--slate-200); margin: 10px 0;">
+                        <span style="font-size: 13px; color: var(--slate-600);">
+                            <strong>Placa:</strong> <span class="badge-prov">${rutaEncontrada.placa}</span> | 
+                            <strong>Ingresos Totales:</strong> $${parsearCosto(rutaEncontrada.ingresos || rutaEncontrada.ingresos).toFixed(2)}
+                        </span>
+                    </div>
+                    
+                    <p>¿Deseas abrir el editor para actualizar esta Carta Porte con nuevos datos o pedidos?</p>
+                </div>
+            `;
+
+            // --- 4. LANZAR EL SWEETALERT ---
+            Swal.fire({
+                title: '¡Carta Porte ya existente!',
+                html: msgHtml,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--emerald-600)',
+                cancelButtonColor: 'var(--slate-500)',
+                confirmButtonText: '✏️ Sí, abrir editor',
+                cancelButtonText: 'No, cancelar',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    abrirEditorDirectamente(rutaEncontrada);
+                    document.getElementById('txtCPIndividual').value = '';
+                }
+            });
+        }
+    });
+
+    // --- FUNCIÓN AUXILIAR PARA ABRIR EL EDITOR DIRECTAMENTE ---
+    function abrirEditorDirectamente(rutaObj) {
+        // Clonamos la ruta para no afectar el original hasta que guarde
+        rutaEnEdicion = JSON.parse(JSON.stringify(rutaObj)); 
+        
+        document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
+        document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
+        document.getElementById('editBase').value = rutaEnEdicion.cBase || 0;
+        document.getElementById('editEstibas').value = rutaEnEdicion.cAyudantes || 0;
+        document.getElementById('editExc').value = rutaEnEdicion.cExc || 0;
+
+        let tbody = document.querySelector('#tblEditorPedidos tbody');
+        tbody.innerHTML = '';
+        
+        let pedidos = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
+        pedidos.forEach((p, index) => {
+            let partes = p.split('-');
+            let id = partes[0] ? partes[0].trim() : "Desconocido";
+            let valorText = partes[1] ? partes[1].replace(/[^0-9.-]+/g, "") : "0"; 
+            let valorNum = parseFloat(valorText) || 0;
+
+            tbody.innerHTML += `
+                <tr id="editRow_${index}">
+                    <td><strong>${id}</strong></td>
+                    <td style="text-align:right;">
+                        <input type="number" id="valEdit_${index}" value="${valorNum}" step="0.01" style="width:100px; padding:4px; text-align:right;" onchange="recalcularTotalesEditor()">
+                    </td>
+                    <td style="text-align:center;">
+                        <button onclick="eliminarPedidoEditor(${index})" style="background:var(--red-50); color:var(--red-600); border:1px solid var(--red-200); border-radius:4px; cursor:pointer;" title="Quitar de la lista">✖</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        // Aseguramos que los eventos sigan funcionando
+        document.getElementById('editBase').oninput = recalcularTotalesEditor;
+        document.getElementById('editEstibas').oninput = recalcularTotalesEditor;
+        document.getElementById('editExc').oninput = recalcularTotalesEditor;
+
+        recalcularTotalesEditor();
+        
+        // Mostramos el modal de edición que ya tienes en el HTML
+        document.getElementById('modalEditorCP').style.display = 'flex';
     }
 </script>
 </body>
