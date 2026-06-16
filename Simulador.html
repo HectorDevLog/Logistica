@@ -410,19 +410,28 @@
     <div id="toastExitoText">¡Ruta guardada con éxito!</div>
 </div>
 
+<!-- 🔥 MODAL PARA FIJAR TARIFAS MANUALES COMPLETO 🔥 -->
 <div id="modalTarifasEspeciales" class="modal-overlay">
     <div class="modal-box" style="width: 95%; max-width: 1200px;">
         <h2 style="margin-top: 0; color: var(--slate-900); display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--slate-100); padding-bottom: 10px;">
-            <span>📋 Pre-Carga de Tarifas Fijas / Especiales</span>
+            <span>📋 Gestión de Tarifas Fijas / Especiales</span>
             <button onclick="cerrarModalTarifas()" style="background:none; border:none; font-size:1.2em; cursor:pointer; color:var(--slate-500);">&times;</button>
         </h2>
         
+        <!-- VISTA 1: INGRESO DE IDs -->
         <div id="pasoIngresoIDs">
-            <label>📦 Ingrese los IDs de Pedidos (Pegue la columna desde Excel o separe con comas):</label>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                <label style="margin:0;">📦 Ingrese los IDs de Pedidos (Pegue la columna desde Excel o separe con comas):</label>
+                <button onclick="verTarifasCargadas()" style="padding: 6px 12px; background: white; color: var(--blue-600); border: 2px solid var(--blue-600); font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:5px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    VER TARIFAS CARGADAS
+                </button>
+            </div>
             <textarea id="txtIdsEspeciales" rows="6" placeholder="Ej. 1222073&#10;1222024&#10;1221347..." style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; resize: vertical; margin-bottom:15px; font-family:inherit;"></textarea>
             <button onclick="procesarYPrecalcularTarifas()" class="btn-main" style="width: 100%; padding: 12px; background: var(--blue-600); color: white; border: none; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">ANALIZAR PEDIDOS E INYECTAR</button>
         </div>
 
+        <!-- VISTA 2: FIJAR NUEVAS TARIFAS -->
         <div id="pasoTablaPrecios" style="display:none;">
             <p style="font-size:0.95em; color:var(--slate-600); margin-bottom:15px;">A continuación se muestran los pedidos encontrados. Aquellos marcados en <strong style="color:var(--red-600);">ROJO</strong> no tienen una tarifa automática base en el sistema, es obligatorio asignarles un precio manual antes de guardar.</p>
             
@@ -446,8 +455,40 @@
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:20px;">
-                <button onclick="regresarAInputIDs()" style="padding: 10px 15px; background: white; color: var(--slate-700); border: 1px solid var(--slate-300); font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Volver a Editar Lista</button>
+                <button onclick="regresarAInputIDs()" style="padding: 10px 15px; background: white; color: var(--slate-700); border: 1px solid var(--slate-300); font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Volver</button>
                 <button onclick="enviarTarifasFijadasAlServidor()" id="btnGuardarEspeciales" style="padding: 10px 15px; background: var(--emerald-600); color: white; border: none; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">GUARDAR TARIFAS EN SISTEMA</button>
+            </div>
+        </div>
+
+        <!-- 🔥 VISTA 3: EDITAR TARIFAS EXISTENTES 🔥 -->
+        <div id="pasoVerTarifas" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0; color:var(--slate-700);">Tarifas Manuales Registradas</h3>
+                <button onclick="volverAInicioDesdeVer()" style="background:var(--slate-600); color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600;">⬅️ Volver</button>
+            </div>
+
+            <div style="margin-bottom: 15px; position: relative;">
+                <input type="text" id="txtBuscarTarifaFija" onkeyup="filtrarTarifasFijadas()" placeholder="🔍 Buscar por ID de Pedido o Usuario..." style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--slate-300); outline: none; font-size: 0.95em; box-sizing: border-box; transition: 0.2s;" onfocus="this.style.borderColor='var(--blue-500)'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="this.style.borderColor='var(--slate-300)'; this.style.boxShadow='none'">
+            </div>
+
+            <div style="max-height:350px; overflow-y:auto; border:1px solid var(--slate-200); border-radius:8px;">
+                <table id="tblTarifasExistentes" style="width:100%; border-collapse:collapse; text-align:left;">
+                    <thead style="background:var(--slate-100); position:sticky; top:0; z-index:10;">
+                        <tr>
+                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); color:var(--slate-600); font-size:0.9em;">Pedido</th>
+                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); color:var(--slate-600); font-size:0.9em;">Usuario</th>
+                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); color:var(--slate-600); font-size:0.9em;">Fecha</th>
+                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); color:var(--slate-600); font-size:0.9em; text-align:right;">Tarifa ($)</th>
+                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); color:var(--slate-600); font-size:0.9em; text-align:center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:15px; text-align:right;">
+                <button onclick="guardarCambiosEdicionTarifas()" style="background:var(--emerald-600); color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.background='#059669'">💾 Guardar Cambios en la Nube</button>
             </div>
         </div>
     </div>
@@ -1246,10 +1287,147 @@
         setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 
+    let tarifasExistentesOriginales = {}; // Memoria para saber qué cambió el usuario
+
     function regresarAInputIDs() {
         document.getElementById('pasoIngresoIDs').style.display = 'block';
         document.getElementById('pasoTablaPrecios').style.display = 'none';
+        document.getElementById('pasoVerTarifas').style.display = 'none';
         document.getElementById('txtIdsEspeciales').value = '';
+    }
+
+    async function verTarifasCargadas() {
+        document.getElementById('pasoIngresoIDs').style.display = 'none';
+        document.getElementById('pasoTablaPrecios').style.display = 'none';
+        document.getElementById('pasoVerTarifas').style.display = 'block';
+        
+        // Limpiar el buscador viejo si existía texto escrito
+        document.getElementById('txtBuscarTarifaFija').value = '';
+        
+        let tbody = document.querySelector('#tblTarifasExistentes tbody');
+        // ... todo el resto de la función se queda exactamente igual a como lo tenías ...
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--blue-600); font-size:1.1em; font-weight:bold;">⏳ Buscando tarifas activas en la Nube...</td></tr>';
+        tarifasExistentesOriginales = {};
+
+        try {
+            let res = await fetch(SCRIPT_URL + "?action=getTarifasFijadas");
+            let tarifasFijas = await res.json();
+            
+            tbody.innerHTML = '';
+            
+            if (tarifasFijas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--slate-500); font-size:1.1em;">No hay tarifas manuales guardadas en el sistema en este momento.</td></tr>';
+                return;
+            }
+
+            tarifasFijas.forEach(tf => {
+                let id = String(tf['Pedido'] || tf['PEDIDO'] || tf['ID Pedido'] || tf['ID PEDIDO'] || '').trim();
+                let tarifa = parseFloat(tf['Tarifa Final'] || tf['TARIFA FINAL'] || tf['Tarifa Fija'] || tf['TARIFA FIJA'] || tf['tarifa']) || 0;
+                let usuario = tf['Usuario que la fijó'] || tf['Usuario'] || tf['usuario'] || '-';
+                let fecha = tf['Fecha'] || tf['fecha'] || '-';
+
+                if (!id) return;
+
+                tarifasExistentesOriginales[id] = tarifa;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200);"><strong>${id}</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); font-size: 0.85em; color:var(--blue-600); font-weight:600;">${usuario}</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); font-size: 0.85em; color:var(--slate-500);">${fecha}</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); text-align:right;">
+                            <input type="number" id="inputEditEsp_${id}" value="${tarifa.toFixed(2)}" step="0.01" min="0" style="width:100px; text-align:right; padding:6px; font-weight:bold; border-radius:6px; border:1px solid var(--slate-300); outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--amber-600)'" onblur="this.style.borderColor='var(--slate-300)'">
+                        </td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid var(--slate-200); text-align:center;">
+                            <button onclick="eliminarTarifaFijada('${id}')" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; font-size:0.9em; transition:0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'" title="Eliminar tarifa">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--red-600); font-weight:bold;">❌ Error de conexión al servidor de Google. Intenta de nuevo.</td></tr>';
+        }
+    }
+
+    async function eliminarTarifaFijada(id) {
+        // Pedimos confirmación para evitar borrados accidentales
+        if (!confirm(`⚠️ ¿Estás seguro de que deseas ELIMINAR la tarifa manual del pedido ${id}?`)) {
+            return;
+        }
+
+        try {
+            // Preparamos el paquete de datos
+            let payload = { 
+                action: 'delete_tarifa_fijada', 
+                id: id 
+            };
+            
+            // Lo enviamos a Apps Script
+            let res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            
+            let data = await res.json();
+            
+            if (data.status === 'success') {
+                // Si todo sale bien, recargamos la tabla para que desaparezca visualmente
+                verTarifasCargadas();
+            } else {
+                alert("❌ No se pudo eliminar: " + (data.message || "Error desconocido"));
+            }
+        } catch (e) {
+            alert("❌ Error de conexión al intentar eliminar.");
+        }
+    }
+
+    async function guardarEdicionTarifasExistentes() {
+        let payloadTarifas = [];
+        
+        // Comparamos los inputs con la memoria original para enviar a la base de datos SOLO lo que se modificó
+        for (let id in tarifasExistentesOriginales) {
+            let nodoInput = document.getElementById(`inputEditEsp_${id}`);
+            if (nodoInput) {
+                let nuevoValor = parseFloat(nodoInput.value) || 0;
+                let valorOriginal = tarifasExistentesOriginales[id];
+                
+                // Si el usuario cambió el valor numérico, lo empaquetamos
+                if (nuevoValor !== valorOriginal) {
+                    payloadTarifas.push({
+                        id: id,
+                        tarifa: nuevoValor,
+                        usuario: sesion.nombre + " (Editado)"
+                    });
+                }
+            }
+        }
+
+        if (payloadTarifas.length === 0) {
+            alert("No has realizado ningún cambio en los precios de la tabla.");
+            return;
+        }
+
+        let btn = document.getElementById('btnGuardarEdicionExistentes');
+        btn.innerHTML = "Actualizando Nube..."; btn.disabled = true;
+
+        try {
+            let res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'save_tarifas_fijadas', tarifas: payloadTarifas })
+            });
+            let responseData = await res.json();
+
+            alert(`✅ ${payloadTarifas.length} tarifa(s) actualizada(s) correctamente en la Base de Datos.`);
+            
+            // Borramos el caché local y forzamos recarga para que el navegador descargue los nuevos precios
+            sessionStorage.removeItem('cacheTarifarioFull');
+            location.reload();
+
+        } catch (e) {
+            alert("❌ Error de comunicación con los servidores de Google.");
+        } finally {
+            btn.innerHTML = "ACTUALIZAR CAMBIOS"; btn.disabled = false;
+        }
     }
 
     function procesarYPrecalcularTarifas() {
@@ -1390,6 +1568,98 @@
             alert("❌ Error de comunicación con los servidores de Google.");
         } finally {
             btn.innerHTML = "GUARDAR TARIFAS EN SISTEMA"; btn.disabled = false;
+        }
+    }
+
+    function filtrarTarifasFijadas() {
+        // Obtener el texto que escribió el usuario y pasarlo a mayúsculas
+        let filtro = document.getElementById('txtBuscarTarifaFija').value.toUpperCase().trim();
+        let tabla = document.getElementById('tblTarifasExistentes');
+        let filas = tabla.getElementsByTagName('tr');
+
+        // Recorrer todas las filas de la tabla (saltándose la cabecera i=0)
+        for (let i = 1; i < filas.length; i++) {
+            let celdaPedido = filas[i].getElementsByTagName('td')[0];
+            let celdaUsuario = filas[i].getElementsByTagName('td')[1];
+            
+            if (celdaPedido && celdaUsuario) {
+                let textoPedido = celdaPedido.textContent || celdaPedido.innerText;
+                let textoUsuario = celdaUsuario.textContent || celdaUsuario.innerText;
+                
+                // Si el filtro coincide con el número de pedido O con el nombre del usuario...
+                if (textoPedido.toUpperCase().indexOf(filtro) > -1 || textoUsuario.toUpperCase().indexOf(filtro) > -1) {
+                    filas[i].style.display = ""; // Mostrar fila
+                } else {
+                    filas[i].style.display = "none"; // Ocultar fila
+                }
+            }
+        }
+    }
+
+    async function guardarCambiosEdicionTarifas() {
+        let boton = document.querySelector('button[onclick="guardarCambiosEdicionTarifas()"]');
+        let textoOriginal = boton.innerHTML;
+        
+        let tarifasEditadas = [];
+        let inputs = document.querySelectorAll('input[id^="inputEditEsp_"]');
+        
+        inputs.forEach(input => {
+            let id = input.id.replace('inputEditEsp_', '');
+            let tarifaNueva = parseFloat(input.value);
+            let tarifaOriginal = parseFloat(tarifasExistentesOriginales[id]);
+            
+            // Solo lo metemos a la lista si el número cambió
+            if (tarifaNueva !== tarifaOriginal) {
+                tarifasEditadas.push({
+                    id: id,
+                    tarifa: tarifaNueva,
+                    // 🔥 Aquí capturamos al usuario logueado actualmente y le agregamos la etiqueta 🔥
+                    usuario: sesion.nombre + " (Editó)" 
+                });
+            }
+        });
+
+        if (tarifasEditadas.length === 0) {
+            alert("ℹ️ No has realizado ningún cambio en los precios.");
+            return;
+        }
+
+        try {
+            boton.innerHTML = '⏳ Guardando cambios...';
+            boton.disabled = true;
+            boton.style.background = 'var(--slate-400)';
+
+            let payload = {
+                action: 'save_tarifas_fijadas',
+                tarifas: tarifasEditadas
+            };
+
+            let res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            let data = await res.json();
+            
+            if (data.status === 'success') {
+                alert("✅ ¡Las tarifas modificadas se guardaron con éxito en la Nube!");
+                
+                // Actualizamos la memoria
+                tarifasEditadas.forEach(t => {
+                    tarifasExistentesOriginales[t.id] = t.tarifa;
+                });
+                
+                // Refrescamos la vista para que el usuario vea su propio nombre reflejado en la tabla
+                verTarifasCargadas();
+            } else {
+                alert("❌ Error al guardar: " + (data.message || "Error desconocido"));
+            }
+        } catch (e) {
+            alert("❌ Error de conexión al servidor. Revisa tu internet.");
+        } finally {
+            boton.innerHTML = textoOriginal;
+            boton.disabled = false;
+            boton.style.background = 'var(--emerald-600)';
         }
     }
 
