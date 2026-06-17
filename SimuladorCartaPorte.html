@@ -1891,6 +1891,9 @@
         let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada);
 
         if (rutaEncontrada) {
+            // 👇 ESTO ES LO NUEVO: Vaciamos la casilla al instante para matar el doble disparo
+            this.value = ''; 
+
             let usuario = rutaEncontrada.usuario || "Desconocido";
             let fecha = rutaEncontrada.fechaCreacion || rutaEncontrada.fecha || "Fecha no registrada";
             
@@ -1917,10 +1920,7 @@
             // --- 2. EXTRAER Y DIBUJAR LA LISTA DE PEDIDOS ---
             let listaPedidosHtml = "<span style='color:var(--slate-400);'>No se encontraron pedidos detallados.</span>";
             if (rutaEncontrada.listaIds) {
-                // Separamos los pedidos por coma
                 let arrPedidos = String(rutaEncontrada.listaIds).split(',').filter(Boolean);
-                
-                // Creamos una lista con scroll por si son muchísimos paquetes
                 listaPedidosHtml = `<ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 13px; color: var(--slate-600); max-height: 110px; overflow-y: auto;">`;
                 arrPedidos.forEach(pedido => {
                     listaPedidosHtml += `<li style="margin-bottom: 3px;">📦 <b>${pedido.trim()}</b></li>`;
@@ -1955,15 +1955,14 @@
                 html: msgHtml,
                 icon: 'info',
                 showCancelButton: true,
-                confirmButtonColor: 'var(--emerald-600)',
-                cancelButtonColor: 'var(--slate-500)',
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
                 confirmButtonText: '✏️ Sí, abrir editor',
                 cancelButtonText: 'No, cancelar',
                 allowOutsideClick: false
             }).then((result) => {
                 if (result.isConfirmed) {
                     abrirEditorDirectamente(rutaEncontrada);
-                    document.getElementById('txtCPIndividual').value = '';
                 }
             });
         }
@@ -1976,9 +1975,9 @@
         
         document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
         document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
-        document.getElementById('editBase').value = rutaEnEdicion.cBase || 0;
-        document.getElementById('editEstibas').value = rutaEnEdicion.cAyudantes || 0;
-        document.getElementById('editExc').value = rutaEnEdicion.cExc || 0;
+        document.getElementById('editBase').value = parsearCosto(rutaEnEdicion.cBase || rutaEnEdicion.cbase);
+        document.getElementById('editEstibas').value = parsearCosto(rutaEnEdicion.cAyudantes || rutaEnEdicion.cayudantes);
+        document.getElementById('editExc').value = parsearCosto(rutaEnEdicion.cExc || rutaEnEdicion.cexc);
 
         let tbody = document.querySelector('#tblEditorPedidos tbody');
         tbody.innerHTML = '';

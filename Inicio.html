@@ -6,6 +6,7 @@
     <script src="config.js"></script>
     <script src="seguridad.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { 
             --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
@@ -645,7 +646,10 @@
     }
 
     window.onload = async function() {
+        window.dbRutasGlobal = [];
+
         if(!sesion) return window.location.href = 'index.html';
+        window.monitorGlobal = [];
 
         document.getElementById('infoUsuario').innerHTML = `
             <span>📍 ${sesion.ciudad}</span>
@@ -721,6 +725,7 @@
                     setPillStatus('Tarifas', 'loading', 'Descargando Tarifario Nuevo...');
                     promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
                         const dbData = allData.db || [];
+                        window.dbRutasGlobal = dbData;
                         const dTarifas = allData.tarifas || []; 
                         const tfaPesoDB = allData.peso || [];
                         const tfaPedidoDB = allData.pedido || []; 
@@ -755,6 +760,7 @@
                         });
 
                         sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                            dbData: window.dbRutasGlobal, // 🔥 ESTO ES CLAVE PARA QUE EL CONCILIADOR FUNCIONE
                             dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
                             tarifarioGlobalDB, 
                             rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
@@ -763,6 +769,7 @@
                         setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
                     }));
                 } else {
+                window.dbRutasGlobal = cacheTarifas.dbData || []; // 🔥 RECUPERAR DE LA MEMORIA
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
             }
 
@@ -770,6 +777,7 @@
                 setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
+                        window.monitorGlobal = jsonResponse; // 🔥 ASIGNAR DATA NUEVA
                         await guardarDatoDBPreload("monitorCargado", jsonResponse, ping.monitorTs);
                         setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${jsonResponse.length} reg)`);
                     } else {
@@ -777,7 +785,8 @@
                     }
                 }));
             } else {
-                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
+                window.monitorGlobal = cacheMonitorObj.data || cacheMonitorObj; // 🔥 ASIGNAR DATA DE CACHÉ
+                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${window.monitorGlobal.length} reg)`);
             }
 
             await Promise.all(promesas);
@@ -785,6 +794,11 @@
             // 🔥 BÚHO CELEBRA EL ÉXITO 🔥
             bodyState.classList.remove('state-loading');
             bodyState.classList.add('state-success');
+
+            // Ejecutar escáner proactivo 2 segundos después de que el búho termina
+            setTimeout(() => { 
+                conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); 
+            }, 2500);
             
             // Calcula la hora nueva recién descargada
             let nuevaHoraTs = ping.monitorTs || new Date().getTime();
@@ -915,13 +929,22 @@
     // 🔥 CARGA MANUAL DE EXCEL AL INDEXED-DB (SIRVE PARA AMBOS BOTONES) 🔥
     // =========================================================================
     function abrirModalExcel() {
-        document.getElementById('modalUploadExcel').style.display = 'flex';
+        let modal = document.getElementById('modalUploadExcel');
+        modal.style.display = 'flex';
+        
+        // 👇 ESTO FALTABA: Darle 10 milisegundos y volverlo visible
+        setTimeout(() => modal.classList.add('active'), 10);
+        
         if(document.getElementById('statusCargaVoluntaria')) document.getElementById('statusCargaVoluntaria').innerText = '';
         if(document.getElementById('fileMonitorVoluntario')) document.getElementById('fileMonitorVoluntario').value = '';
     }
 
     function cerrarModalExcel() {
-        document.getElementById('modalUploadExcel').style.display = 'none';
+        let modal = document.getElementById('modalUploadExcel');
+        
+        // 👇 ESTO FALTABA: Quitarle lo visible primero, esperar y luego apagarlo
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 
     async function procesarMonitorExcel(idInput, idStatus) {
@@ -973,6 +996,179 @@
 
         reader.readAsArrayBuffer(file);
     }
+
+    // =========================================================================
+    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA (DETECTA CAMBIOS DE CP) 🚀
+    // =========================================================================
+    
+    // Llama a esta función justo después de que el búho celebra el éxito en window.onload
+    // Ejemplo: setTimeout(() => { conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); }, 2500);
+
+    async function conciliarCambiosMonitor(dbRutas, monitor) {
+        if (!dbRutas || !monitor || dbRutas.length === 0 || monitor.length === 0) return;
+
+        // 1. Filtrar las rutas según el rol
+        let misRutas = dbRutas;
+        if (sesion.rol !== 'Administrador') {
+            misRutas = dbRutas.filter(r => String(r.usuario).trim() === String(sesion.nombre).trim());
+        }
+
+        let alertasHTML = '';
+        let actualizacionesPendientes = [];
+
+        // 2. Analizar cada ruta
+        misRutas.forEach(ruta => {
+            let cpOriginal = String(ruta.cartaPorte).trim().toUpperCase();
+            let idsEnRuta = String(ruta.listaIds).split(',').filter(Boolean);
+            
+            let pedidosFugados = [];
+            let ingresosPerdidos = 0;
+            
+            let nuevaListaIds = []; // Los que se quedan
+            let agrupacionDestinos = {}; // A dónde se fueron los fugados
+
+            idsEnRuta.forEach(item => {
+                let idLimpio = item.split('-')[0].trim();
+                let cobro = parseFloat(item.split('-')[1].replace(/[^0-9.-]+/g, "")) || 0;
+                
+                // Buscar dónde está este ID hoy en el monitor
+                let estadoMonitor = monitor.find(m => String(m['PEDIDOID'] || m['idpedido']).trim() === idLimpio);
+                
+                if (estadoMonitor) {
+                    let cpMonitor = String(estadoMonitor['ULTIMA_CARTA_PORTE'] || estadoMonitor['Carta_Porte'] || 'SIN_CP').trim().toUpperCase();
+                    
+                    if (cpMonitor !== cpOriginal && cpMonitor !== 'SIN_CP') {
+                        // ¡Se fugó a otra CP!
+                        pedidosFugados.push(idLimpio);
+                        ingresosPerdidos += cobro;
+                        
+                        if(!agrupacionDestinos[cpMonitor]) agrupacionDestinos[cpMonitor] = { ids: [], cobroGanan: 0, usuarioDestino: 'Desconocido' };
+                        agrupacionDestinos[cpMonitor].ids.push(item); // Guardamos "ID - ($X.XX)"
+                        agrupacionDestinos[cpMonitor].cobroGanan += cobro;
+                        
+                    } else {
+                        // Sigue en la misma
+                        nuevaListaIds.push(item);
+                    }
+                } else {
+                    // Ya no existe en el monitor (cancelado/eliminado)
+                    nuevaListaIds.push(item); 
+                }
+            });
+
+            // Si detectamos fugas en esta ruta
+            if (pedidosFugados.length > 0) {
+                let msj = `De la CP <b>${cpOriginal}</b> (que tenía ${ruta.pedidos} pedidos), salieron <b>${pedidosFugados.length}</b> pedidos <i>(${pedidosFugados.join(', ')})</i> con el siguiente destino:<br>`;
+                
+                let objetoActualizacion = {
+                    rutaVieja: ruta,
+                    nuevaListaVieja: nuevaListaIds,
+                    descuentoIngresoViejo: ingresosPerdidos,
+                    impactosNuevos: agrupacionDestinos
+                };
+
+                Object.keys(agrupacionDestinos).forEach(nuevaCP => {
+                    let dest = agrupacionDestinos[nuevaCP];
+                    
+                    // Buscar si la nueva CP existe en nuestra BD
+                    let rutaDestinoDB = dbRutas.find(r => String(r.cartaPorte).trim().toUpperCase() === nuevaCP);
+                    if (rutaDestinoDB) {
+                        dest.usuarioDestino = rutaDestinoDB.usuario;
+                        dest.rutaRef = rutaDestinoDB;
+                        msj += `- Se movieron a la CP <b>${nuevaCP}</b> de ${dest.usuarioDestino}.<br>`;
+                    } else {
+                        dest.rutaRef = null; // No existe
+                        msj += `- Se asignaron a la CP <b>${nuevaCP}</b> (Aún no registrada en el sistema. Se sacarán de su ruta actual).<br>`;
+                    }
+                });
+
+                alertasHTML += `<div style="background:var(--slate-50); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border:1px solid var(--slate-200);">${msj}</div>`;
+                actualizacionesPendientes.push(objetoActualizacion);
+            }
+        });
+
+        // 3. Mostrar el Modal si hay cambios
+        if (actualizacionesPendientes.length > 0) {
+            Swal.fire({
+                title: '🔄 Actualizaciones de Ruta Detectadas',
+                html: `<div style="text-align:left; font-size:14px; color:var(--slate-700);">
+                        El sistema detectó que algunos pedidos fueron reasignados en el Monitor:<br><br>
+                        ${alertasHTML}
+                        ¿Desea aplicar y reconciliar estos cambios en la base de datos ahora mismo?
+                       </div>`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--emerald-600)',
+                cancelButtonColor: 'var(--slate-500)',
+                confirmButtonText: 'Sí, aplicar cambios',
+                cancelButtonText: 'Ignorar por ahora',
+                allowOutsideClick: false
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    ejecutarSincronizacionProactiva(actualizacionesPendientes);
+                }
+            });
+        }
+    }
+
+    // =========================================================================
+    // APLICAR LOS CAMBIOS DIRECTAMENTE A LA BASE DE DATOS
+    // =========================================================================
+    async function ejecutarSincronizacionProactiva(pendientes) {
+        Swal.fire({ title: 'Actualizando Bases...', text: 'Ajustando pedidos y finanzas.', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+        let promesas = [];
+
+        pendientes.forEach(pend => {
+            // 1. Actualizar la ruta vieja (Se le restan los pedidos fugados)
+            let rutaAntigua = pend.rutaVieja;
+            rutaAntigua.listaIds = pend.nuevaListaVieja.join(', ');
+            rutaAntigua.pedidos = pend.nuevaListaVieja.length;
+            rutaAntigua.ingresos = Math.max(0, rutaAntigua.ingresos - pend.descuentoIngresoViejo);
+            
+            promesas.push(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: rutaAntigua.idRegistro, datos: rutaAntigua }) }));
+
+            // 2. Actualizar las rutas nuevas (Si existen)
+            Object.keys(pend.impactosNuevos).forEach(nuevaCP => {
+                let impacto = pend.impactosNuevos[nuevaCP];
+                if (impacto.rutaRef) {
+                    let rutaNueva = impacto.rutaRef;
+                    let listaActual = String(rutaNueva.listaIds).split(',').filter(Boolean);
+                    
+                    // Solo agregamos si no están ya en la lista
+                    impacto.ids.forEach(item => {
+                        let idP = item.split('-')[0].trim();
+                        if (!listaActual.some(x => x.includes(idP))) {
+                            listaActual.push(item);
+                        }
+                    });
+
+                    rutaNueva.listaIds = listaActual.join(', ');
+                    rutaNueva.pedidos = listaActual.length;
+                    rutaNueva.ingresos = parseFloat(rutaNueva.ingresos) + impacto.cobroGanan;
+
+                    promesas.push(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: rutaNueva.idRegistro, datos: rutaNueva }) }));
+                }
+            });
+        });
+
+        try {
+            await Promise.all(promesas);
+            Swal.fire('¡Éxito!', 'Las Cartas Porte han sido reconciliadas y los ingresos ajustados.', 'success');
+            // Forzar recarga silenciosa para limpiar caché
+            setTimeout(() => { forzarDescargaSilenciosa(); }, 2000);
+        } catch (e) {
+            Swal.fire('Error', 'Hubo un problema sincronizando las rutas.', 'error');
+        }
+    }
+
+    function forzarDescargaSilenciosa() {
+        sessionStorage.removeItem('cacheTarifarioFull');
+        location.reload();
+    }
+
+
+
 </script>
 </body>
 </html>
