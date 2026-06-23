@@ -414,6 +414,10 @@
             window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; 
             trayectoDB = cache.trayectoDB;
             tarifarioGlobalDB = cache.tarifarioGlobalDB;
+            
+            // 🔥 EL ESLABÓN PERDIDO: Faltaba despertar a los exclusivos en este bloque 🔥
+            window.tarifaExclusivosDB = cache.tarifaExclusivosDB || []; 
+            
             if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
             dMonitor = dMonitorCache; 
         }

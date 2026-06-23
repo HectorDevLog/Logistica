@@ -5,8 +5,7 @@
     <title>FlexNet - Centro de Operaciones</title>
     <script src="config.js"></script>
     <script src="seguridad.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
     <style>
         :root { 
             --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
@@ -141,13 +140,9 @@
         }
 
         /* 🔥 ESTADOS DE ANIMACIÓN DEL BÚHO 🔥 */
-
-        /* 🔥 ESTADOS DE ANIMACIÓN DEL BÚHO 🔥 */
-
-        /* 1. PENSANDO / DESCARGANDO (Aleteo sutil y ojos leyendo) */
         @keyframes flapWings {
             0%, 100% { transform: translateY(5px) rotate(15deg); }
-            50% { transform: translateY(-5px) rotate(35deg); } /* Levanta un poco las alas */
+            50% { transform: translateY(-5px) rotate(35deg); } 
         }
         @keyframes flapWingsRight {
             0%, 100% { transform: translateY(5px) rotate(-15deg); }
@@ -163,17 +158,15 @@
         body.state-loading .owl-pupil { animation: lookReading 1.2s infinite ease-in-out !important; } 
         body.state-loading .owl-eyelid { display: block; transform: translateY(8px); animation: none; } 
 
-        /* 2. ESTADO "FELIZ / COMPLETADO" */
         @keyframes jumpHappy {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
-        body.state-success .owl-body { animation: jumpHappy 0.4s ease 2; } /* Salta 2 veces */
-        /* Brazos arriba en señal de victoria */
+        body.state-success .owl-body { animation: jumpHappy 0.4s ease 2; } 
         body.state-success .owl-wing.left { transform: translateY(-20px) translateX(-5px) rotate(110deg); transform-origin: bottom right;} 
         body.state-success .owl-wing.right { transform: translateY(-20px) translateX(5px) rotate(-110deg); transform-origin: bottom left;}
-        body.state-success .owl-pupil { transform: scale(1.3) translateY(2px) !important; } /* Ojos brillantes */
-        body.state-success .owl-eyelid { display: none; } /* Abre bien los ojos */
+        body.state-success .owl-pupil { transform: scale(1.3) translateY(2px) !important; } 
+        body.state-success .owl-eyelid { display: none; } 
 
         /* 🔥 PANEL DE ESTADO EN VIVO (Píldoras) 🔥 */
         .status-dashboard { display: flex; justify-content: center; gap: 15px; margin-top: 25px; flex-wrap: wrap; animation: fadeInDown 0.8s ease-out forwards 0.4s; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
@@ -202,7 +195,6 @@
             transition: all 0.5s ease; position: relative; z-index: 10;
         }
 
-        /* Ocultar msgBloqueo en PC porque el búho habla */
         @media (min-width: 951px) {
             #msgBloqueo { display: none !important; }
         }
@@ -375,22 +367,7 @@
         </div>
 
         <div id="msgBloqueo">
-            ⏳ Verificando si hay cambios en la nube...
-        </div>
-
-        <div id="bannerEmergencia" style="display: none; margin-top: 20px; padding: 15px 25px; background: #fff1f2; color: #991b1b; border: 2px dashed #f87171; border-radius: 12px; max-width: 700px; margin-left: auto; margin-right: auto; text-align: left; box-shadow: 0 10px 15px -3px rgba(239,68,68,0.2);">
-            <h3 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                Fallo de Sincronización Detectado
-            </h3>
-            <p style="margin: 0 0 15px 0; font-size: 0.95em; line-height: 1.5; color: #7f1d1d;">
-                Querido usuario, el sistema detecta que la Base Operativa no se ha actualizado en más de 2 horas (posible fallo en la compu matriz). Para no detener la operación, <b>por favor descargue el Monitor en formato Excel y súbalo manualmente aquí:</b>
-            </p>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="file" id="fileMonitorManual" accept=".xlsx, .xls, .csv" style="flex: 1; padding: 8px; background: white; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer;">
-                <button onclick="procesarMonitorExcel('fileMonitorManual', 'statusCargaManual')" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">Cargar Monitor</button>
-            </div>
-            <div id="statusCargaManual" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; color: #b91c1c;"></div>
+            ⏳ Verificando la nube...
         </div>
 
         <div class="mascot-container">
@@ -466,7 +443,7 @@
         <a href="AuditoriaRutas.html" class="menu-card card-auditor" id="cardAuditoria">
             <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
             <div class="card-title">Auditoría de Rutas</div>
-            <p class="card-desc">Revisa y ajusta manually los ingresos de rutas despachadas en fechas anteriores.</p>
+            <p class="card-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</p>
             <div class="arrow-link">Acceder al módulo &rarr;</div>
         </a>
 
@@ -483,7 +460,7 @@
         <span style="font-size: 2em; line-height: 1;">💡</span>
         <div>
             <strong>Datos actualizados</strong>
-            <span style="font-size: 0.95em;">Si no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando. El sistema se actualizará automáticamente de forma progresiva; el monitor se refresca cada 15 minutos de manera automática. Si lo prefiere, puede actualizar la página manualmente desde la parte superior.</span>
+            <span style="font-size: 0.95em;">Si no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando. El sistema se actualizará automáticamente de forma progresiva. Si lo prefiere, puede actualizar la página manualmente desde la parte superior.</span>
         </div>
     </div>
 
@@ -506,27 +483,6 @@
             <div class="modal-buttons">
                 <button class="modal-btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
                 <button class="modal-btn btn-save" id="btnGuardar" onclick="guardarPerfil()">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modalUploadExcel">
-        <div class="modal-box">
-            <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> 
-                Actualización Manual
-            </h3>
-            <p style="font-size: 0.9em; color: var(--slate-600); margin-bottom: 15px; line-height: 1.4;">
-                ¿Hiciste cambios recientes en el sistema (TMS) y no quieres esperar la actualización automática? Sube tu archivo Excel del Monitor aquí para aplicarlos de inmediato.
-            </p>
-            
-            <input type="file" id="fileMonitorVoluntario" accept=".xlsx, .xls, .csv" style="background: var(--slate-50); padding: 10px; border-radius: 6px; border: 1px dashed var(--slate-400); width: 100%;">
-            
-            <div id="statusCargaVoluntaria" style="margin-top: 10px; font-size: 0.85em; font-weight: bold; text-align: center;"></div>
-            
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button class="modal-btn btn-cancel" onclick="cerrarModalExcel()">Cancelar</button>
-                <button class="modal-btn btn-save" onclick="procesarMonitorExcel('fileMonitorVoluntario', 'statusCargaVoluntaria')">Subir y Actualizar</button>
             </div>
         </div>
     </div>
@@ -655,7 +611,6 @@
             <span>📍 ${sesion.ciudad}</span>
             <span style="opacity:0.5;">|</span>
             <span>👤 <b id="uiNombre">${sesion.nombre}</b> (${sesion.rol})</span>
-            <button onclick="abrirModalExcel()" class="btn-nav" style="background: var(--blue-600); border-color: var(--blue-600);" title="Subir Monitor desde tu PC">📂 Subir Excel</button>
             <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Sincronizar todo desde la Nube">🔄 Actualizar Nube</button>
             <button onclick="abrirModal()" class="btn-nav">⚙️ Perfil</button>
             <button onclick="cerrarSesion()" class="btn-nav btn-logout">Salir</button>
@@ -676,22 +631,6 @@
             
             let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
 
-            let limiteHoras = 2 * 60 * 60 * 1000; 
-            let tiempoActual = new Date().getTime();
-            let monitorMuyViejo = false;
-
-            if (ping.monitorTs) {
-                if (tiempoActual - ping.monitorTs > limiteHoras) monitorMuyViejo = true;
-            } else if (cacheMonitorObj && cacheMonitorObj.timestamp) {
-                if (tiempoActual - cacheMonitorObj.timestamp > limiteHoras) monitorMuyViejo = true;
-            } else {
-                monitorMuyViejo = true;
-            }
-
-            if (monitorMuyViejo) {
-                document.getElementById('bannerEmergencia').style.display = 'block';
-            }
-
             let necesitaMonitor = false;
             
             if (!cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0) {
@@ -701,22 +640,17 @@
                 necesitaMonitor = true;
             }
 
-            // Conseguir el texto amigable de "Hace X minutos"
-            let ultimaHoraTs = ping.monitorTs || (cacheMonitorObj ? cacheMonitorObj.timestamp : null);
-            let textoTiempo = obtenerTextoTiempo(ultimaHoraTs);
-
             if (!necesitaTarifas && !necesitaMonitor) {
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
                 setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
                 desbloquearMenu(false);
                 
-                // Búho da un tip de que todo está OK y muestra la hora
-                mostrarMensajeBuho(`✅ Todo al día.<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoTiempo}</b></span>`, 6000, true);
+                mostrarMensajeBuho(`✅ Todo al día y sincronizado con la Nube.`, 6000, true);
                 return; 
             }
 
             // 🔥 BÚHO PIENSA Y AVISA QUE DESCARGA 🔥
-            mostrarMensajeBuho(`⏳ Sincronizando bases de datos...<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoTiempo}</b></span>`);
+            mostrarMensajeBuho(`⏳ Sincronizando bases de datos...`);
             bodyState.classList.add('state-loading');
 
             const promesas = [];
@@ -733,7 +667,7 @@
                         const tfaMedidaDB = allData.medida || []; 
                         const trayectoDB = allData.trayecto || [];
                         const tarifarioGlobalDB = allData.tarifarioGlobal || [];
-                        const tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 NUEVA VARIABLE
+                        const tarifaExclusivosDB = allData.tarifaExclusivos || []; 
 
                         let pedidosHistoricosArray = [];
                         let rutasPorDiaYPlaca = {};
@@ -763,7 +697,7 @@
                         sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                             dbData: window.dbRutasGlobal,
                             dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                            tarifarioGlobalDB, tarifaExclusivosDB, // 🔥 AGREGADA AL CACHÉ
+                            tarifarioGlobalDB, tarifaExclusivosDB, 
                             rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
                         }));
                         
@@ -801,11 +735,7 @@
                 conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); 
             }, 2500);
             
-            // Calcula la hora nueva recién descargada
-            let nuevaHoraTs = ping.monitorTs || new Date().getTime();
-            let textoNuevoTiempo = obtenerTextoTiempo(nuevaHoraTs);
-            
-            mostrarMensajeBuho(`✅ ¡Bases actualizadas!<br><span style="font-size: 0.85em; color: var(--slate-500); font-weight: normal;">Última act: <b>${textoNuevoTiempo}</b></span>`, 5000, true); 
+            mostrarMensajeBuho(`✅ ¡Bases de datos actualizadas con éxito!`, 5000, true); 
             setTimeout(() => { bodyState.classList.remove('state-success'); }, 2000); 
             
             desbloquearMenu(true);
@@ -819,23 +749,6 @@
             bodyState.classList.remove('state-loading');
         }
     };
-
-    // 🔥 FUNCIÓN PARA CALCULAR HACE CUÁNTO SE ACTUALIZÓ 🔥
-    function obtenerTextoTiempo(timestampLocal) {
-        if (!timestampLocal) return "desconocido";
-        const ahora = new Date().getTime();
-        const diferenciaMs = Math.max(0, ahora - timestampLocal); // Evitar negativos
-        
-        const minutos = Math.floor(diferenciaMs / 1000 / 60);
-        
-        if (minutos < 1) return "hace un momento";
-        if (minutos === 1) return "hace 1 minuto";
-        if (minutos < 60) return `hace ${minutos} minutos`;
-        
-        const horas = Math.floor(minutos / 60);
-        if (horas === 1) return "hace 1 hora";
-        return `hace ${horas} horas`;
-    }
 
     // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAL
     async function forzarDescarga() {
@@ -927,111 +840,7 @@
     }
 
     // =========================================================================
-    // 🔥 CARGA MANUAL DE EXCEL AL INDEXED-DB (SIRVE PARA AMBOS BOTONES) 🔥
-    // =========================================================================
-    function abrirModalExcel() {
-        let modal = document.getElementById('modalUploadExcel');
-        modal.style.display = 'flex';
-        
-        // 👇 ESTO FALTABA: Darle 10 milisegundos y volverlo visible
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        if(document.getElementById('statusCargaVoluntaria')) document.getElementById('statusCargaVoluntaria').innerText = '';
-        if(document.getElementById('fileMonitorVoluntario')) document.getElementById('fileMonitorVoluntario').value = '';
-    }
-
-    function cerrarModalExcel() {
-        let modal = document.getElementById('modalUploadExcel');
-        
-        // 👇 ESTO FALTABA: Quitarle lo visible primero, esperar y luego apagarlo
-        modal.classList.remove('active');
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    }
-
-    async function procesarMonitorExcel(idInput, idStatus) {
-        let fileInput = document.getElementById(idInput);
-        let statusDiv = document.getElementById(idStatus);
-        let file = fileInput.files[0];
-
-        if (!file) {
-            statusDiv.style.color = "#dc2626";
-            statusDiv.innerText = "⚠️ Por favor, selecciona un archivo Excel (.xlsx) primero.";
-            return;
-        }
-
-        statusDiv.style.color = "#059669";
-        statusDiv.innerText = "⏳ Subiendo archivo y compartiéndolo con la red... Por favor espere.";
-
-        let reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, { type: 'array' });
-                
-                let firstSheet = workbook.SheetNames[0];
-                let worksheet = workbook.Sheets[firstSheet];
-                
-                let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-                if (jsonData.length === 0) throw new Error("El archivo Excel parece estar vacío.");
-
-                // 🔥 1. Subir directamente el Excel a Google Drive vía Apps Script
-                let base64File = await fileToBase64(file);
-                
-                statusDiv.innerText = `⏳ Subiendo la nueva versión a la nube (${jsonData.length} registros)...`;
-
-                let resDrive = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'upload_monitor_excel', 
-                        fileName: file.name,
-                        fileMimeType: file.type,
-                        fileData: base64File.split(',')[1] // Quitamos el encabezado de base64
-                    })
-                });
-
-                let jsonDrive = await resDrive.json();
-                
-                if(jsonDrive.status === 'error') {
-                    throw new Error("No se pudo subir a la nube: " + jsonDrive.message);
-                }
-
-                statusDiv.innerText = `⏳ Sincronizando memoria local...`;
-
-                // 🔥 2. Si se subió bien a la nube, actualizamos la memoria local
-                let nuevoTimestamp = new Date().getTime();
-                await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
-
-                statusDiv.innerText = "✅ ¡Monitor cargado con éxito! Recargando sistema...";
-                
-                setTimeout(() => { location.reload(); }, 1200);
-
-            } catch (error) {
-                statusDiv.style.color = "#dc2626";
-                statusDiv.innerText = "❌ Error al leer o subir el archivo: " + error.message;
-            }
-        };
-
-        reader.onerror = function() {
-            statusDiv.style.color = "#dc2626";
-            statusDiv.innerText = "❌ Error al intentar abrir el archivo en su computadora.";
-        };
-
-        reader.readAsArrayBuffer(file);
-    }
-
-    // Helper para convertir el File a Base64
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // =========================================================================
-    // 🚀 ROBOT CONCILIADOR AUTOMÁTICO (DETECTA, CORRIGE Y NOTIFICA) 🚀
+    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA (DETECTA CAMBIOS DE CP) 🚀
     // =========================================================================
 
     async function conciliarCambiosMonitor(dbRutas, monitor) {
