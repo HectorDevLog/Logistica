@@ -770,6 +770,7 @@
             dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
             window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
             rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
+            window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || []; // 🔥 LEE DEL CACHÉ
             
             pedidosHistoricos = {};
             preciosHistoricos = {}; 
@@ -790,6 +791,7 @@
                 window.tfaRangoDB = allData.rango || [];
                 window.tfaMedidaDB = allData.medida || []; 
                 trayectoDB = allData.trayecto || [];
+                window.tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 DESCARGA LA TABLA
                 
                 window.tarifasFijadasDB = allData.tarifasFijadas || []; 
 
@@ -826,7 +828,9 @@
                 fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
                     let cacheDataToSave = {
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, 
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, 
+                        tarifaExclusivosDB: window.tarifaExclusivosDB, // 🔥 GUARDA EN CACHÉ
+                        rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, 
                         tarifasFijadas: window.tarifasFijadasDB, 
                         timestamp: ping.tarifarioTs
                     };

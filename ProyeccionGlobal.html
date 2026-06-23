@@ -364,6 +364,7 @@
                     window.tfaMedidaDB = tfaMedidaDB = allData.medida || []; 
                     trayectoDB = allData.trayecto || [];
                     tarifarioGlobalDB = allData.tarifarioGlobal || [];
+                    window.tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 AQUÍ LO DESCARGA
                     
                     let dbData = allData.db || [];
                     let arrHist = [];
@@ -375,17 +376,21 @@
                             });
                         }
                     });
+                    // 🔥 AQUÍ LO GUARDA EN EL CACHÉ
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                        dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, tarifarioGlobalDB, arrHist
+                        dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, tarifarioGlobalDB, 
+                        tarifaExclusivosDB: window.tarifaExclusivosDB, arrHist
                     }));
                 } else {
                     dTarifas = cache.dTarifas; 
                     window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
                     window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; 
                     window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
-                    window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; 
+                    window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB;
                     trayectoDB = cache.trayectoDB;
                     tarifarioGlobalDB = cache.tarifarioGlobalDB;
+                    window.tarifaExclusivosDB = cache.tarifaExclusivosDB || []; // 🔥 AQUÍ LO LEE DEL CACHÉ
+                    
                     if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
                 }
 
@@ -642,6 +647,8 @@
 
                     let objMotor = {
                         Cliente: clienteStr, Tipo_Servicio: servicioMonitor, Trayecto: tipoTrayectoStr,
+                        Origen: locOrigen,   // 🔥 ¡ESTO FALTABA!
+                        Destino: locDestino, // 🔥 ¡ESTO FALTABA!
                         peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0),
                         cantidad_bultos: bultosNum
                     };

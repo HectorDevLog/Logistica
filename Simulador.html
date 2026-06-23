@@ -678,10 +678,15 @@
             dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
             window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
             rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
+            window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || []; // 🔥 LEE DEL CACHÉ
             
             pedidosHistoricos = {};
+            preciosHistoricos = {}; 
             if(cacheTarifas.pedidosHistoricosArray) {
-                cacheTarifas.pedidosHistoricosArray.forEach(p => pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa});
+                cacheTarifas.pedidosHistoricosArray.forEach(p => {
+                    pedidosHistoricos[p.id] = {fecha: p.fecha, placa: p.placa};
+                    if(p.precio !== undefined) preciosHistoricos[p.id] = p.precio;
+                });
             }
             setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
         } else {
@@ -694,9 +699,13 @@
                 window.tfaRangoDB = allData.rango || [];
                 window.tfaMedidaDB = allData.medida || []; 
                 trayectoDB = allData.trayecto || [];
+                window.tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 DESCARGA LA TABLA
+                
+                window.tarifasFijadasDB = allData.tarifasFijadas || []; 
 
                 pedidosHistoricos = {};
                 rutasPorDiaYPlaca = {};
+                preciosHistoricos = {}; 
                 let pedidosArray = [];
                 
                 dbData.forEach(row => { 
@@ -707,10 +716,17 @@
 
                         if (row.listaIds) {
                             row.listaIds.split(',').forEach(item => {
-                                let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
+                                let partes = item.split('-');
+                                let cleanId = partes[0] ? partes[0].trim().replace(/\D/g, '') : "";
+                                let precioExtraido = 0;
+                                if (partes[1]) {
+                                    precioExtraido = parseFloat(partes[1].replace(/[^0-9.-]+/g, "")) || 0;
+                                }
+
                                 if(cleanId && !pedidosHistoricos[cleanId]) {
                                     pedidosHistoricos[cleanId] = { fecha: fLimpia, placa: pLimpia };
-                                    pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
+                                    preciosHistoricos[cleanId] = precioExtraido; 
+                                    pedidosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia, precio: precioExtraido });
                                 }
                             });
                         }
@@ -718,16 +734,21 @@
                 });
 
                 fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
-                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
+                    let cacheDataToSave = {
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
-                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, timestamp: ping.tarifarioTs
-                    }));
+                        tfaMedidaDB: window.tfaMedidaDB, trayectoDB, 
+                        tarifaExclusivosDB: window.tarifaExclusivosDB, // 🔥 GUARDA EN CACHÉ
+                        rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, 
+                        tarifasFijadas: window.tarifasFijadasDB, 
+                        timestamp: ping.tarifarioTs
+                    };
+                    window.cacheTarifarioFullObj = cacheDataToSave;
+                    sessionStorage.setItem('cacheTarifarioFull', JSON.stringify(cacheDataToSave));
                 });
 
                 setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
             }));
         }
-
         if (!necesitaMonitor) {
             dMonitor = dMonitorCache;
             setPillStatus('Monitor', 'success', `Base Operativa: Lista (${dMonitor.length})`);

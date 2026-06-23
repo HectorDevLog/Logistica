@@ -733,6 +733,7 @@
                         const tfaMedidaDB = allData.medida || []; 
                         const trayectoDB = allData.trayecto || [];
                         const tarifarioGlobalDB = allData.tarifarioGlobal || [];
+                        const tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 NUEVA VARIABLE
 
                         let pedidosHistoricosArray = [];
                         let rutasPorDiaYPlaca = {};
@@ -760,9 +761,9 @@
                         });
 
                         sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                            dbData: window.dbRutasGlobal, // 🔥 ESTO ES CLAVE PARA QUE EL CONCILIADOR FUNCIONE
+                            dbData: window.dbRutasGlobal,
                             dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                            tarifarioGlobalDB, 
+                            tarifarioGlobalDB, tarifaExclusivosDB, // 🔥 AGREGADA AL CACHÉ
                             rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
                         }));
                         
@@ -959,7 +960,7 @@
         }
 
         statusDiv.style.color = "#059669";
-        statusDiv.innerText = "⏳ Leyendo archivo Excel... Por favor espere.";
+        statusDiv.innerText = "⏳ Subiendo archivo y compartiéndolo con la red... Por favor espere.";
 
         let reader = new FileReader();
         reader.onload = async function(e) {
@@ -974,8 +975,30 @@
 
                 if (jsonData.length === 0) throw new Error("El archivo Excel parece estar vacío.");
 
-                statusDiv.innerText = `⏳ Guardando ${jsonData.length} registros en la memoria local...`;
+                // 🔥 1. Subir directamente el Excel a Google Drive vía Apps Script
+                let base64File = await fileToBase64(file);
+                
+                statusDiv.innerText = `⏳ Subiendo la nueva versión a la nube (${jsonData.length} registros)...`;
 
+                let resDrive = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'upload_monitor_excel', 
+                        fileName: file.name,
+                        fileMimeType: file.type,
+                        fileData: base64File.split(',')[1] // Quitamos el encabezado de base64
+                    })
+                });
+
+                let jsonDrive = await resDrive.json();
+                
+                if(jsonDrive.status === 'error') {
+                    throw new Error("No se pudo subir a la nube: " + jsonDrive.message);
+                }
+
+                statusDiv.innerText = `⏳ Sincronizando memoria local...`;
+
+                // 🔥 2. Si se subió bien a la nube, actualizamos la memoria local
                 let nuevoTimestamp = new Date().getTime();
                 await guardarDatoDBPreload("monitorCargado", jsonData, nuevoTimestamp);
 
@@ -985,7 +1008,7 @@
 
             } catch (error) {
                 statusDiv.style.color = "#dc2626";
-                statusDiv.innerText = "❌ Error al leer el archivo: " + error.message;
+                statusDiv.innerText = "❌ Error al leer o subir el archivo: " + error.message;
             }
         };
 
@@ -997,178 +1020,205 @@
         reader.readAsArrayBuffer(file);
     }
 
+    // Helper para convertir el File a Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
     // =========================================================================
-    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA (DETECTA CAMBIOS DE CP) 🚀
+    // 🚀 ROBOT CONCILIADOR AUTOMÁTICO (DETECTA, CORRIGE Y NOTIFICA) 🚀
     // =========================================================================
-    
-    // Llama a esta función justo después de que el búho celebra el éxito en window.onload
-    // Ejemplo: setTimeout(() => { conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); }, 2500);
 
     async function conciliarCambiosMonitor(dbRutas, monitor) {
         if (!dbRutas || !monitor || dbRutas.length === 0 || monitor.length === 0) return;
 
-        // 1. Filtrar las rutas según el rol
-        let misRutas = dbRutas;
+        // 1. OBTENER FECHA ESTRICTA DE HOY (Zona Horaria Ecuador)
+        let d = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
+        let fechaHoyEC = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+
+        // 2. FILTRAR POR HOY Y POR ROL
+        let rutasDeHoy = dbRutas.filter(r => {
+            let fLimpia = String(r.fecha || r.Fecha || '').trim();
+            if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
+            if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
+            return fLimpia === fechaHoyEC;
+        });
+
+        if (rutasDeHoy.length === 0) return;
+
+        let misRutas = rutasDeHoy;
         if (sesion.rol !== 'Administrador') {
-            misRutas = dbRutas.filter(r => String(r.usuario).trim() === String(sesion.nombre).trim());
+            misRutas = rutasDeHoy.filter(r => String(r.usuario || r.Usuario).trim() === String(sesion.nombre).trim());
         }
 
         let alertasHTML = '';
-        let actualizacionesPendientes = [];
+        let operacionesPendientes = [];
 
-        // 2. Analizar cada ruta
+        // 3. ANALIZAR CADA RUTA PARA DETECTAR FUGAS Y TRADUCIR COLUMNAS
         misRutas.forEach(ruta => {
-            let cpOriginal = String(ruta.cartaPorte).trim().toUpperCase();
-            let idsEnRuta = String(ruta.listaIds).split(',').filter(Boolean);
+            let valCP = ruta.cartaPorte || ruta['Carta Porte'] || ruta.CARTA_PORTE || ruta.Carta_Porte;
+            let cpOriginal = String(valCP || '').trim().toUpperCase().replace(/\./g, '');
             
-            let pedidosFugados = [];
+            let valIds = ruta.listaIds || ruta.IDs_Pedidos || ruta.ids_pedidos;
+            let idsEnRuta = String(valIds || '').split(',').filter(Boolean);
+
+            if (!cpOriginal || cpOriginal === 'UNDEFINED' || idsEnRuta.length === 0) return; 
+
+            let idsQueSeQuedan = [];
             let ingresosPerdidos = 0;
-            
-            let nuevaListaIds = []; // Los que se quedan
-            let agrupacionDestinos = {}; // A dónde se fueron los fugados
+            let fugadosA_NoRegistrados = []; 
+            let fugadosB_Registrados = {};   
 
             idsEnRuta.forEach(item => {
                 let idLimpio = item.split('-')[0].trim();
                 let cobro = parseFloat(item.split('-')[1].replace(/[^0-9.-]+/g, "")) || 0;
                 
-                // Buscar dónde está este ID hoy en el monitor
-                let estadoMonitor = monitor.find(m => String(m['PEDIDOID'] || m['idpedido']).trim() === idLimpio);
+                let estadoMonitor = monitor.find(m => {
+                    let idM = m['PEDIDOID'] || m['idpedido'] || m['2idpedido'] || m['Nro Pedido:'] || m['Nro Pedido'] || m['NROPEDIDO'] || m['ID_Pedido'] || m['Orden'] || m['Nro_Pedido'];
+                    return String(idM || '').trim() === idLimpio;
+                });
                 
                 if (estadoMonitor) {
-                    let cpMonitor = String(estadoMonitor['ULTIMA_CARTA_PORTE'] || estadoMonitor['Carta_Porte'] || 'SIN_CP').trim().toUpperCase();
+                    let cpRaw = estadoMonitor['ULTIMA_CARTA_PORTE'] || estadoMonitor['Carta_Porte'] || estadoMonitor['CARTA PORTE'] || estadoMonitor['Nro Carta Porte:'] || estadoMonitor['Nro Carta Porte'] || estadoMonitor['NROCARTAPORTE'] || estadoMonitor['CP'] || 'SIN_CP';
+                    let cpMonitor = String(cpRaw).trim().toUpperCase().replace(/\./g, '');
                     
-                    if (cpMonitor !== cpOriginal && cpMonitor !== 'SIN_CP') {
-                        // ¡Se fugó a otra CP!
-                        pedidosFugados.push(idLimpio);
+                    if (cpMonitor !== cpOriginal && cpMonitor !== 'SIN_CP' && cpMonitor !== '') {
                         ingresosPerdidos += cobro;
                         
-                        if(!agrupacionDestinos[cpMonitor]) agrupacionDestinos[cpMonitor] = { ids: [], cobroGanan: 0, usuarioDestino: 'Desconocido' };
-                        agrupacionDestinos[cpMonitor].ids.push(item); // Guardamos "ID - ($X.XX)"
-                        agrupacionDestinos[cpMonitor].cobroGanan += cobro;
+                        let rutaDestinoDB = rutasDeHoy.find(r => {
+                            let rCP = r.cartaPorte || r['Carta Porte'] || r.CARTA_PORTE;
+                            return String(rCP || '').trim().toUpperCase().replace(/\./g, '') === cpMonitor;
+                        });
                         
+                        if (rutaDestinoDB) {
+                            if (!fugadosB_Registrados[cpMonitor]) {
+                                fugadosB_Registrados[cpMonitor] = { ids: [], gananciaSumar: 0, rutaRef: rutaDestinoDB };
+                            }
+                            fugadosB_Registrados[cpMonitor].ids.push(item);
+                            fugadosB_Registrados[cpMonitor].gananciaSumar += cobro;
+                        } else {
+                            fugadosA_NoRegistrados.push(item);
+                        }
                     } else {
-                        // Sigue en la misma
-                        nuevaListaIds.push(item);
+                        idsQueSeQuedan.push(item);
                     }
                 } else {
-                    // Ya no existe en el monitor (cancelado/eliminado)
-                    nuevaListaIds.push(item); 
+                    idsQueSeQuedan.push(item); 
                 }
             });
 
-            // Si detectamos fugas en esta ruta
-            if (pedidosFugados.length > 0) {
-                let msj = `De la CP <b>${cpOriginal}</b> (que tenía ${ruta.pedidos} pedidos), salieron <b>${pedidosFugados.length}</b> pedidos <i>(${pedidosFugados.join(', ')})</i> con el siguiente destino:<br>`;
-                
-                let objetoActualizacion = {
-                    rutaVieja: ruta,
-                    nuevaListaVieja: nuevaListaIds,
-                    descuentoIngresoViejo: ingresosPerdidos,
-                    impactosNuevos: agrupacionDestinos
-                };
-
-                Object.keys(agrupacionDestinos).forEach(nuevaCP => {
-                    let dest = agrupacionDestinos[nuevaCP];
-                    
-                    // Buscar si la nueva CP existe en nuestra BD
-                    let rutaDestinoDB = dbRutas.find(r => String(r.cartaPorte).trim().toUpperCase() === nuevaCP);
-                    if (rutaDestinoDB) {
-                        dest.usuarioDestino = rutaDestinoDB.usuario;
-                        dest.rutaRef = rutaDestinoDB;
-                        msj += `- Se movieron a la CP <b>${nuevaCP}</b> de ${dest.usuarioDestino}.<br>`;
-                    } else {
-                        dest.rutaRef = null; // No existe
-                        msj += `- Se asignaron a la CP <b>${nuevaCP}</b> (Aún no registrada en el sistema. Se sacarán de su ruta actual).<br>`;
-                    }
+            // PREPARAR REPORTE VISUAL SI HUBO CAMBIOS
+            if (fugadosA_NoRegistrados.length > 0 || Object.keys(fugadosB_Registrados).length > 0) {
+                operacionesPendientes.push({
+                    rutaOrigen: ruta,
+                    nuevaListaOrigen: idsQueSeQuedan,
+                    descuentoOrigen: ingresosPerdidos,
+                    impactosNuevos: fugadosB_Registrados
                 });
 
-                alertasHTML += `<div style="background:var(--slate-50); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border:1px solid var(--slate-200);">${msj}</div>`;
-                actualizacionesPendientes.push(objetoActualizacion);
+                let msj = `En la CP <b>${cpOriginal}</b>:<br>`;
+                
+                if (fugadosA_NoRegistrados.length > 0) {
+                    msj += `&nbsp;&nbsp;🔸 Se retiraron ${fugadosA_NoRegistrados.length} pedidos (ruta aún no ingresada).<br>`;
+                }
+
+                Object.keys(fugadosB_Registrados).forEach(cpDest => {
+                    let dest = fugadosB_Registrados[cpDest];
+                    let usrDestino = dest.rutaRef.usuario || dest.rutaRef.Usuario || 'Desconocido';
+                    msj += `&nbsp;&nbsp;🔸 Se movieron ${dest.ids.length} pedidos hacia la CP <b>${cpDest}</b> de ${usrDestino}.<br>`;
+                });
+
+                alertasHTML += `<div style="background:var(--slate-50); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border-left: 4px solid var(--blue-500);">${msj}</div>`;
             }
         });
 
-        // 3. Mostrar el Modal si hay cambios
-        if (actualizacionesPendientes.length > 0) {
-            Swal.fire({
-                title: '🔄 Actualizaciones de Ruta Detectadas',
-                html: `<div style="text-align:left; font-size:14px; color:var(--slate-700);">
-                        El sistema detectó que algunos pedidos fueron reasignados en el Monitor:<br><br>
-                        ${alertasHTML}
-                        ¿Desea aplicar y reconciliar estos cambios en la base de datos ahora mismo?
-                       </div>`,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: 'var(--emerald-600)',
-                cancelButtonColor: 'var(--slate-500)',
-                confirmButtonText: 'Sí, aplicar cambios',
-                cancelButtonText: 'Ignorar por ahora',
-                allowOutsideClick: false
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    ejecutarSincronizacionProactiva(actualizacionesPendientes);
-                }
-            });
+        // 4. SI HAY OPERACIONES, EL SISTEMA LAS EJECUTA EN SILENCIO Y LUEGO AVISA
+        if (operacionesPendientes.length > 0) {
+            let hashCambiosActuales = btoa(JSON.stringify(operacionesPendientes));
+            if (sessionStorage.getItem('cambiosIgnoradosHoy') === hashCambiosActuales) return;
+
+            ejecutarCorreccionSilenciosa(operacionesPendientes, alertasHTML, hashCambiosActuales);
         }
     }
 
     // =========================================================================
-    // APLICAR LOS CAMBIOS DIRECTAMENTE A LA BASE DE DATOS
+    // CORRECCIÓN SILENCIOSA EN GOOGLE SHEETS
     // =========================================================================
-    async function ejecutarSincronizacionProactiva(pendientes) {
-        Swal.fire({ title: 'Actualizando Bases...', text: 'Ajustando pedidos y finanzas.', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-
+    async function ejecutarCorreccionSilenciosa(operaciones, alertasHTML, hash) {
         let promesas = [];
+        let rutasAActualizar = {}; 
 
-        pendientes.forEach(pend => {
-            // 1. Actualizar la ruta vieja (Se le restan los pedidos fugados)
-            let rutaAntigua = pend.rutaVieja;
-            rutaAntigua.listaIds = pend.nuevaListaVieja.join(', ');
-            rutaAntigua.pedidos = pend.nuevaListaVieja.length;
-            rutaAntigua.ingresos = Math.max(0, rutaAntigua.ingresos - pend.descuentoIngresoViejo);
-            
-            promesas.push(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: rutaAntigua.idRegistro, datos: rutaAntigua }) }));
+        // Preparar las matemáticas para mover el dinero y los paquetes
+        operaciones.forEach(op => {
+            let idOrig = op.rutaOrigen.idRegistro || op.rutaOrigen.id_registro;
+            if (!rutasAActualizar[idOrig]) rutasAActualizar[idOrig] = JSON.parse(JSON.stringify(op.rutaOrigen));
 
-            // 2. Actualizar las rutas nuevas (Si existen)
-            Object.keys(pend.impactosNuevos).forEach(nuevaCP => {
-                let impacto = pend.impactosNuevos[nuevaCP];
-                if (impacto.rutaRef) {
-                    let rutaNueva = impacto.rutaRef;
-                    let listaActual = String(rutaNueva.listaIds).split(',').filter(Boolean);
-                    
-                    // Solo agregamos si no están ya en la lista
-                    impacto.ids.forEach(item => {
-                        let idP = item.split('-')[0].trim();
-                        if (!listaActual.some(x => x.includes(idP))) {
-                            listaActual.push(item);
-                        }
-                    });
+            rutasAActualizar[idOrig].listaIds = op.nuevaListaOrigen.join(', ');
+            rutasAActualizar[idOrig].pedidos = op.nuevaListaOrigen.length;
+            let ingOrig = parseFloat(rutasAActualizar[idOrig].ingresos || rutasAActualizar[idOrig].Ingresos) || 0;
+            rutasAActualizar[idOrig].ingresos = Math.max(0, ingOrig - op.descuentoOrigen);
 
-                    rutaNueva.listaIds = listaActual.join(', ');
-                    rutaNueva.pedidos = listaActual.length;
-                    rutaNueva.ingresos = parseFloat(rutaNueva.ingresos) + impacto.cobroGanan;
+            Object.keys(op.impactosNuevos).forEach(cpDest => {
+                let impacto = op.impactosNuevos[cpDest];
+                let idDest = impacto.rutaRef.idRegistro || impacto.rutaRef.id_registro;
 
-                    promesas.push(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: rutaNueva.idRegistro, datos: rutaNueva }) }));
-                }
+                if (!rutasAActualizar[idDest]) rutasAActualizar[idDest] = JSON.parse(JSON.stringify(impacto.rutaRef));
+
+                let valIdsDest = rutasAActualizar[idDest].listaIds || rutasAActualizar[idDest].IDs_Pedidos;
+                let listaActualDest = String(valIdsDest || '').split(',').filter(Boolean);
+                
+                impacto.ids.forEach(item => {
+                    let idP = item.split('-')[0].trim();
+                    if (!listaActualDest.some(x => x.includes(idP))) listaActualDest.push(item);
+                });
+
+                rutasAActualizar[idDest].listaIds = listaActualDest.join(', ');
+                rutasAActualizar[idDest].pedidos = listaActualDest.length;
+                let ingDest = parseFloat(rutasAActualizar[idDest].ingresos || rutasAActualizar[idDest].Ingresos) || 0;
+                rutasAActualizar[idDest].ingresos = ingDest + impacto.gananciaSumar;
             });
+        });
+
+        // Enviar silenciosamente a la base de datos
+        Object.values(rutasAActualizar).forEach(rutaActualizada => {
+            let idEnvio = rutaActualizada.idRegistro || rutaActualizada.id_registro;
+            promesas.push(
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: idEnvio, datos: rutaActualizada })
+                })
+            );
         });
 
         try {
             await Promise.all(promesas);
-            Swal.fire('¡Éxito!', 'Las Cartas Porte han sido reconciliadas y los ingresos ajustados.', 'success');
-            // Forzar recarga silenciosa para limpiar caché
-            setTimeout(() => { forzarDescargaSilenciosa(); }, 2000);
+            sessionStorage.setItem('cambiosIgnoradosHoy', hash); // Guardamos para no repetir el aviso
+            
+            // Notificamos al usuario que el sistema ya arregló todo con un hermoso modal verde
+            Swal.fire({
+                title: '✅ Ajuste Automático Realizado',
+                html: `<div style="text-align:left; font-size:14px; color:var(--slate-700);">
+                        El sistema detectó modificaciones en el Monitor y ha cuadrado tus finanzas y paquetes automáticamente:<br><br>
+                        ${alertasHTML}
+                       </div>`,
+                icon: 'success',
+                confirmButtonColor: 'var(--emerald-600)',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                // Al darle a entendido, actualizamos la RAM local
+                sessionStorage.removeItem('cacheTarifarioFull');
+                location.reload();
+            });
+
         } catch (e) {
-            Swal.fire('Error', 'Hubo un problema sincronizando las rutas.', 'error');
+            console.log("Error al intentar corregir silenciosamente en la base de datos", e);
         }
     }
-
-    function forzarDescargaSilenciosa() {
-        sessionStorage.removeItem('cacheTarifarioFull');
-        location.reload();
-    }
-
-
-
 </script>
 </body>
 </html>
