@@ -98,6 +98,7 @@
         .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; display: inline-block;}
         .badge-prov { background: var(--slate-200); color: var(--slate-700); }
         .badge-ruta { background: var(--blue-50); color: var(--blue-600); border: 1px solid #bfdbfe; }
+        .badge-cp { background: var(--slate-100); color: var(--slate-600); border: 1px dashed var(--slate-300); }
         
         .section-title { color: var(--slate-900); font-size: 1.1em; font-weight: 700; border-bottom: 2px solid var(--teal-600); padding-bottom: 8px; margin-bottom: 20px; display: inline-block; }
 
@@ -116,17 +117,17 @@
         
         <div class="nav-menu-container">
             <div class="nav-links">
-        <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
-        <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
-        <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
-        <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
-        <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
-        <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
-        <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
-        <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
-        <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
-        <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
-    </div>
+                <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
+                <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
+                <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
+                <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
+                <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
+                <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
+                <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
+                <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
+                <a href="Reportes.html" id="linkReportes" class="active">📈 Dashboard</a>
+                <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+            </div>
         </div>
         
         <div class="user-info" id="infoUsuario"></div>
@@ -186,8 +187,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Placa Vehículo:</label>
-                    <input type="text" id="filtroPlaca" placeholder="Ej. GTO9407" oninput="aplicarFiltros()">
+                    <label>Placa o CP:</label>
+                    <input type="text" id="filtroPlaca" placeholder="Buscar..." oninput="aplicarFiltros()">
                 </div>
             </div>
         </div>
@@ -263,6 +264,7 @@
                             <th>Placa Asignada</th>
                             <th>Usuario (Despachador)</th>
                             <th>Tipo de Ruta</th>
+                            <th>Carta Porte</th>
                             <th style="text-align:center;">Pedidos</th>
                             <th style="text-align:right;">Ingresos</th>
                             <th style="text-align:right;">Costos</th>
@@ -368,13 +370,22 @@
         const selU = document.getElementById('filtroUsuario');
         usuarios.forEach(u => { selU.innerHTML += `<option value="${u}">${u}</option>`; });
         
-        // Excepción: Administradores o Leonardo Flores tienen acceso total al filtro
+        // Excepción: Administradores o Leonardo Flores tienen acceso total al filtro de Usuarios
         let nombreUsuario = String(sesion.nombre).trim().toLowerCase();
         let tieneAccesoUsuarios = (sesion.rol === 'Administrador' || nombreUsuario.includes('leonardo flores'));
 
+        // 🔥 BLOQUEO PARA ESTEBAN (O CUALQUIER RUTEADOR NORMAL) 🔥
         if (!tieneAccesoUsuarios) {
-            selU.value = sesion.nombre;
-            selU.disabled = true;
+            // Desmarcamos todos y buscamos su nombre exacto
+            Array.from(selU.options).forEach(opt => opt.selected = false);
+            let optUsuario = Array.from(selU.options).find(opt => opt.value === sesion.nombre);
+            if(optUsuario) {
+                optUsuario.selected = true;
+            } else {
+                // Por si el usuario acaba de crear rutas pero aún no refresca, inyectamos su nombre y lo seleccionamos
+                selU.innerHTML += `<option value="${sesion.nombre}" selected>${sesion.nombre}</option>`;
+            }
+            selU.disabled = true; // Bloquea el selector para que no vea a los demás
         }
 
         const selTR = document.getElementById('filtroTipoRuta');
@@ -403,9 +414,20 @@
         dbFiltrada = dbOriginal.filter(fila => {
             // Filtros tradicionales (Texto y Fechas)
             let pasaFecha = (!fInicio || fila.fecha >= fInicio) && (!fFin || fila.fecha <= fFin);
-            let pasaPlaca = (!fPlaca || (fila.placa && fila.placa.includes(fPlaca)));
             
-            // NUEVO: Filtros de selección múltiple (Pasa si tiene la palabra "TODOS", si no hay nada seleccionado, o si coincide con los datos)
+            // 🔥 Mejora: Buscar por placa o Carta Porte en el mismo campo de texto
+            let pasaPlaca = false;
+            if (!fPlaca) {
+                pasaPlaca = true;
+            } else {
+                let placaObj = String(fila.placa || "").toUpperCase();
+                let cpObj = String(fila.cartaPorte || "").toUpperCase();
+                if (placaObj.includes(fPlaca) || cpObj.includes(fPlaca)) {
+                    pasaPlaca = true;
+                }
+            }
+            
+            // Filtros de selección múltiple (Pasa si tiene la palabra "TODOS", si no hay nada seleccionado, o si coincide con los datos)
             let pasaCiudad = fCiudad.includes("TODAS") || fCiudad.length === 0 || fCiudad.includes(fila.ciudad);
             let pasaProv = fProv.includes("TODOS") || fProv.length === 0 || fProv.includes(fila.proveedor || "GENERAL");
             let pasaUsuario = fUsuario.includes("TODOS") || fUsuario.length === 0 || fUsuario.includes(fila.usuario); 
@@ -429,7 +451,7 @@
         tbodyGen.innerHTML = '';
 
         if(dbFiltrada.length === 0){
-            tbodyGen.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8;">No hay registros operativos para los filtros seleccionados.</td></tr>`;
+            tbodyGen.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:40px; color:#94a3b8;">No hay registros operativos para los filtros seleccionados.</td></tr>`;
         }
 
         dbFiltrada.forEach(fila => {
@@ -454,6 +476,7 @@
             let prov = fila.proveedor || "GENERAL";
             let tipoRuta = fila.tipoRuta || "NORMAL";
             let usuario = fila.usuario || "DESCONOCIDO";
+            let cp = fila.cartaPorte || "-"; // 🔥 CARTA PORTE AGREGADA
 
             if(!objVehiculos[p]) objVehiculos[p] = { placa: p, proveedor: prov, viajes: 0, pedidos: 0, ingresos: 0, costos: 0 };
             objVehiculos[p].viajes += 1;
@@ -476,6 +499,7 @@
                     <td style="font-weight:700; color:var(--slate-900);">${p}</td>
                     <td>${usuario}</td>
                     <td><span class="badge badge-ruta">${tipoRuta}</span></td>
+                    <td style="font-weight:600; color:var(--slate-700);">${cp === '-' ? '-' : '<span class="badge badge-cp">' + cp + '</span>'}</td>
                     <td style="text-align:center;">${fila.pedidos}</td>
                     <td style="text-align:right;">$${ing.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
                     <td style="text-align:right; color:var(--red-600);">$${costos.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
@@ -626,7 +650,7 @@
                 return { 
                     "Fecha": f.fecha, "Ciudad": f.ciudad, "Proveedor": f.proveedor || "GENERAL", "Placa Vehículo": f.placa, 
                     "Usuario Despachador": f.usuario || "DESCONOCIDO",
-                    "Tipo de Ruta": f.tipoRuta || "NORMAL", "Cantidad Pedidos": f.pedidos, 
+                    "Tipo de Ruta": f.tipoRuta || "NORMAL", "Carta Porte": f.cartaPorte || "SIN CP", "Cantidad Pedidos": f.pedidos, 
                     "Ingresos Operativos ($)": i, "Costo Operativo ($)": c, "Utilidad Neta ($)": i-c 
                 };
             });
@@ -721,12 +745,12 @@
             doc.text("Detalle Operativo Diario (Rutas)", 14, finalY);
             let filasG = dbFiltrada.map(f => {
                 let i = Number(f.ingresos)||0, c = (Number(f.cBase)||0)+(Number(f.cAyudantes)||0)+(Number(f.cExc)||0)+(Number(f.cHE)||0);
-                return [f.fecha, f.ciudad, (f.proveedor||"GENERAL"), f.placa, (f.usuario||"DESCONOCIDO"), (f.tipoRuta||"NORMAL"), f.pedidos, `$${i.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${c.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${(i-c).toLocaleString('en-US', {minimumFractionDigits: 2})}`];
+                return [f.fecha, f.ciudad, (f.proveedor||"GENERAL"), f.placa, (f.usuario||"DESCONOCIDO"), (f.tipoRuta||"NORMAL"), (f.cartaPorte||"-"), f.pedidos, `$${i.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${c.toLocaleString('en-US', {minimumFractionDigits: 2})}`, `$${(i-c).toLocaleString('en-US', {minimumFractionDigits: 2})}`];
             });
 
             doc.autoTable({ 
                 startY: finalY + 6, 
-                head: [["Fecha", "Ciudad", "Proveedor", "Placa", "Usuario", "Tipo Ruta", "Pedidos", "Ingresos", "Costos", "Utilidad"]], 
+                head: [["Fecha", "Ciudad", "Proveedor", "Placa", "Usuario", "Ruta", "CP", "Pedidos", "Ingresos", "Costos", "Utilidad"]], 
                 body: filasG, 
                 theme: 'grid', 
                 headStyles: { fillColor: [15, 23, 42], textColor: [255,255,255] }, // Slate-900

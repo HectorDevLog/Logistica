@@ -100,16 +100,20 @@ document.addEventListener('DOMContentLoaded', function() {
         let prohibidas = [...confRol.paginasBloqueadas];
         let ocultos = [...confRol.elementosOcultos];
 
-        // 🔥 LA SOLUCIÓN: Usamos el "Nombre Completo" porque el login no guarda el usuario corto
         let nombreActivo = String(authLocal.nombre).trim().toLowerCase();
 
-        // PERMISOS ESPECIALES PARA LEO
+        // 🔥 PERMISOS ESPECIALES PARA LEO
         if (nombreActivo.includes('leonardo flores')) {
-            // Le agregamos Reportes.html a sus páginas habilitadas
             let paginasExtra = ['AuditoriaRutas.html', 'AuditorMasivo.html', 'Reportes.html'];
-            // Le agregamos los botones/tarjetas de Reportes a sus elementos habilitados
             let elementosExtra = ['linkAuditoria', 'cardAuditoria', 'linkMasivo', 'cardMasivo', 'linkReportes', 'cardReportes'];
-            
+            prohibidas = prohibidas.filter(p => !paginasExtra.includes(p));
+            ocultos = ocultos.filter(e => !elementosExtra.includes(e));
+        }
+
+        // 🔥 PERMISOS ESPECIALES PARA ESTEBAN (Para que entre a Reportes)
+        if (nombreActivo.includes('esteban')) {
+            let paginasExtra = ['Reportes.html'];
+            let elementosExtra = ['linkReportes', 'cardReportes'];
             prohibidas = prohibidas.filter(p => !paginasExtra.includes(p));
             ocultos = ocultos.filter(e => !elementosExtra.includes(e));
         }
@@ -126,11 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let el = document.getElementById(idElemento);
             if (el) el.style.display = 'none';
         });
-    });
-})();
 
-// C. AUTO-ILUMINAR EL BOTÓN DEL MENÚ ACTUAL
+        // C. AUTO-ILUMINAR EL BOTÓN DEL MENÚ ACTUAL
         let navLinks = document.querySelectorAll('.nav-links a');
         navLinks.forEach(link => {
             if(link.getAttribute('href') === paginaActual) link.classList.add('active');
         });
+    });
+})();
