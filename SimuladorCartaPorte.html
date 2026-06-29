@@ -1228,10 +1228,11 @@
 
                 Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
                     let pedidos = window.agrupacionVehiculos[cpKey];
-                    let placa = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
+                    let placaRaw = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA');
+                    let placa = placaRaw.toUpperCase().replace(/[-\s]/g, ''); // Quita guiones y espacios
 
                     let provMatch = dTarifas.find(t => {
-                        let tP = String(t.PLACA || t.PLACAS || t.Placa || '').toUpperCase().trim();
+                        let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
                         return tP === placa;
                     });
                     
@@ -1342,7 +1343,14 @@
     }
 
     function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa) {
-        let opt = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().trim() === placa) || {};
+        // Normalizamos la placa entrante quitando guiones y espacios
+        let placaLimpia = String(placa).toUpperCase().replace(/[-\s]/g, '');
+        
+        // Normalizamos las placas del Tarifario igual para que hagan match perfecto
+        let opt = dTarifas.find(t => {
+            let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
+            return tP === placaLimpia;
+        }) || {};
         let pedidos = window.agrupacionVehiculos[cpKey];
         let elTipo = document.getElementById(`tipo_${idTarjeta}`);
         let tipo = elTipo ? elTipo.value : '';
@@ -1378,7 +1386,7 @@
                 let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
                 cHE = he * heTarifa;
                 
-                if (tipo === 'NORMAL') cBase = yaSalioHoy ? 0 : parseDinero(opt['Precio Base Dia']);
+                if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']);
                 else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']);
                 else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']);
             } else {
