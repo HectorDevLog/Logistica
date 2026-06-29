@@ -473,10 +473,22 @@
 </div>
 
 <script>
+    function reconstruirDesdeHeadersYFilas(payload) {
+        if (!payload || !payload.headers || !payload.rows) return [];
+        const headersCrudos = payload.headers.map(h => String(h).trim());
+        const headersLimpios = headersCrudos.map(h => h.toUpperCase().replace(/[^A-Z0-9_]/g, ""));
+
+        return payload.rows.map(fila => {
+            let obj = {};
+            headersLimpios.forEach((hLimpio, i) => { obj[hLimpio] = fila[i]; });
+            headersCrudos.forEach((hCrudo, i) => { obj[hCrudo] = fila[i]; });
+            return obj;
+        });
+    }
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
 
-    // 🔥 VARIABLES GLOBALES REPARADAS 🔥
+    // 🔥 VARIABLES GLOBALES 🔥
     let dMonitor = [], dTarifas = [], trayectoDB = [];
     let dbRutasFull = []; 
     let cpsEnActualizacion = {}; 
@@ -485,7 +497,6 @@
     let preciosHistoricos = {}; 
     let cloudLista = false, monitorListo = false;
 
-    // 🔥 NUEVO: Función para limpiar símbolos extraños de la BD y asegurar números reales
     const parsearCosto = (valor) => {
         if (valor === undefined || valor === null || valor === '') return 0;
         if (typeof valor === 'number') return valor;
@@ -667,22 +678,6 @@
         return str;
     }
 
-    function obtenerTextoTiempo(timestampLocal) {
-        if (!timestampLocal) return "desconocido";
-        const ahora = new Date().getTime();
-        const diferenciaMs = Math.max(0, ahora - timestampLocal); 
-        
-        const minutos = Math.floor(diferenciaMs / 1000 / 60);
-        
-        if (minutos < 1) return "hace un momento";
-        if (minutos === 1) return "hace 1 minuto";
-        if (minutos < 60) return `hace ${minutos} minutos`;
-        
-        const horas = Math.floor(minutos / 60);
-        if (horas === 1) return "hace 1 hora";
-        return `hace ${horas} horas`;
-    }
-
     function iniciarPingFondo() {
         setInterval(async function() {
             try {
@@ -712,7 +707,7 @@
                         const resBQ = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
                         const jsonResponse = await resBQ.json();
                         if(!jsonResponse.error) {
-                            dMonitor = jsonResponse;
+                            dMonitor = reconstruirDesdeHeadersYFilas(jsonResponse);
                             await guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
                             setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${dMonitor.length})`);
                         }
@@ -770,7 +765,7 @@
             dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
             window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
             rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
-            window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || []; // 🔥 LEE DEL CACHÉ
+            window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || [];
             
             pedidosHistoricos = {};
             preciosHistoricos = {}; 
@@ -791,7 +786,7 @@
                 window.tfaRangoDB = allData.rango || [];
                 window.tfaMedidaDB = allData.medida || []; 
                 trayectoDB = allData.trayecto || [];
-                window.tarifaExclusivosDB = allData.tarifaExclusivos || []; // 🔥 DESCARGA LA TABLA
+                window.tarifaExclusivosDB = allData.tarifaExclusivos || [];
                 
                 window.tarifasFijadasDB = allData.tarifasFijadas || []; 
 
@@ -829,7 +824,7 @@
                     let cacheDataToSave = {
                         dTarifas, tfaPesoDB: window.tfaPesoDB, tfaPedidoDB: window.tfaPedidoDB, tfaRangoDB: window.tfaRangoDB, 
                         tfaMedidaDB: window.tfaMedidaDB, trayectoDB, 
-                        tarifaExclusivosDB: window.tarifaExclusivosDB, // 🔥 GUARDA EN CACHÉ
+                        tarifaExclusivosDB: window.tarifaExclusivosDB,
                         rutasPorDiaYPlaca, pedidosHistoricosArray: pedidosArray, 
                         tarifasFijadas: window.tarifasFijadasDB, 
                         timestamp: ping.tarifarioTs
@@ -848,8 +843,8 @@
         } else {
             setPillStatus('Monitor', 'loading', 'Descargando Base Operativa...');
             promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
-                if(!jsonResponse.error) {
-                    dMonitor = jsonResponse;
+            if(!jsonResponse.error) {
+                dMonitor = reconstruirDesdeHeadersYFilas(jsonResponse);
                     fetch(`${SCRIPT_URL}?action=checkUpdates`).then(r=>r.json()).then(ping => {
                         guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
                     });
@@ -878,7 +873,7 @@
                 let alerta = document.getElementById('alertaCambios');
                 if(alerta) {
                     alerta.style.display = 'block';
-                    alerta.innerText = "☁️ Hay cambios en la Nube. Haz clic en 'Actualizar' arriba.";
+                    alerta.innerText = "☁️ Se detectaron nuevos datos en la nube. Vuelva a extraer o calcular para refrescar.";
                 }
             }
         }).catch(e => console.log(e));
@@ -939,7 +934,6 @@
         ejecutarCalculo(); 
     }
 
-    // 🔥 NUEVO: Función para Desvincular de ruta antigua 🔥
     async function desvincularPedido(id) {
         if(!confirm(`⚠️ ¿Desvincular el pedido ${id} de su Carta Porte anterior?\n\nEsto lo eliminará de la ruta pasada y permitirá que se cobre normalmente en esta nueva ruta.`)) return;
 
@@ -956,11 +950,9 @@
             let data = await res.json();
 
             if(data.status === 'success') {
-                // Borrar del registro local para no obligar a refrescar la página
                 delete pedidosHistoricos[id];
                 delete preciosHistoricos[id];
                 
-                // Actualizar el caché para que no vuelva a molestar
                 let cacheStr = sessionStorage.getItem('cacheTarifarioFull');
                 if(cacheStr) {
                     let cacheObj = JSON.parse(cacheStr);
@@ -971,7 +963,6 @@
                 }
 
                 alert(`✅ Pedido ${id} desvinculado de la CP anterior (${data.old_cp}). Recalculando...`);
-                // Mandamos a recalcular la tabla completa al instante
                 ejecutarCalculo();
             } else {
                 alert("❌ No se pudo desvincular: " + data.message);
@@ -1004,9 +995,13 @@
 
         rutasBD.forEach(rutaDB => {
             let cpBuscada = String(rutaDB.cartaPorte).trim().toUpperCase();
+            if (cpBuscada.endsWith('.0')) cpBuscada = cpBuscada.slice(0, -2);
+            cpBuscada = cpBuscada.replace(/\./g, '');
             
             let encontrados = dMonitor.filter(x => {
                 let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim().toUpperCase();
+                if (cpMonitor.endsWith('.0')) cpMonitor = cpMonitor.slice(0, -2);
+                cpMonitor = cpMonitor.replace(/\./g, '');
                 return cpMonitor === cpBuscada;
             });
 
@@ -1087,13 +1082,17 @@
         document.getElementById('modalCambiosCP').style.display = 'flex';
     }
 
+    // 🔥 MODIFICADO PARA NO DESTRUIR CARTAS PORTE CON .0 🔥
     function analizarCPs() {
         cpsEnActualizacion = {}; 
         
-        document.getElementById('btnCalc').innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            CALCULAR COSTOS Y RUTAS
-        `;
+        let btn = document.getElementById('btnCalc');
+        if(btn) {
+            btn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                CALCULAR COSTOS Y RUTAS
+            `;
+        }
 
         let modo = document.querySelector('input[name="modoCP"]:checked').value;
         let cpsRaw = modo === 'individual' ? document.getElementById('txtCPIndividual').value : document.getElementById('txtCPMasivo').value;
@@ -1101,7 +1100,9 @@
         let rawItems = cpsRaw.split(/[\n,\t]+/);
         let cps = [];
         rawItems.forEach(item => {
-            let strCp = item.trim().toUpperCase().replace(/\./g, '');
+            let strCp = item.trim().toUpperCase();
+            if (strCp.endsWith('.0')) strCp = strCp.slice(0, -2);
+            strCp = strCp.replace(/\./g, '');
             if(strCp) cps.push(strCp);
         });
         cps = [...new Set(cps)];
@@ -1110,14 +1111,18 @@
 
         let encontrados = dMonitor.filter(x => {
             let cpMonitor = String(x['ULTIMA_CARTA_PORTE'] || x['Carta_Porte'] || x['CARTA_PORTE'] || x['CARTA PORTE'] || '').trim().toUpperCase();
+            if (cpMonitor.endsWith('.0')) cpMonitor = cpMonitor.slice(0, -2);
+            cpMonitor = cpMonitor.replace(/\./g, '');
             return cps.includes(cpMonitor);
         });
 
-        if(encontrados.length === 0) return alert("❌ No se encontraron pedidos en el Monitor para las Cartas Porte ingresadas.");
+        if(encontrados.length === 0) return alert("❌ No se encontraron pedidos en el Monitor para las Cartas Porte ingresadas.\n\nAsegúrese de haber extraído los datos más recientes de la Nube (Botón 'Actualizar Nube').");
 
         let agrupado = {};
         encontrados.forEach(p => {
             let cp = String(p['ULTIMA_CARTA_PORTE'] || p['Carta_Porte'] || p['CARTA_PORTE'] || p['CARTA PORTE'] || 'SIN_CP').trim().toUpperCase();
+            if (cp.endsWith('.0')) cp = cp.slice(0, -2);
+            cp = cp.replace(/\./g, '');
             if(!agrupado[cp]) agrupado[cp] = [];
             agrupado[cp].push(p);
         });
@@ -1136,15 +1141,21 @@
         if (window.tempAgrupadoCambios) {
             continuarProcesoCP(window.tempAgrupadoCambios);
             
-            document.getElementById('btnCalc').innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                RECALCULAR COSTOS
-            `;
+            let btn = document.getElementById('btnCalc');
+            if(btn) {
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    RECALCULAR COSTOS
+                `;
+            }
             
-            document.getElementById('btnSave').innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                CONFIRMAR Y ACTUALIZAR MASIVAMENTE BD
-            `;
+            let btnS = document.getElementById('btnSave');
+            if(btnS) {
+                btnS.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    CONFIRMAR Y ACTUALIZAR MASIVAMENTE BD
+                `;
+            }
         }
     }
 
@@ -1184,6 +1195,7 @@
         ejecutarCalculo();
     }
 
+    // 🔥 EJECUTAR CÁLCULO BLINDADO 🔥
     function ejecutarCalculo() {
         let fecha = document.getElementById('fechaDespacho').value;
         if(!fecha) return alert("⚠️ Seleccione la fecha de despacho.");
@@ -1196,130 +1208,141 @@
             contenedor.style.flexDirection = 'column';
             contenedor.style.gap = '20px';
         }
-        contenedor.innerHTML = ''; 
         
-        window.rutasAguardar = [];
-        let vehiculosProcesadosHoy = {};
-
         let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
         let estItsaG = document.getElementById('estibasItsa').value || 0;
         let heItsaG = document.getElementById('heItsa').value || 0;
         let cFijoManualG = document.getElementById('costoManual').value || 0;
         let estManualG = document.getElementById('estibasManual').value || 0;
 
-        Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
-            let pedidos = window.agrupacionVehiculos[cpKey];
-            let placa = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
+        let btn = document.getElementById('btnCalc');
+        let txtOri = btn.innerHTML;
+        btn.innerHTML = `<span class="loader-spinner" style="border-top-color:currentColor; margin-right:8px;"></span> CALCULANDO...`;
+        btn.disabled = true;
 
-            let provMatch = dTarifas.find(t => {
-                let tP = String(t.PLACA || t.PLACAS || t.Placa || '').toUpperCase().trim();
-                return tP === placa;
-            });
-            
-            let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
-            if(!provOriginal && pedidos.length > 0) {
-                let trans = String(pedidos[0]['TRANSPORTISTA'] || pedidos[0]['Transportista'] || '').toUpperCase().trim();
-                if(trans) provOriginal = trans;
-            }
+        setTimeout(() => {
+            try {
+                window.rutasAguardar = [];
+                let vehiculosProcesadosHoy = {};
+                let todasLasTarjetasHTML = ''; 
 
-            let prov = provOriginal;
-            if (prov.includes("ENTREGAR")) prov = "ITSACOURIER";
-            let opt = provMatch || {};
-            let isItsa = prov === "ITSACOURIER";
+                Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
+                    let pedidos = window.agrupacionVehiculos[cpKey];
+                    let placa = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
 
-            let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
-            
-            let esActualizacionData = cpsEnActualizacion[cpKey];
-            if (esActualizacionData && placa === esActualizacionData.rutaAntigua.placa) {
-                if (Number(esActualizacionData.rutaAntigua.cBase) > 0) yaSalioHoy = false; 
-            }
-            vehiculosProcesadosHoy[`${fecha}|${placa}`] = true;
+                    let provMatch = dTarifas.find(t => {
+                        let tP = String(t.PLACA || t.PLACAS || t.Placa || '').toUpperCase().trim();
+                        return tP === placa;
+                    });
+                    
+                    let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
+                    if(!provOriginal && pedidos.length > 0) {
+                        let trans = String(pedidos[0]['TRANSPORTISTA'] || pedidos[0]['Transportista'] || '').toUpperCase().trim();
+                        if(trans) provOriginal = trans;
+                    }
 
-            let idTarjeta = `tarjeta_${index}`;
-            let valBase = opt['Precio Base Dia'] || 0;
-            let valExcLab = opt['EXCLUSIVO HORARIO LABORAL'] || 0;
-            let valExcFuer = opt['EXCLUSIVO FUERA HORARIO'] || 0;
-            let valHE = opt['HORAS EXTRAS'] || 6.25;
+                    let prov = provOriginal;
+                    if (prov.includes("ENTREGAR")) prov = "ITSACOURIER";
+                    let isItsa = prov === "ITSACOURIER";
 
-            let selNormal = tipoGlobal === 'NORMAL' ? 'selected' : '';
-            let selLab = tipoGlobal === 'EXCLUSIVO HORARIO LABORAL' ? 'selected' : '';
-            let selFuer = tipoGlobal === 'EXCLUSIVO FUERA HORARIO' ? 'selected' : '';
-            let selExcMan = tipoGlobal === 'EXCLUSIVO' ? 'selected' : '';
-            let selPunto = tipoGlobal === 'POR PUNTO' ? 'selected' : '';
+                    let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
+                    
+                    let esActualizacionData = cpsEnActualizacion[cpKey];
+                    if (esActualizacionData && placa === esActualizacionData.rutaAntigua.placa) {
+                        if (Number(esActualizacionData.rutaAntigua.cBase) > 0) yaSalioHoy = false; 
+                    }
+                    vehiculosProcesadosHoy[`${fecha}|${placa}`] = true;
 
-            let controlesHtml = isItsa ? `
-                <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="if(event && event.isTrusted) this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')">
-                    <option value="NORMAL" ${selNormal}>Normal</option>
-                    <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
-                    <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
-                </select></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, '${valBase}', '${valExcLab}', '${valExcFuer}', '${valHE}')"></div>
-            ` : `
-                <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="if(event && event.isTrusted) this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)">
-                    <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
-                    <option value="POR PUNTO" ${selPunto}>Por Punto</option>
-                </select></div>
-                <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo / P.Base ($):</label><input type="number" id="costo_${idTarjeta}" value="${cFijoManualG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
-                <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="this.dataset.modificado='true'; recalcularTarjeta('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, 0, 0, 0, 0)"></div>
-            `;
+                    let idTarjeta = `tarjeta_${index}`;
+                    
+                    let selNormal = tipoGlobal === 'NORMAL' ? 'selected' : '';
+                    let selLab = tipoGlobal === 'EXCLUSIVO HORARIO LABORAL' ? 'selected' : '';
+                    let selFuer = tipoGlobal === 'EXCLUSIVO FUERA HORARIO' ? 'selected' : '';
+                    let selExcMan = tipoGlobal === 'EXCLUSIVO' ? 'selected' : '';
+                    let selPunto = tipoGlobal === 'POR PUNTO' ? 'selected' : '';
 
-            let tarjetaHTML = `
-                <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--slate-300); margin-bottom:20px;">
-                    <div style="background:var(--slate-50); padding:15px 20px; border-bottom:1px solid var(--slate-200); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                        <h3 style="margin:0; border:none; padding:0; color:var(--blue-700); font-size:1.1em;">📄 CP: ${cpKey} <span class="badge-prov" style="margin-left:10px;">${placa}</span></h3>
-                        <div style="display:flex; gap:15px; font-size:0.95em; font-weight:bold; background:white; padding:5px 15px; border-radius:20px; border:1px solid var(--slate-200);">
-                            <span style="color:var(--slate-500)">Ingresos: <span id="ing_${idTarjeta}" style="color:var(--blue-600)">$0.00</span></span>
-                            <span style="color:var(--slate-500)">Costos: <span id="cos_${idTarjeta}" style="color:var(--red-600)">$0.00</span></span>
-                            <span style="color:var(--slate-500)">Utilidad: <span id="util_${idTarjeta}" style="color:var(--emerald-600)">$0.00</span></span>
+                    let controlesHtml = isItsa ? `
+                        <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">
+                            <option value="NORMAL" ${selNormal}>Normal</option>
+                            <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
+                            <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
+                        </select></div>
+                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                    ` : `
+                        <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">
+                            <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
+                            <option value="POR PUNTO" ${selPunto}>Por Punto</option>
+                        </select></div>
+                        <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo / P.Base ($):</label><input type="number" id="costo_${idTarjeta}" value="${cFijoManualG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                    `;
+
+                    todasLasTarjetasHTML += `
+                        <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--slate-300); margin-bottom:20px;">
+                            <div style="background:var(--slate-50); padding:15px 20px; border-bottom:1px solid var(--slate-200); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                                <h3 style="margin:0; border:none; padding:0; color:var(--blue-700); font-size:1.1em;">📄 CP: ${cpKey} <span class="badge-prov" style="margin-left:10px;">${placa}</span></h3>
+                                <div style="display:flex; gap:15px; font-size:0.95em; font-weight:bold; background:white; padding:5px 15px; border-radius:20px; border:1px solid var(--slate-200);">
+                                    <span style="color:var(--slate-500)">Ingresos: <span id="ing_${idTarjeta}" style="color:var(--blue-600)">$0.00</span></span>
+                                    <span style="color:var(--slate-500)">Costos: <span id="cos_${idTarjeta}" style="color:var(--red-600)">$0.00</span></span>
+                                    <span style="color:var(--slate-500)">Utilidad: <span id="util_${idTarjeta}" style="color:var(--emerald-600)">$0.00</span></span>
+                                </div>
+                            </div>
+                            <div style="padding:15px 20px; background:white; border-bottom:1px solid var(--slate-100); display:flex; gap:15px; flex-wrap:wrap; align-items:flex-end;">
+                                ${controlesHtml}
+                            </div>
+                            <div class="table-wrapper" style="max-height: 300px; box-shadow:none;">
+                                <table style="width:100%; border-collapse:collapse; font-size:0.85em; white-space:nowrap;">
+                                    <thead style="background:var(--slate-50); position:sticky; top:0; z-index:10;">
+                                        <tr>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">ID Pedido</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Cliente</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Int</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Servicio</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Origen</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Destino (CP)</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Trayecto Base</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Bultos</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Peso (Kg)</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Tarifa Nube</th>
+                                            <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:right;">Tarifa Final</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_${idTarjeta}"></tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div style="padding:15px 20px; background:white; border-bottom:1px solid var(--slate-100); display:flex; gap:15px; flex-wrap:wrap; align-items:flex-end;">
-                        ${controlesHtml}
-                    </div>
-                    <div class="table-wrapper" style="max-height: 300px; box-shadow:none;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.85em; white-space:nowrap;">
-                            <thead style="background:var(--slate-50); position:sticky; top:0; z-index:10;">
-                                <tr>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">ID Pedido</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Cliente</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Int</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Servicio</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Origen</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Loc. Destino (CP)</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Trayecto Base</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Bultos</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:center;">Peso (Kg)</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200);">Tarifa Nube</th>
-                                    <th style="padding:10px; border-bottom:2px solid var(--slate-200); text-align:right;">Tarifa Final</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody_${idTarjeta}"></tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-            
-            contenedor.innerHTML += tarjetaHTML;
-        });
+                    `;
+                });
 
-        let panelFiltros = document.getElementById('panelFiltrosGlobales');
-        if (panelFiltros) panelFiltros.style.display = 'block';
+                contenedor.innerHTML = todasLasTarjetasHTML;
 
-        Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
-            let elSelect = document.getElementById(`tipo_tarjeta_${index}`);
-            if(elSelect) elSelect.dispatchEvent(new Event('change')); 
-        });
+                Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
+                    let idTarjeta = `tarjeta_${index}`;
+                    let placa = String(window.agrupacionVehiculos[cpKey][0]['VEHICULO'] || window.agrupacionVehiculos[cpKey][0]['Vehiculo'] || 'SIN_PLACA').toUpperCase().trim();
+                    let prov = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().trim() === placa)?.PROVEEDOR || "";
+                    if(prov.includes("ENTREGAR")) prov = "ITSACOURIER";
+                    let isItsa = prov === "ITSACOURIER";
+                    let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
 
-        document.getElementById('btnSave').disabled = false;
-        
-        let esActualizacionGlobal = Object.keys(cpsEnActualizacion).length > 0;
-        if (esActualizacionGlobal) dibujarComparativoGeneral();
+                    recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa);
+                });
+                
+            } catch(e) {
+                console.error("Error al calcular", e);
+                alert("Ocurrió un error calculando las tarifas. Revisa la consola.");
+            } finally {
+                btn.innerHTML = txtOri;
+                btn.disabled = false;
+                document.getElementById('btnSave').disabled = false;
+            }
+        }, 50);
     }
 
-    function recalcularTarjeta(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, valBaseD, valExcLab, valExcFuer, valHe) {
+    function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa) {
+        let opt = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().trim() === placa) || {};
         let pedidos = window.agrupacionVehiculos[cpKey];
         let elTipo = document.getElementById(`tipo_${idTarjeta}`);
         let tipo = elTipo ? elTipo.value : '';
@@ -1335,7 +1358,6 @@
                 esRutaManualRestaurada = true;
                 tipo = rutaAntigua.tipoRuta;
                 cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
-                console.log("🔍 RADIOGRAFÍA DE LA RUTA:", rutaAntigua);
                 cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
                 cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
                 cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
@@ -1353,18 +1375,24 @@
                 let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
                 let he = parseFloat(document.getElementById(`he_${idTarjeta}`).value) || 0;
                 cEstibas = est * 30;
-                let heTarifa = parseDinero(valHe) || 6.25;
+                let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
                 cHE = he * heTarifa;
                 
-                if (tipo === 'NORMAL') cBase = yaSalioHoy ? 0 : parseDinero(valBaseD);
-                else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(valExcLab);
-                else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(valExcFuer);
+                if (tipo === 'NORMAL') cBase = yaSalioHoy ? 0 : parseDinero(opt['Precio Base Dia']);
+                else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']);
+                else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']);
             } else {
                 let costoInput = parseFloat(document.getElementById(`costo_${idTarjeta}`).value) || 0;
                 let est = parseFloat(document.getElementById(`estibas_${idTarjeta}`).value) || 0;
                 cEstibas = est * 15; 
                 
-                if (tipo === 'POR PUNTO' || tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') {
+                if (tipo === 'POR PUNTO') {
+                    let ptsBase = parseFloat(document.getElementById('cantPuntosBase').value) || 0;
+                    let precBase = parseFloat(document.getElementById('precioPuntosBase').value) || 0;
+                    let precAd = parseFloat(document.getElementById('precioPuntoAdicional').value) || 0;
+                    let ptsTotales = pedidos.length;
+                    cExc = ptsTotales <= ptsBase ? precBase : precBase + ((ptsTotales - ptsBase) * precAd);
+                } else if (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') {
                     cExc = costoInput; 
                 }
             }
@@ -1373,10 +1401,9 @@
         let costoVehiculo = cBase + cEstibas + cExc + cHE;
         let ingresosVehiculo = 0;
         let pesoTotalVehiculo = 0; 
-        let tbody = document.getElementById(`tbody_${idTarjeta}`);
-        tbody.innerHTML = '';
         
         let idsArrConPrecio = [];
+        let htmlFilas = '';
 
         pedidos.forEach(p => {
             let id = String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido']).trim();
@@ -1402,7 +1429,6 @@
 
             p._calcNube = calcularTarifasAutomaticas(p); 
             
-            // 🛡️ BÚSQUEDA BLINDADA DE TARIFA FIJA
             let tarifaFijaObj = null;
             if (window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
                 tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
@@ -1462,11 +1488,9 @@
             idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
 
             let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
-            
-            // 🔥 AÑADIDO: BOTÓN DE DESVINCULAR SI EL PEDIDO YA ESTABA EN EL HISTORIAL 🔥
-            let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${id}')" title="Desvincular de ruta anterior (Liberar)" style="color:var(--amber-600);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
+            let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${id}')" title="Desvincular de ruta anterior" style="color:var(--amber-600);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
 
-            tbody.innerHTML += `
+            htmlFilas += `
                 <tr style="${styleFila}" data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100);"><strong>${id}</strong></td>
                     <td style="padding:8px 10px; border-bottom:1px solid var(--slate-100); font-size:0.85em;">${clienteStr}</td>
@@ -1489,13 +1513,18 @@
             `;
         });
 
-        let util = ingresosVehiculo - costoVehiculo;
-        document.getElementById(`ing_${idTarjeta}`).innerText = `$${ingresosVehiculo.toFixed(2)}`;
-        document.getElementById(`cos_${idTarjeta}`).innerText = `$${costoVehiculo.toFixed(2)}`;
-        document.getElementById(`util_${idTarjeta}`).innerText = `$${util.toFixed(2)}`;
-        document.getElementById(`util_${idTarjeta}`).style.color = util < 0 ? 'var(--red-600)' : 'var(--emerald-600)';
+        let tbody = document.getElementById(`tbody_${idTarjeta}`);
+        if(tbody) tbody.innerHTML = htmlFilas;
 
-        let indiceGuardar = window.rutasAguardar.findIndex(r => r.cartaPorte === cpKey);
+        let util = ingresosVehiculo - costoVehiculo;
+        let elIng = document.getElementById(`ing_${idTarjeta}`); if(elIng) elIng.innerText = `$${ingresosVehiculo.toFixed(2)}`;
+        let elCos = document.getElementById(`cos_${idTarjeta}`); if(elCos) elCos.innerText = `$${costoVehiculo.toFixed(2)}`;
+        let elUtil = document.getElementById(`util_${idTarjeta}`); 
+        if(elUtil) {
+            elUtil.innerText = `$${util.toFixed(2)}`;
+            elUtil.style.color = util < 0 ? 'var(--red-600)' : 'var(--emerald-600)';
+        }
+
         let objRuta = {
             fecha: document.getElementById('fechaDespacho').value,
             ciudad: sesion.ciudad.trim().toUpperCase(),
@@ -1514,6 +1543,7 @@
             pesoTotal: pesoTotalVehiculo 
         };
 
+        let indiceGuardar = window.rutasAguardar.findIndex(r => r.cartaPorte === cpKey);
         if (indiceGuardar > -1) {
             window.rutasAguardar[indiceGuardar] = objRuta;
         } else {
@@ -1521,7 +1551,6 @@
         }
 
         actualizarGlobales();
-        
         let esActualizacionGlobal = Object.keys(cpsEnActualizacion).length > 0;
         if (esActualizacionGlobal) dibujarComparativoGeneral();
     }
@@ -1675,6 +1704,26 @@
             } else {
                 let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(window.rutasAguardar) });
                 let dataResp = await res.json();
+
+                // 🔧 Actualiza la detección de duplicados al instante: agrega las rutas
+                // recién guardadas al array local, sin esperar al próximo refresco
+                // periódico (cada 3 min) ni a recargar la página.
+                let timestampLocal = new Date().toISOString();
+                window.rutasAguardar.forEach(ruta => {
+                    dbRutasFull.push({
+                        cartaPorte: ruta.cartaPorte,
+                        usuario: sesion.nombre,
+                        fechaCreacion: timestampLocal,
+                        fecha: timestampLocal,
+                        pedidos: ruta.pedidos,
+                        listaIds: ruta.listaIds,
+                        placa: ruta.placa,
+                        ingresos: ruta.ingresos,
+                        historial: null,
+                        // idRegistro real se sincroniza solo, pero la detección de
+                        // duplicados no lo necesita: solo compara por cartaPorte.
+                    });
+                });
                 
                 let idsGenerados = dataResp.id_registro || "Múltiples";
                 let cpsGuardadas = [...new Set(window.rutasAguardar.map(r => r.cartaPorte))].join(', ');
@@ -1746,13 +1795,21 @@
     async function abrirBuscadorCP() {
         let cpBuscada = await dialogPrompt("Buscar Carta Porte", "Ingrese el número de la Carta Porte que desea buscar y editar en el sistema:", "Ej: 65994", false);
         if (!cpBuscada) return;
-        cpBuscada = cpBuscada.trim().replace(/\./g, '');
+        
+        cpBuscada = cpBuscada.trim().toUpperCase();
+        if (cpBuscada.endsWith('.0')) cpBuscada = cpBuscada.slice(0, -2);
+        cpBuscada = cpBuscada.replace(/\./g, '');
 
         if (!dbRutasFull || dbRutasFull.length === 0) {
             return dialogAlert("La base de datos histórica aún no se ha cargado. Intente en unos segundos.", "warning");
         }
 
-        let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada.toUpperCase());
+        let rutaEncontrada = dbRutasFull.find(r => {
+            let rCp = String(r.cartaPorte).trim().toUpperCase();
+            if (rCp.endsWith('.0')) rCp = rCp.slice(0, -2);
+            rCp = rCp.replace(/\./g, '');
+            return rCp === cpBuscada;
+        });
 
         if (!rutaEncontrada) {
             return dialogAlert(`No se encontró ninguna ruta guardada con la Carta Porte <b>${cpBuscada}</b> en la Base de Datos.`, "error");
@@ -1883,25 +1940,29 @@
         }
     }
 
-   // --- 🚀 DETECCIÓN EN TIEMPO REAL CON HISTORIAL Y LISTA DE PEDIDOS 🚀 ---
+    // --- 🚀 DETECCIÓN EN TIEMPO REAL CON HISTORIAL Y LISTA DE PEDIDOS 🚀 ---
     document.getElementById('txtCPIndividual').addEventListener('blur', function() {
-        let cpBuscada = this.value.trim().toUpperCase().replace(/\./g, '');
+        let cpBuscada = this.value.trim().toUpperCase();
+        if (cpBuscada.endsWith('.0')) cpBuscada = cpBuscada.slice(0, -2);
+        cpBuscada = cpBuscada.replace(/\./g, '');
+        
         if (!cpBuscada) return;
 
-        // Verificamos si la base de datos de la Nube ya cargó
         if (!dbRutasFull || dbRutasFull.length === 0) return;
 
-        // Buscamos la carta porte
-        let rutaEncontrada = dbRutasFull.find(r => String(r.cartaPorte).trim().toUpperCase() === cpBuscada);
+        let rutaEncontrada = dbRutasFull.find(r => {
+            let rCp = String(r.cartaPorte).trim().toUpperCase();
+            if (rCp.endsWith('.0')) rCp = rCp.slice(0, -2);
+            rCp = rCp.replace(/\./g, '');
+            return rCp === cpBuscada;
+        });
 
         if (rutaEncontrada) {
-            // 👇 ESTO ES LO NUEVO: Vaciamos la casilla al instante para matar el doble disparo
             this.value = ''; 
 
             let usuario = rutaEncontrada.usuario || "Desconocido";
             let fecha = rutaEncontrada.fechaCreacion || rutaEncontrada.fecha || "Fecha no registrada";
             
-            // --- 1. PROCESAR HISTORIAL DE CAMBIOS ---
             let htmlCambios = '';
             if (rutaEncontrada.historial) {
                 let listaCambios = rutaEncontrada.historial.split('\n').filter(Boolean);
@@ -1921,7 +1982,6 @@
                     </div>`;
             }
 
-            // --- 2. EXTRAER Y DIBUJAR LA LISTA DE PEDIDOS ---
             let listaPedidosHtml = "<span style='color:var(--slate-400);'>No se encontraron pedidos detallados.</span>";
             if (rutaEncontrada.listaIds) {
                 let arrPedidos = String(rutaEncontrada.listaIds).split(',').filter(Boolean);
@@ -1932,7 +1992,6 @@
                 listaPedidosHtml += `</ul>`;
             }
 
-            // --- 3. DISEÑO FINAL DEL MODAL ---
             let msgHtml = `
                 <div style="text-align: left; font-size: 14px;">
                     <p>Esta Carta Porte ya fue agregada por <strong style="color:var(--blue-600);">${usuario}</strong> el <strong>${fecha}</strong>.</p>
@@ -1953,7 +2012,6 @@
                 </div>
             `;
 
-            // --- 4. LANZAR EL SWEETALERT ---
             Swal.fire({
                 title: '¡Carta Porte ya existente!',
                 html: msgHtml,
@@ -1972,9 +2030,7 @@
         }
     });
 
-    // --- FUNCIÓN AUXILIAR PARA ABRIR EL EDITOR DIRECTAMENTE ---
     function abrirEditorDirectamente(rutaObj) {
-        // Clonamos la ruta para no afectar el original hasta que guarde
         rutaEnEdicion = JSON.parse(JSON.stringify(rutaObj)); 
         
         document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
@@ -2006,14 +2062,11 @@
             `;
         });
 
-        // Aseguramos que los eventos sigan funcionando
         document.getElementById('editBase').oninput = recalcularTotalesEditor;
         document.getElementById('editEstibas').oninput = recalcularTotalesEditor;
         document.getElementById('editExc').oninput = recalcularTotalesEditor;
 
         recalcularTotalesEditor();
-        
-        // Mostramos el modal de edición que ya tienes en el HTML
         document.getElementById('modalEditorCP').style.display = 'flex';
     }
 </script>

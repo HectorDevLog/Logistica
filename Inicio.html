@@ -1028,6 +1028,27 @@
             console.log("Error al intentar corregir silenciosamente en la base de datos", e);
         }
     }
+
+    // Reconstruye el array de objetos a partir de {headers, rows}.
+    // Genera AMBAS versiones de cada clave (la "limpia" en mayúsculas y la
+    // "cruda" tal como viene de MySQL) porque distintas páginas del sistema
+    // (ej. SimuladorCartaPorte.html) dependen de p['idpedido'] o p.Cliente
+    // con el casing original, no solo de la versión IDPEDIDO/CLIENTE.
+    // Esta duplicación ahora se hace en el navegador (barata, en memoria)
+    // en vez de venir ya duplicada en el JSON transferido (que es lo que
+    // hacía pesado el payload antes).
+    function reconstruirDesdeHeadersYFilas(payload) {
+        if (!payload || !payload.headers || !payload.rows) return [];
+        const headersCrudos = payload.headers.map(h => String(h).trim());
+        const headersLimpios = headersCrudos.map(h => h.toUpperCase().replace(/[^A-Z0-9_]/g, ""));
+
+        return payload.rows.map(fila => {
+            let obj = {};
+            headersLimpios.forEach((hLimpio, i) => { obj[hLimpio] = fila[i]; });
+            headersCrudos.forEach((hCrudo, i) => { obj[hCrudo] = fila[i]; });
+            return obj;
+        });
+    }
 </script>
 </body>
 </html>
