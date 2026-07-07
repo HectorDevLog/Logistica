@@ -712,9 +712,11 @@
                 setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
-                        window.monitorGlobal = jsonResponse; // 🔥 ASIGNAR DATA NUEVA
-                        await guardarDatoDBPreload("monitorCargado", jsonResponse, ping.monitorTs);
-                        setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${jsonResponse.length} reg)`);
+                        // 🔥 AHORA SÍ PASAMOS POR EL DESCOMPRESOR 🔥
+                        window.monitorGlobal = reconstruirDesdeHeadersYFilas(jsonResponse); 
+                        
+                        await guardarDatoDBPreload("monitorCargado", window.monitorGlobal, ping.monitorTs);
+                        setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${window.monitorGlobal.length} reg)`);
                     } else {
                         setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
                     }
