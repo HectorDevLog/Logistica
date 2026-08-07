@@ -2,295 +2,306 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlexNet - Proyección Global</title>
+    <script src="config.js"></script>
     <script src="seguridad.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        :root { 
-            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1; --slate-500: #64748b; --slate-700: #334155; --slate-900: #0f172a;
-            --blue-50: #eff6ff; --blue-100: #dbeafe; --blue-500: #3b82f6; --blue-600: #2563eb; --blue-700: #1d4ed8; --blue-800: #1e40af;
-            --emerald-50: #ecfdf5; --emerald-100: #d1fae5; --emerald-600: #059669; --emerald-700: #047857;
-            --red-50: #fef2f2; --red-100: #fee2e2; --red-500: #ef4444; --red-600: #dc2626;
-            --purple-50: #faf5ff; --purple-100: #f3e8ff; --purple-600: #9333ea; --purple-700: #7e22ce;
-            --amber-50: #fffbeb; --amber-600: #d97706;
-        }
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f4f7f9; margin: 0; font-size: 13px; color: var(--slate-700); }
-        
-        /* NAVBAR */
-        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .nav-links { display: flex; gap: 8px; margin: 0 auto;}
-        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; display: flex; align-items: center; gap: 5px; border: 1px solid transparent;}
-        .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
-        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; }
-        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700&display=swap');
 
-        /* CONTENEDOR PRINCIPAL TIPO DASHBOARD */
-        .dashboard-wrapper { max-width: 1500px; margin: 25px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 20px; }
+        :root { 
+            /* VARIABLES TEMA OSCURO (Por defecto) */
+            --bg-main: #070b14;
+            --bg-panel: rgba(17, 24, 39, 0.6);
+            --bg-card: #171717;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255,255,255,0.05);
+            --border-hover: rgba(255,255,255,0.15);
+            --table-header: rgba(15, 23, 42, 0.9);
+            --table-row-hover: rgba(255,255,255,0.02);
+            --input-bg: rgba(0,0,0,0.3);
+            
+            --neon-blue: #00f0ff;
+            --neon-purple: #8a2be2;
+            --neon-green: #00ff9d;
+            --neon-amber: #ffb700;
+            --neon-red: #ff3333;
+        }
+
+        /* VARIABLES TEMA CLARO */
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --bg-panel: rgba(255, 255, 255, 0.8);
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0,0,0,0.1);
+            --border-hover: rgba(0,0,0,0.2);
+            --table-header: #f8fafc;
+            --table-row-hover: rgba(0,0,0,0.02);
+            --input-bg: #ffffff;
+            
+            --neon-blue: #0284c7; 
+            --neon-green: #059669; 
+            --neon-amber: #d97706; 
+            --neon-red: #dc2626; 
+            --neon-purple: #7e22ce;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
+            margin: 0; padding: 0; color: var(--text-main); 
+            min-height: 100vh; overflow-x: hidden; font-size: 13px;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        
+        /* NAVBAR NEON */
+        .navbar { 
+            background: var(--bg-panel); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 4%; display: flex; align-items: center; justify-content: space-between; 
+            position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 15px;
+            transition: all 0.4s ease;
+        }
+        
+        .navbar-brand { font-size: clamp(1.1em, 2vw, 1.3em); font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+        .navbar-brand svg { filter: drop-shadow(0 0 8px var(--neon-purple)); color: var(--neon-purple); }
+
+        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .nav-links a { 
+            color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9em;
+            display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 8px; transition: all 0.3s;
+        }
+        .nav-links a:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .nav-links a.active { color: var(--neon-purple); background: rgba(138, 43, 226, 0.1); font-weight: 600; box-shadow: inset 0 0 10px rgba(138, 43, 226, 0.1);}
+        body.light-theme .nav-links a.active { box-shadow: none; background: rgba(138, 43, 226, 0.05); }
+
+        .user-info { display: flex; align-items: center; gap: 10px; font-size: clamp(0.8em, 1.2vw, 0.9em); font-weight: 500; flex-wrap: wrap; justify-content: flex-end;}
+        .btn-logout { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-logout:hover { background: var(--neon-red); color: white; border-color: var(--neon-red); box-shadow: 0 0 15px rgba(255,51,51,0.4);}
+
+        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
+        #theme-switch { display: none; }
+        .theme-label {
+            width: 70px; height: 28px; background-color: var(--border-color);
+            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2); flex-shrink: 0;
+        }
+        .theme-label .toggle {
+            position: absolute; width: 34px; height: 22px; background-color: #fff; left: 3px;
+            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
+            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
+        }
+        #theme-switch:checked + .theme-label .toggle { transform: translateX(30px); background-color: #1e293b; }
+        .theme-label .names {
+            font-size: 10px; font-weight: bolder; width: 100%; position: absolute;
+            display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main);
+        }
+        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
+        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
+        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
+        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
+        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
+
+        /* CONTENEDOR PRINCIPAL FLUIDO */
+        .dashboard-wrapper { max-width: 1600px; margin: 2vw auto; padding: 0 3%; display: flex; flex-direction: column; gap: 2vw; width: 100%; box-sizing: border-box; }
         
         /* 🔥 BARRA DE CONTROL SUPERIOR PEGAJOSA 🔥 */
         .top-action-bar {
-            background: white; border-radius: 12px; border: 1px solid var(--slate-200); padding: 15px 25px; 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); margin-bottom: 5px;
+            background: var(--bg-panel); border-radius: 16px; border: 1px solid var(--border-color); padding: 15px 25px; 
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); margin-bottom: 5px; backdrop-filter: blur(15px);
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
-            position: sticky; top: 75px; z-index: 90;
+            position: sticky; top: 80px; z-index: 90;
         }
 
-        .btn-main-action { padding: 10px 20px; font-size: 0.95em; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; color: white; }
-        .btn-calc { background: var(--blue-600); }
-        .btn-calc:hover:not(:disabled) { background: var(--blue-700); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(37,99,235,0.2); }
-        .btn-save { background: var(--emerald-600); }
-        .btn-save:hover:not(:disabled) { background: var(--emerald-700); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(5,150,105,0.2); }
-        .btn-pdf { background: var(--red-600); }
-        .btn-pdf:hover:not(:disabled) { background: var(--red-700); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(220, 38, 38, 0.2); }
+        .btn-main-action { padding: 10px 15px; font-size: 0.9em; font-weight: 700; border-radius: 8px; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; color: white; white-space: nowrap; flex: 1 1 auto; max-width: max-content;}
         
-        .btn-main-action:disabled { background: var(--slate-300); cursor: not-allowed; transform: none; box-shadow: none; color: var(--slate-500); }
+        /* Botones Neón */
+        .btn-calc { background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); border-color: rgba(0, 240, 255, 0.3); }
+        .btn-calc:hover:not(:disabled) { background: var(--neon-blue); color: #000; box-shadow: 0 0 15px rgba(0,240,255,0.4); transform: translateY(-2px); }
+        
+        .btn-save { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border-color: rgba(0, 255, 157, 0.3); }
+        .btn-save:hover:not(:disabled) { background: var(--neon-green); color: #000; box-shadow: 0 0 15px rgba(0,255,157,0.4); transform: translateY(-2px); }
+        
+        .btn-pdf { background: rgba(255, 51, 51, 0.1); color: var(--neon-red); border-color: rgba(255, 51, 51, 0.3); }
+        .btn-pdf:hover:not(:disabled) { background: var(--neon-red); color: white; box-shadow: 0 0 15px rgba(255,51,51,0.4); transform: translateY(-2px); }
+        
+        .btn-main-action:disabled { background: rgba(255,255,255,0.05); border-color: transparent; cursor: not-allowed; transform: none; box-shadow: none; color: var(--text-muted); }
 
-        .panel { background: white; border-radius: 12px; border: 1px solid var(--slate-200); padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .panel-title { margin: 0 0 20px 0; font-size: 1.15em; color: var(--blue-800); display: flex; align-items: center; gap: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
-        .panel-title svg { color: var(--blue-600); }
+        .btn-outline-amber {
+            background: transparent; color: var(--neon-amber); border: 1px solid var(--neon-amber); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 700; transition: all 0.3s; white-space: nowrap; flex: 1 1 auto; max-width: max-content;
+        }
+        .btn-outline-amber:hover { background: rgba(255,183,0,0.1); box-shadow: 0 0 10px rgba(255,183,0,0.2); }
 
-        /* 🔥 KPIs 🔥 */
-        .kpis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 5px; }
-        .kpi-box { border-radius: 10px; padding: 20px 15px; text-align: center; border: 1px solid var(--slate-200); display: flex; flex-direction: column; justify-content: center; background: white; }
-        .kpi-box h4 { margin: 0 0 10px 0; font-size: 0.85em; font-weight: 700; color: var(--slate-700); text-transform: uppercase; }
-        .kpi-box span { font-size: 2.2em; font-weight: 800; display: block; margin-bottom: 5px; }
-        .kpi-box small { font-size: 0.8em; color: var(--slate-400); }
-        
-        .kpi-ingresos { border-color: var(--emerald-200); border-bottom: 4px solid var(--emerald-500); }
-        .kpi-ingresos h4 { color: var(--emerald-700); }
-        .kpi-ingresos span { color: var(--emerald-600); }
-        
-        .kpi-costos { border-color: var(--red-200); background: var(--red-50); border-bottom: 4px solid var(--red-500); }
-        .kpi-costos h4 { color: var(--red-700); }
-        .kpi-costos span { color: var(--red-600); }
-        
-        .kpi-neta { border-color: var(--blue-200); border-bottom: 4px solid var(--blue-500); }
-        .kpi-neta h4 { color: var(--blue-700); }
-        .kpi-neta span { color: var(--blue-600); }
+        .panel { background: var(--bg-panel); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5vw 2vw; box-shadow: 0 10px 20px rgba(0,0,0,0.1); backdrop-filter: blur(10px); transition: border-color 0.3s; width: 100%; box-sizing: border-box;}
+        .panel:hover { border-color: var(--border-hover); }
+        .panel-title { margin: 0 0 20px 0; font-size: clamp(1em, 1.2vw, 1.15em); color: var(--text-main); display: flex; align-items: center; gap: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        .panel-title svg { color: var(--neon-purple); filter: drop-shadow(0 0 5px rgba(138,43,226,0.5)); flex-shrink: 0;}
 
-        .kpi-margen { border-color: var(--purple-200); border-bottom: 4px solid var(--purple-500); }
-        .kpi-margen h4 { color: var(--purple-700); }
-        .kpi-margen span { color: var(--purple-600); }
+        /* 🔥 KPIs GRIDS 🔥 */
+        .kpis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 5px; }
+        .kpi-box { border-radius: 12px; padding: 20px 15px; text-align: center; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,0.2); position: relative; overflow: hidden; transition: all 0.3s;}
+        body.light-theme .kpi-box { background: white; }
+        .kpi-box:hover { transform: translateY(-3px); }
+        
+        .kpi-box::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; }
+        .kpi-box h4 { margin: 0 0 10px 0; font-size: 0.85em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        .kpi-box span { font-size: clamp(1.5em, 2vw, 2.2em); font-weight: 800; display: block; margin-bottom: 5px; letter-spacing: -0.5px;}
+        .kpi-box small { font-size: 0.8em; color: var(--text-muted); opacity: 0.7;}
+        
+        .kpi-ingresos::after { background: var(--neon-green); box-shadow: 0 -2px 10px var(--neon-green); }
+        .kpi-ingresos span { color: var(--neon-green); text-shadow: 0 0 10px rgba(0,255,157,0.3);}
+        
+        .kpi-costos::after { background: var(--neon-red); box-shadow: 0 -2px 10px var(--neon-red); }
+        .kpi-costos span { color: var(--neon-red); text-shadow: 0 0 10px rgba(255,51,51,0.3);}
+        
+        .kpi-neta::after { background: var(--neon-blue); box-shadow: 0 -2px 10px var(--neon-blue); }
+        .kpi-neta span { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,240,255,0.3);}
+
+        .kpi-margen::after { background: var(--neon-purple); box-shadow: 0 -2px 10px var(--neon-purple); }
+        .kpi-margen span { color: var(--neon-purple); text-shadow: 0 0 10px rgba(138,43,226,0.3);}
 
         /* Banners de estado */
-        .status-banner { padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 10px; display: none; margin-top: 15px; justify-content: center; }
-        .status-rentable { background: var(--emerald-50); color: var(--emerald-700); border: 1px solid var(--emerald-200); }
-        .status-perdida { background: var(--red-50); color: var(--red-700); border: 1px solid var(--red-200); }
+        .status-banner { padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 10px; display: none; margin-top: 15px; justify-content: center; backdrop-filter: blur(5px);}
+        .status-rentable { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border: 1px solid rgba(0, 255, 157, 0.3); box-shadow: inset 0 0 15px rgba(0,255,157,0.05);}
+        .status-perdida { background: rgba(255, 51, 51, 0.1); color: var(--neon-red); border: 1px solid rgba(255, 51, 51, 0.3); box-shadow: inset 0 0 15px rgba(255,51,51,0.05);}
+        
+        body.light-theme .status-rentable { background: #ecfdf5; color: #047857; border-color: #34d399; box-shadow: none;}
+        body.light-theme .status-perdida { background: #fef2f2; color: #b91c1c; border-color: #f87171; box-shadow: none;}
 
         /* GRÁFICOS */
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; height: 260px; margin-top: 15px; }
-        .chart-container { position: relative; height: 100%; width: 100%; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; height: auto; min-height: 260px; margin-top: 15px; }
+        .chart-container { position: relative; height: 260px; width: 100%; }
 
-        /* CONFIGURACIÓN Y VEHÍCULOS */
-        .config-row { display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: stretch; }
+        /* 🔥 CONFIGURACIÓN Y VEHÍCULOS (FLEXBOX RESPONSIVO) 🔥 */
+        .config-row { display: flex; flex-wrap: wrap; gap: 2vw; align-items: stretch; width: 100%; box-sizing: border-box;}
+        .config-row > div:nth-child(1) { flex: 1 1 300px; min-width: 0; } 
+        .config-row > div:nth-child(2) { flex: 2 1 450px; min-width: 0; } 
         
-        /* Formulario Ingreso */
-        .form-label { display: flex; align-items: center; gap: 6px; font-weight: 600; margin: 15px 0 8px; font-size: 0.95em; color: var(--blue-700); }
-        .input-box { width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1em; color: var(--slate-700); transition: all 0.2s; background: white; }
-        .input-box:focus { outline: none; border-color: var(--blue-500); box-shadow: 0 0 0 3px var(--blue-50); }
-        textarea.input-box { resize: vertical; min-height: 110px; background: #f8fafc; }
+        .form-label { display: flex; align-items: center; gap: 6px; font-weight: 600; margin: 15px 0 8px; font-size: 0.95em; color: var(--text-main); }
+        .input-box { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1em; color: var(--text-main); transition: all 0.3s; background: var(--input-bg); }
+        .input-box:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 2px rgba(0,240,255,0.2); }
+        textarea.input-box { resize: vertical; min-height: 110px; }
         
-        /* Grid de Vehículos */
-        .vehiculos-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start; }
-        .veh-card { border: 1px solid var(--slate-200); border-radius: 10px; padding: 15px; text-align: center; width: 120px; background: white; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; }
-        .veh-card:hover { border-color: var(--blue-300); box-shadow: 0 4px 12px rgba(37,99,235,0.08); }
-        .veh-icon { font-size: 2em; color: var(--slate-700); margin-bottom: 5px; }
-        .veh-name { font-weight: 700; font-size: 0.85em; color: var(--slate-800); margin-bottom: 5px; line-height: 1.2; }
-        .veh-input { width: 70px; text-align: center; padding: 8px; font-size: 1.2em; font-weight: bold; color: var(--slate-900); border: 1px solid var(--slate-300); border-radius: 6px; margin: 10px 0 5px; outline: none; transition: border 0.2s; }
-        .veh-input:focus { border-color: var(--blue-500); }
-        .veh-unit { font-size: 0.75em; color: var(--slate-400); }
-        .veh-info-banner { background: var(--blue-50); color: var(--blue-700); padding: 10px 15px; border-radius: 8px; font-size: 0.85em; display: flex; align-items: center; gap: 8px; margin-top: 20px; width: 100%; box-sizing: border-box; }
+        .vehiculos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; justify-content: center; }
+        .veh-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; text-align: center; background: rgba(0,0,0,0.2); transition: all 0.3s; display: flex; flex-direction: column; align-items: center; }
+        body.light-theme .veh-card { background: white; }
+        .veh-card:hover { border-color: var(--neon-purple); box-shadow: 0 4px 15px rgba(138,43,226,0.15); transform: translateY(-2px);}
+        .veh-icon { font-size: 2.2em; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
+        .veh-name { font-weight: 600; font-size: 0.8em; color: var(--text-main); margin-bottom: 8px; line-height: 1.2; height: 28px; display: flex; align-items: center; justify-content: center;}
+        .veh-input { width: 100%; text-align: center; padding: 8px; font-size: 1.2em; font-weight: bold; color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; margin: 5px 0; outline: none; transition: border 0.3s; background: var(--input-bg); box-sizing: border-box;}
+        .veh-input:focus { border-color: var(--neon-purple); box-shadow: 0 0 0 2px rgba(138,43,226,0.2); }
+        .veh-unit { font-size: 0.7em; color: var(--text-muted); text-transform: uppercase;}
+        .veh-info-banner { background: rgba(0, 240, 255, 0.05); color: var(--neon-blue); padding: 10px 15px; border-radius: 8px; font-size: 0.85em; display: flex; align-items: center; gap: 8px; margin-top: 20px; width: 100%; box-sizing: border-box; border: 1px solid rgba(0,240,255,0.2); }
 
-        /* TABLA DE PEDIDOS Y COSTOS */
-        .bottom-row { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: stretch; margin-bottom: 40px;}
+        /* 🔥 TABLA DE PEDIDOS Y COSTOS (FLEXBOX RESPONSIVO) 🔥 */
+        .bottom-row { display: flex; flex-wrap: wrap; gap: 2vw; align-items: stretch; margin-bottom: 40px; width: 100%; box-sizing: border-box;}
+        .bottom-row > div:nth-child(1) { flex: 1 1 300px; min-width: 0; } 
+        .bottom-row > div:nth-child(2) { flex: 3 1 500px; min-width: 0; } 
 
-        /* Tabla de Pedidos */
         .table-panel { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-        .table-header { padding: 20px 25px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; background: white; flex-wrap: wrap; gap: 15px;}
+        .table-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: rgba(0,0,0,0.1);}
         
-        .filter-group { display: flex; gap: 10px; align-items: center; }
-        .filter-inline { padding: 6px 12px; font-size: 0.85em; border: 1px solid var(--slate-300); border-radius: 6px; outline: none; background: white; color: var(--slate-700); cursor: pointer; }
+        .filter-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
+        .filter-inline { padding: 8px 12px; font-size: 0.85em; border: 1px solid var(--border-color); border-radius: 8px; outline: none; background: var(--input-bg); color: var(--text-main); cursor: pointer; transition: all 0.2s;}
+        .filter-inline:focus { border-color: var(--neon-blue); }
         
-        .table-wrapper { width: 100%; overflow-x: auto; max-height: 400px; background: white; flex-grow: 1; }
+        .table-wrapper { width: 100%; overflow-x: auto; max-height: 500px; flex-grow: 1; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; white-space: nowrap; text-align: center; }
-        th { background: #f8fafc; padding: 15px 10px; font-weight: 700; color: var(--slate-700); border-bottom: 2px solid var(--slate-200); position: sticky; top: 0; z-index: 10; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { padding: 12px 10px; border-bottom: 1px solid var(--slate-100); color: var(--slate-600); }
-        tbody tr:hover { background-color: var(--slate-50); }
+        th { background: var(--table-header); padding: 15px 10px; font-weight: 600; color: var(--text-main); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); }
+        tbody tr:hover { background-color: var(--table-row-hover); }
         
-        /* Botones de la tabla */
         .action-cell { display: flex; gap: 8px; justify-content: center; }
-        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white; border: 1px solid var(--slate-200); }
-        .btn-edit { color: var(--blue-600); }
-        .btn-edit:hover { background: var(--blue-50); border-color: var(--blue-300); }
-        .btn-delete { color: var(--red-500); }
-        .btn-delete:hover { background: var(--red-50); border-color: var(--red-300); }
+        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--input-bg); border: 1px solid var(--border-color); }
+        .btn-edit { color: var(--neon-blue); }
+        .btn-edit:hover { background: rgba(0,240,255,0.1); border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0,240,255,0.2);}
+        .btn-delete { color: var(--neon-red); }
+        .btn-delete:hover { background: rgba(255,51,51,0.1); border-color: var(--neon-red); box-shadow: 0 0 10px rgba(255,51,51,0.2);}
 
-        .table-footer { padding: 15px 25px; background: white; border-top: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
-        .badge-total { background: var(--blue-50); color: var(--blue-700); padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85em; }
+        .table-footer { padding: 15px 25px; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .badge-total { background: rgba(0,240,255,0.1); color: var(--neon-blue); padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85em; border: 1px solid rgba(0,240,255,0.2);}
 
-        /* Tabla de Costos Resumen */
         .costos-table { width: 100%; border-collapse: collapse; text-align: center; }
-        .costos-table th { background: var(--slate-50); color: var(--blue-800); font-size: 0.85em; padding: 12px 10px; border-bottom: 2px solid var(--slate-200); }
-        .costos-table td { padding: 12px 10px; border-bottom: 1px solid var(--slate-100); color: var(--slate-600); }
-        .costos-table tr.total-row td { font-weight: 800; font-size: 1.15em; color: var(--slate-900); border-top: 2px solid var(--slate-300); border-bottom: none; padding-top: 15px;}
-        .costos-table tr.total-row td.red-total { color: var(--red-600); }
+        .costos-table th { background: var(--table-header); color: var(--text-main); font-size: 0.85em; font-weight:600; padding: 12px 10px; border-bottom: 1px solid var(--border-color); text-transform: uppercase;}
+        .costos-table td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); }
+        .costos-table tr.total-row td { font-weight: 800; font-size: 1.15em; color: var(--text-main); border-top: 1px solid var(--border-color); border-bottom: none; padding-top: 15px;}
+        .costos-table tr.total-row td.red-total { color: var(--neon-red); text-shadow: 0 0 10px rgba(255,51,51,0.3);}
 
-        /* UTILIDADES Y MODALES */
         .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.8em; font-weight: 600; display: inline-block; }
-        .badge-srv { background: var(--blue-50); color: var(--blue-600); border: 1px solid var(--blue-100); }
-        .badge-loc { color: var(--slate-700); font-weight: 500; }
-        .badge-ya { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-200); font-size: 0.7em; margin-top: 4px; display: inline-block; }
+        .badge-loc { color: var(--text-main); font-weight: 500; }
+        .badge-ya { background: rgba(255,183,0,0.1); color: var(--neon-amber); border: 1px solid rgba(255,183,0,0.3); font-size: 0.7em; margin-top: 4px; display: inline-block; }
 
-        .loader-spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+        .loader-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 11, 20, 0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 30px; border-radius: 16px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
 
-        /* ======================================================== */
-        /* 🔥 ESTILOS EXCLUSIVOS PARA CUANDO SE GENERA EL PDF 🔥 */
-        /* ======================================================== */
+        /* ESTILOS EXCLUSIVOS PARA PDF */
         .solo-pdf { display: none; }
-        
-        body.generando-pdf { 
-            background-color: white !important; 
-            width: 1200px !important; 
-            margin: 0 auto !important; 
-        }
-        
-        body.generando-pdf .dashboard-wrapper { 
-            width: 100% !important; 
-            max-width: 1200px !important; 
-            padding: 20px !important; 
-            margin: 0 !important; 
-            box-sizing: border-box !important; 
-        }
-
-        /* 1. Ocultar interfaz de configuración y controles */
-        body.generando-pdf .navbar, 
-        body.generando-pdf .top-action-bar, 
-        body.generando-pdf .config-row,
-        body.generando-pdf .table-header { 
-            display: none !important; 
-        }
-        
-        /* 2. Cabecera del PDF */
-        body.generando-pdf .solo-pdf { 
-            display: block !important; 
-            text-align: center !important; 
-            margin-bottom: 25px !important; 
-            padding-top: 10px !important;
-            border-bottom: 2px solid #e2e8f0 !important;
-            padding-bottom: 15px !important;
-        }
-
+        body.generando-pdf { background-color: white !important; background-image: none !important; color: black !important; width: 1200px !important; margin: 0 auto !important; }
+        body.generando-pdf * { color: black !important; text-shadow: none !important; box-shadow: none !important; border-color: #ccc !important;}
+        body.generando-pdf .dashboard-wrapper { width: 100% !important; max-width: 1200px !important; padding: 20px !important; margin: 0 !important; box-sizing: border-box !important; display: block !important;}
+        body.generando-pdf .navbar, body.generando-pdf .top-action-bar, body.generando-pdf .config-row, body.generando-pdf .table-header { display: none !important; }
+        body.generando-pdf .solo-pdf { display: block !important; text-align: center !important; margin-bottom: 25px !important; padding-top: 10px !important; border-bottom: 2px solid #e2e8f0 !important; padding-bottom: 15px !important; }
         body.generando-pdf .solo-pdf h1 { font-size: 26px !important; color: #1e40af !important; margin: 0 0 5px 0 !important; }
         body.generando-pdf .solo-pdf p { font-size: 13px !important; color: #64748b !important; margin: 0 !important; }
-        
-        /* 3. Reacomodar los KPIs (Garantizar que queden en 1 sola fila horizontal) */
-        body.generando-pdf .kpis-grid { 
-            display: flex !important; 
-            flex-direction: row !important; 
-            justify-content: space-between !important; 
-            gap: 15px !important; 
-        }
-        body.generando-pdf .kpi-box { 
-            flex: 1 !important; 
-            border: 1px solid #cbd5e1 !important; 
-            box-shadow: none !important; 
-            padding: 15px !important;
-        }
-
-        /* Gráficos en PDF */
+        body.generando-pdf .kpis-grid { display: flex !important; flex-direction: row !important; justify-content: space-between !important; gap: 15px !important; }
+        body.generando-pdf .kpi-box { flex: 1 !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; padding: 15px !important; background: white !important;}
+        body.generando-pdf .kpi-box::after { display: none !important; }
         body.generando-pdf .charts-grid { display: flex !important; flex-direction: row !important; height: 220px !important; }
         body.generando-pdf .charts-grid > div { flex: 1 !important; }
+        body.generando-pdf .bottom-row { display: block !important; }
+        body.generando-pdf .panel { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 30px !important; page-break-inside: avoid !important; background: transparent !important;}
+        body.generando-pdf .panel-title { font-size: 16px !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 8px !important; margin-bottom: 15px !important; }
+        body.generando-pdf .panel-title svg { display: none !important; }
+        body.generando-pdf .table-wrapper { overflow: visible !important; max-height: none !important; width: 100% !important; }
+        body.generando-pdf table { width: 100% !important; border-collapse: collapse !important; table-layout: auto !important; }
+        body.generando-pdf th, body.generando-pdf td { white-space: normal !important; word-wrap: break-word !important; border: 1px solid #cbd5e1 !important; padding: 8px 6px !important; font-size: 10.5px !important; background: transparent !important;}
+        body.generando-pdf th { background-color: #f1f5f9 !important; font-weight: bold !important; }
+        body.generando-pdf th:last-child, body.generando-pdf td:last-child { display: none !important; }
+        body.generando-pdf tr { page-break-inside: avoid !important; }
+        body.generando-pdf .badge-ya { border:none !important; color: #d97706 !important;}
 
-        /* 4. Romper los Grids inferiores para que se acomoden hacia abajo */
-        body.generando-pdf .bottom-row { 
-            display: block !important; 
-        }
-
-        body.generando-pdf .panel { 
-            box-shadow: none !important; 
-            border: none !important; 
-            padding: 0 !important;
-            margin-bottom: 30px !important; 
-            page-break-inside: avoid !important; /* Evita cortes bruscos */
-        }
-        
-        body.generando-pdf .panel-title { 
-            font-size: 16px !important;
-            border-bottom: 1px solid #cbd5e1 !important; 
-            padding-bottom: 8px !important; 
-            margin-bottom: 15px !important;
-        }
-
-        /* 5. Formateo estricto de tablas: Liberar la altura máxima y permitir ajuste */
-        body.generando-pdf .table-wrapper { 
-            overflow: visible !important; 
-            max-height: none !important; 
-            width: 100% !important; 
-        }
-        
-        body.generando-pdf table { 
-            width: 100% !important; 
-            border-collapse: collapse !important; 
-            table-layout: auto !important; 
-        }
-        
-        body.generando-pdf th, 
-        body.generando-pdf td { 
-            white-space: normal !important; 
-            word-wrap: break-word !important;
-            border: 1px solid #cbd5e1 !important; 
-            padding: 8px 6px !important; 
-            font-size: 10.5px !important;
-        }
-        
-        body.generando-pdf th { 
-            background-color: #f1f5f9 !important; 
-            color: #1e293b !important; 
-            font-weight: bold !important;
-        }
-        
-        /* Ocultar columna Acciones */
-        body.generando-pdf th:last-child, 
-        body.generando-pdf td:last-child { 
-            display: none !important; 
-        }
-
-        body.generando-pdf tr { 
-            page-break-inside: avoid !important; 
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; padding: 15px; justify-content: center; text-align: center;}
+            .user-info { width: 100%; justify-content: center; margin-top: 10px;}
+            .nav-links { width: 100%; justify-content: center; }
+            .top-action-bar { flex-direction: column; align-items: center;}
+            .btn-main-action { width: 100%; }
         }
     </style>
-    <script src="config.js"></script>
-    <script src="motorTarifas.js"></script> 
 </head>
 <body>
 
 <div class="navbar" id="navbar">
     <div class="navbar-brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-        Proyección Global (Macro)
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+        Proyección Global
     </div>
     <div class="nav-links">
-        <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
+        <a href="Inicio.html" id="linkInicio">🏠 Inicio</a>
         <a href="ProyeccionGlobal.html" id="linkProyeccion" class="active">🔭 Proyección</a>
-        <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
-        <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
-        <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
+        <a href="Simulador.html" id="linkSimIDs">📝 Sim. IDs</a>
+        <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. CP</a>
+        <a href="AuditorMasivo.html" id="linkMasivo">⚡ Masivo</a>
         <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
         <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
         <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
         <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
         <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
     </div>
-    <div class="user-info" id="infoUsuario"></div>
+    <div class="user-info" id="infoUsuario">
+        <!-- Renderizado por JS -->
+    </div>
 </div>
 
 <div class="dashboard-wrapper" id="zonaImprimible">
@@ -305,29 +316,32 @@
 
     <div class="top-action-bar">
         <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap;">
-            <div id="indicadorStatus" style="font-size: 0.9em; font-weight: 700; color: var(--emerald-700); background: var(--emerald-100); padding: 8px 14px; border-radius: 20px;">✅ Sistema Conectado</div>
-            <button onclick="forzarDescarga()" style="background:transparent; color:var(--blue-600); border:none; cursor:pointer; font-size:0.9em; font-weight: 600; text-decoration:underline;">Actualizar Datos</button>
-            <button onclick="abrirModalEditarProy()" style="background: white; color: var(--amber-600); border: 1px solid var(--amber-200); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">✏️ Editar Proyección Anterior</button>
+            <div id="indicadorStatus" style="font-size: 0.9em; font-weight: 700; color: var(--neon-amber); background: rgba(255,183,0,0.1); border: 1px solid rgba(255,183,0,0.3); padding: 8px 14px; border-radius: 20px; box-shadow: 0 0 10px rgba(255,183,0,0.1);">⏳ Verificando Caché...</div>
+            <button onclick="forzarDescarga()" style="background:transparent; color:var(--text-muted); border:none; cursor:pointer; font-size:0.9em; font-weight: 500; text-decoration:underline;">Actualizar Datos</button>
+            <button onclick="abrirModalEditarProy()" class="btn-outline-amber">✏️ Editar Proyección Anterior</button>
         </div>
 
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1; justify-content: flex-end;">
             <button id="btnCalcTop" class="btn-main-action btn-calc" onclick="ejecutarProyeccion()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-                Calcular Rentabilidad
+                Calcular
             </button>
             <button id="btnSaveTop" class="btn-main-action btn-save" onclick="guardarProyeccion()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                <span id="txtBtnSave">Guardar Proyección</span>
+                <span id="txtBtnSave">Guardar</span>
             </button>
             <button id="btnPdfTop" class="btn-main-action btn-pdf" onclick="generarPDF()" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                Generar PDF
+                PDF
             </button>
         </div>
     </div>
 
     <div class="panel" style="padding-bottom: 15px;">
-        <h3 class="panel-title">Resumen Financiero de la Simulación</h3>
+        <h3 class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Resumen Financiero de la Simulación
+        </h3>
         
         <div class="kpis-grid">
             <div class="kpi-box kpi-ingresos">
@@ -359,7 +373,10 @@
     </div>
 
     <div class="panel" id="panelGraficos" style="display: none; padding-bottom: 20px;">
-        <h3 class="panel-title">Análisis Gráfico</h3>
+        <h3 class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>
+            Análisis Gráfico
+        </h3>
         <div class="charts-grid">
             <div class="chart-container"><canvas id="chartRentabilidad"></canvas></div>
             <div class="chart-container"><canvas id="chartCostos"></canvas></div>
@@ -373,28 +390,28 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 1. Ingresar Pedidos
             </h3>
-            <p style="font-size:0.9em; color:var(--slate-500); margin-bottom:15px;">Agrega los pedidos que deseas cotizar para la fecha seleccionada.</p>
+            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:15px;">Agrega los pedidos que deseas cotizar para la fecha seleccionada.</p>
             
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom: 20px;">
-                <label style="margin:0; width: 140px; color: var(--slate-700);">📅 Fecha a proyectar:</label>
-                <input type="date" id="fechaDespacho" class="input-box" style="padding: 8px;">
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom: 20px; flex-wrap: wrap;">
+                <label style="margin:0; width: auto; color: var(--text-muted); white-space: nowrap;">📅 Fecha a proyectar:</label>
+                <input type="date" id="fechaDespacho" class="input-box" style="padding: 8px; flex: 1; min-width: 150px;">
             </div>
 
-            <div style="border: 1px solid var(--blue-200); background: var(--blue-50); border-radius: 10px; padding: 15px;">
-                <textarea id="txtPedidos" class="input-box" placeholder="Ej: 1218301, 1218302..." oninput="validarEstadoBoton()" style="border-color:var(--blue-200); background:white; min-height: 120px; font-size: 1.1em; letter-spacing: 0.5px;"></textarea>
-                <div style="text-align:right; font-size:0.9em; font-weight:700; color:var(--blue-700); margin-top:8px;" id="lblCantIds">0 IDs Únicos</div>
+            <div style="border: 1px solid var(--border-color); background: rgba(0,0,0,0.1); border-radius: 10px; padding: 15px;">
+                <textarea id="txtPedidos" class="input-box" placeholder="Ej: 1218301, 1218302..." oninput="validarEstadoBoton()" style="min-height: 150px; font-size: 1.1em; letter-spacing: 0.5px;"></textarea>
+                <div style="text-align:right; font-size:0.85em; font-weight:700; color:var(--neon-blue); margin-top:8px;" id="lblCantIds">0 IDs Únicos</div>
             </div>
         </div>
 
         <div class="panel">
             <h3 class="panel-title">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                2. Seleccionar Vehículos a Utilizar
+                2. Seleccionar Vehículos
             </h3>
-            <p style="font-size:0.9em; color:var(--slate-500); margin-bottom:20px;">Elige los tipos y cantidades de vehículos para cumplir con los pedidos.</p>
+            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:20px;">Elige los tipos y cantidades de vehículos para cumplir con los pedidos.</p>
             
             <div id="listaVehiculosGlobal" class="vehiculos-grid">
-                <div style="padding: 20px; text-align: center; color: var(--slate-400); width: 100%;">Cargando catálogo...</div>
+                <div style="padding: 20px; text-align: center; color: var(--text-muted); width: 100%;">Cargando catálogo...</div>
             </div>
 
             <div class="veh-info-banner">
@@ -406,31 +423,39 @@
 
     <div class="bottom-row">
         <div class="panel">
-            <h3 class="panel-title">Flota Utilizada y Desglose de Costos</h3>
-            <table class="costos-table">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;">Tipo de Vehículo</th>
-                        <th>Cantidad Asignada</th>
-                        <th>Costo Unitario</th>
-                        <th style="text-align:right;">Costo Total</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyCostosVehiculos">
-                    <tr><td colspan="4" style="padding: 30px; font-style:italic;">Seleccione vehículos.</td></tr>
-                </tbody>
-                <tfoot>
-                    <tr class="total-row">
-                        <td colspan="3" style="text-align:left;">Inversión Total en Flota</td>
-                        <td id="tfootTotalCosto" class="red-total" style="text-align:right;">$0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
+            <h3 class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Costos de Flota
+            </h3>
+            <div style="overflow-x: auto;">
+                <table class="costos-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Tipo de Vehículo</th>
+                            <th>Cantidad</th>
+                            <th>Costo Un.</th>
+                            <th style="text-align:right;">Costo Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCostosVehiculos">
+                        <tr><td colspan="4" style="padding: 30px; font-style:italic;">Seleccione vehículos.</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td colspan="3" style="text-align:left;">Inversión Total</td>
+                            <td id="tfootTotalCosto" class="red-total" style="text-align:right;">$0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
 
         <div class="panel table-panel">
             <div class="table-header">
-                <h3 class="panel-title" style="margin:0;">Detalle de Pedidos Proyectados</h3>
+                <h3 class="panel-title" style="margin:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    Detalle de Pedidos
+                </h3>
                 
                 <div class="filter-group">
                     <select id="filtroCliente" class="filter-inline" onchange="renderizarTabla()">
@@ -463,7 +488,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="11" style="text-align:center; padding:80px; color:#94a3b8; font-size:1.1em;">Rellene la bolsa de pedidos y haga clic en Calcular.</td></tr>
+                        <tr><td colspan="11" style="text-align:center; padding:80px; color:var(--text-muted); font-size:1.1em;">Rellene la bolsa de pedidos y haga clic en Calcular.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -474,57 +499,63 @@
     </div>
 </div>
 
+<!-- MODAL BUSCAR PROYECCIÓN -->
 <div id="modalEditarProy" class="modal-overlay">
     <div class="modal-content">
-        <h2 style="margin-bottom: 25px; color:var(--blue-800);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:bottom;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Editar Proyección</h2>
+        <h2 style="margin-bottom: 25px; color:var(--text-main); display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon-amber)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> 
+            Editar Proyección
+        </h2>
         
-        <div style="display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; background: var(--slate-50); padding: 10px; border-radius: 8px;">
-            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin:0;"><input type="radio" name="tipoBusquedaProy" value="ID" checked onchange="toggleBusquedaProy()"> Buscar por ID</label>
-            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin:0;"><input type="radio" name="tipoBusquedaProy" value="FECHA" onchange="toggleBusquedaProy()"> Buscar por Fecha</label>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin:0; color: var(--text-main);"><input type="radio" name="tipoBusquedaProy" value="ID" checked onchange="toggleBusquedaProy()"> Buscar por ID</label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin:0; color: var(--text-main);"><input type="radio" name="tipoBusquedaProy" value="FECHA" onchange="toggleBusquedaProy()"> Buscar por Fecha</label>
         </div>
 
         <div id="boxBusquedaId">
-            <input type="number" id="txtIdEditarProy" placeholder="Ej: 45" style="text-align:center; font-size: 1.2em; font-weight: bold; margin-bottom: 20px; padding: 15px; width:100%; border:1px solid var(--slate-300); border-radius:8px;">
+            <input type="number" id="txtIdEditarProy" placeholder="Ej: 45" style="text-align:center; font-size: 1.2em; font-weight: bold; margin-bottom: 20px; padding: 15px; width:100%; border:1px solid var(--border-color); border-radius:8px; background: var(--input-bg); color: var(--text-main); outline: none;">
         </div>
 
         <div id="boxBusquedaFecha" style="display:none;">
-            <input type="date" id="txtFechaEditarProy" style="text-align:center; font-size: 1.2em; font-weight: bold; margin-bottom: 20px; padding: 15px; width:100%; border:1px solid var(--slate-300); border-radius:8px;">
+            <input type="date" id="txtFechaEditarProy" style="text-align:center; font-size: 1.2em; font-weight: bold; margin-bottom: 20px; padding: 15px; width:100%; border:1px solid var(--border-color); border-radius:8px; background: var(--input-bg); color: var(--text-main); outline: none;">
         </div>
 
-        <div id="listaResultadosFecha" style="display:none; text-align:left; max-height:200px; overflow-y:auto; margin-bottom:15px; border:1px solid var(--slate-200); border-radius:8px; padding:10px;"></div>
+        <div id="listaResultadosFecha" style="display:none; text-align:left; max-height:200px; overflow-y:auto; margin-bottom:15px; border:1px solid var(--border-color); border-radius:8px; padding:10px; background: rgba(0,0,0,0.1);"></div>
 
         <div style="display: flex; gap: 10px;">
-            <button onclick="document.getElementById('modalEditarProy').style.display='none'" style="flex:1; background:white; color:var(--slate-700); border:1px solid var(--slate-300); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Cancelar</button>
-            <button onclick="buscarProyeccionEdicion()" style="flex:1; background:var(--blue-600); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Buscar Datos</button>
+            <button onclick="document.getElementById('modalEditarProy').style.display='none'" style="flex:1; background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; transition:all 0.2s;">Cancelar</button>
+            <button onclick="buscarProyeccionEdicion()" style="flex:1; background:rgba(0, 240, 255, 0.1); color:var(--neon-blue); border:1px solid var(--neon-blue); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; transition:all 0.2s;">Buscar Datos</button>
         </div>
     </div>
 </div>
 
+<!-- MODAL LOADER CAMIÓN -->
 <div id="loaderCamion" class="modal-overlay">
     <div style="text-align: center;">
         <div style="font-size: 4em; animation: pulse 1s infinite alternate; margin-bottom: 15px;">🚀</div>
         <h2 id="lblLoaderMsg" style="color: white; margin: 0;">Procesando Datos...</h2>
-        <div style="color: var(--slate-400); font-size: 0.9em; margin-top: 10px;">Por favor, no cierre esta ventana.</div>
+        <div style="color: var(--text-muted); font-size: 0.9em; margin-top: 10px;">Por favor, no cierre esta ventana.</div>
     </div>
 </div>
 <style>@keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 100% { transform: scale(1.1); opacity: 1; } }</style>
 
+<!-- MODAL ÉXITO -->
 <div id="modalExitoProy" class="modal-overlay">
     <div class="modal-content">
-        <div style="width: 70px; height: 70px; background: var(--emerald-50); color: var(--emerald-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+        <div style="width: 70px; height: 70px; background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 1px solid var(--neon-green); box-shadow: 0 0 15px rgba(0,255,157,0.2);">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         </div>
-        <h2 style="margin: 0 0 10px; font-size: 1.5em; color: var(--slate-900);">¡Operación Exitosa!</h2>
-        <p id="msgExitoGeneral" style="color:var(--slate-600); font-size:1.05em; margin-bottom: 15px;">La proyección se ha guardado en la base de datos.</p>
+        <h2 style="margin: 0 0 10px; font-size: 1.5em; color: var(--text-main);">¡Operación Exitosa!</h2>
+        <p id="msgExitoGeneral" style="color:var(--text-muted); font-size:1.05em; margin-bottom: 15px;">La proyección se ha guardado en la base de datos.</p>
         
-        <div style="background: var(--slate-50); border: 2px dashed var(--slate-300); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
-            <span style="font-size: 0.9em; color: var(--slate-500); display: block; margin-bottom: 5px;">ID Asignado:</span>
-            <strong id="lblIdExito" style="font-size: 2.2em; color: var(--blue-600); letter-spacing: 1px;">#0</strong>
+        <div style="background: rgba(0,0,0,0.2); border: 2px dashed var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+            <span style="font-size: 0.9em; color: var(--text-muted); display: block; margin-bottom: 5px;">ID Asignado:</span>
+            <strong id="lblIdExito" style="font-size: 2.2em; color: var(--neon-blue); letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,240,255,0.4);">#0</strong>
         </div>
         
         <div style="display: flex; gap: 10px;">
-            <button onclick="document.getElementById('modalExitoProy').style.display='none'" style="flex:1; background:white; border:1px solid var(--slate-300); color:var(--slate-700); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Entendido</button>
-            <button onclick="copiarIdProyeccion()" style="flex:1; background:var(--blue-600); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <button onclick="document.getElementById('modalExitoProy').style.display='none'" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Entendido</button>
+            <button onclick="copiarIdProyeccion()" style="flex:1; background:rgba(0, 240, 255, 0.1); color:var(--neon-blue); border:1px solid var(--neon-blue); padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 Copiar ID
             </button>
@@ -532,26 +563,60 @@
     </div>
 </div>
 
+<!-- MODAL NO ENCONTRADOS -->
 <div id="modalIdsNoEncontrados" class="modal-overlay">
     <div class="modal-content" style="max-width: 500px;">
-        <div style="width: 70px; height: 70px; background: var(--red-50); color: var(--red-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+        <div style="width: 70px; height: 70px; background: rgba(255, 51, 51, 0.1); color: var(--neon-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 1px solid var(--neon-red); box-shadow: 0 0 15px rgba(255,51,51,0.2);">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
         </div>
-        <h2 style="margin: 0 0 10px; font-size: 1.5em; color: var(--slate-900);">Pedidos no encontrados</h2>
-        <p style="color:var(--slate-600); font-size:1.05em; margin-bottom: 15px;">Los siguientes IDs no existen en el Monitor. Verifique si están bien escritos o si ya fueron procesados en el TMS:</p>
+        <h2 style="margin: 0 0 10px; font-size: 1.5em; color: var(--text-main);">Pedidos no encontrados</h2>
+        <p style="color:var(--text-muted); font-size:1.05em; margin-bottom: 15px;">Los siguientes IDs no existen en el Monitor. Verifique si están bien escritos o si ya fueron procesados en el TMS:</p>
         
-        <div style="background: var(--slate-50); border: 1px solid var(--slate-300); padding: 15px; border-radius: 8px; margin-bottom: 25px; max-height: 180px; overflow-y: auto; text-align: left; font-family: monospace; font-size: 1.1em; color: var(--red-600);">
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 25px; max-height: 180px; overflow-y: auto; text-align: left; font-family: monospace; font-size: 1.1em; color: var(--neon-red);">
             <ul id="listaIdsPerdidos" style="margin: 0; padding-left: 20px; line-height: 1.6;"></ul>
         </div>
         
-        <button onclick="document.getElementById('modalIdsNoEncontrados').style.display='none'" style="width:100%; background:var(--slate-800); color:white; padding:14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 1.05em;">Entendido</button>
+        <button onclick="document.getElementById('modalIdsNoEncontrados').style.display='none'" style="width:100%; background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color); padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 1.05em;">Entendido</button>
     </div>
 </div>
+
+<!-- 🔥 RECURSOS DE LÓGICA DE NEGOCIO 🔥 -->
+<script src="motorTarifas.js"></script> 
 
 <script>
     // 🔒 RECUPERAR SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+
+    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
+    const savedTheme = localStorage.getItem('flexnet_theme');
+    let isDarkChecked = (!savedTheme || savedTheme === 'dark') ? 'checked' : '';
+    if (savedTheme === 'light') document.body.classList.add('light-theme');
+
+    function toggleTheme() {
+        const isChecked = document.getElementById('theme-switch').checked;
+        if (isChecked) {
+            document.body.classList.remove('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'dark');
+        } else {
+            document.body.classList.add('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'light');
+        }
+        
+        if (totalesActuales.totalPedidos > 0) {
+            Chart.defaults.color = isChecked ? '#94a3b8' : '#64748b'; 
+            let dataFlota = [];
+            document.querySelectorAll('.input-flota').forEach(input => {
+                let cant = parseInt(input.value) || 0;
+                if(cant>0) dataFlota.push({tipo: input.getAttribute('data-tipo'), costo: cant * parseFloat(input.getAttribute('data-precio'))});
+            });
+            let dataClientes = {};
+            pedidosProcesadosGlobal.forEach(p => {
+                if(!p.noEncontrado) dataClientes[p.cliente] = (dataClientes[p.cliente] || 0) + 1;
+            });
+            dibujarGraficos(totalesActuales.ingresosProyectados, totalesActuales.costoFlota, dataFlota, dataClientes);
+        }
+    }
 
     // VARIABLES GLOBALES
     let dMonitor = [], dTarifas = [];
@@ -561,12 +626,10 @@
     let modoEdicionActivo = false;
     let idProyeccionEditando = null;
 
-    // Variables Gráficos Chart.js
     let myChartRentabilidad = null;
     let myChartCostos = null;
     let myChartClientes = null;
 
-    // 🔥 MOTORES DE INDEXED DB 🔥
     const dbName = "SimuladorDB";
     const storeName = "MonitorStore";
     
@@ -582,12 +645,12 @@
         });
     }
     
-    async function obtenerDatoDB(id) {
+    async function obtenerDatoDBCompleto(id) {
         const db = await initDB();
         const tx = db.transaction(storeName, "readonly");
         const request = tx.objectStore(storeName).get(id);
         return new Promise(resolve => {
-            request.onsuccess = () => resolve(request.result ? request.result.data : null);
+            request.onsuccess = () => resolve(request.result ? request.result : null);
             request.onerror = () => resolve(null);
         });
     }
@@ -600,10 +663,23 @@
     }
 
     window.onload = async function() {
-        document.getElementById('infoUsuario').innerHTML = `<span>📍 ${sesion.ciudad} | 👤 ${sesion.nombre}</span> <button onclick="cerrarSesion()" class="btn-logout">Salir</button>`;
+        document.getElementById('infoUsuario').innerHTML = `
+            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
+            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                <div class="toggle"></div>
+                <div class="names">
+                    <p class="light">Light</p>
+                    <p class="dark">Dark</p>
+                </div>
+            </label>
+            <span style="opacity:0.3; margin: 0 5px;">|</span>
+            <span>📍 ${sesion.ciudad}</span>
+            <span>👤 <b>${sesion.nombre}</b></span>
+            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+        `;
+        
         document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
 
-        // Preparar info para PDF
         document.getElementById('pdfUsuario').innerText = sesion.nombre;
         document.getElementById('pdfFechaImpresion').innerText = new Date().toLocaleString('es-EC');
         document.getElementById('pdfFechaSeleccionada').innerText = document.getElementById('fechaDespacho').value;
@@ -617,26 +693,26 @@
             document.getElementById('lblCantIds').innerText = ids.length + " IDs Únicos";
         });
 
+        Chart.defaults.color = document.body.classList.contains('light-theme') ? '#64748b' : '#94a3b8';
+
         await inicializarDatos();
     };
 
-    // ==========================================
-    // 🔥 ACTUALIZAR GRÁFICOS (CHART.JS) 🔥
-    // ==========================================
     function dibujarGraficos(ingresos, costos, dataFlota, dataClientes) {
         document.getElementById('panelGraficos').style.display = 'block';
 
-        // Destruir gráficos anteriores para evitar superposiciones
         if(myChartRentabilidad) myChartRentabilidad.destroy();
         if(myChartCostos) myChartCostos.destroy();
         if(myChartClientes) myChartClientes.destroy();
 
-        // Configuraciones globales para que el PDF capture la foto instantánea sin esperar animaciones
         Chart.defaults.animation = false;
         Chart.defaults.responsive = true;
         Chart.defaults.maintainAspectRatio = false;
 
-        // 1. Gráfico Rentabilidad (Barras)
+        const colorVerde = '#00ff9d';
+        const colorRojo = '#ff3333';
+        const colorBorder = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+
         const ctxRent = document.getElementById('chartRentabilidad').getContext('2d');
         myChartRentabilidad = new Chart(ctxRent, {
             type: 'bar',
@@ -645,7 +721,7 @@
                 datasets: [{
                     label: 'Monto ($)',
                     data: [ingresos, costos],
-                    backgroundColor: ['#059669', '#dc2626'], // Emerald y Red
+                    backgroundColor: [colorVerde, colorRojo], 
                     borderRadius: 4
                 }]
             },
@@ -654,11 +730,13 @@
                     title: { display: true, text: 'Comparativa de Rentabilidad', font: { size: 14 } },
                     legend: { display: false }
                 },
-                scales: { y: { beginAtZero: true } }
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: colorBorder } },
+                    x: { grid: { display: false } }
+                }
             }
         });
 
-        // 2. Gráfico Distribución de Costos (Dona)
         let labelsCostos = [];
         let valuesCostos = [];
         dataFlota.forEach(item => {
@@ -673,7 +751,9 @@
                 labels: labelsCostos,
                 datasets: [{
                     data: valuesCostos,
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#64748b']
+                    backgroundColor: ['#00f0ff', '#8a2be2', '#ffb700', '#00ff9d', '#ff3333', '#94a3b8'],
+                    borderWidth: 1,
+                    borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a'
                 }]
             },
             options: {
@@ -681,11 +761,10 @@
                     title: { display: true, text: 'Inversión por Tipo de Vehículo', font: { size: 14 } },
                     legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
                 },
-                cutout: '60%'
+                cutout: '65%'
             }
         });
 
-        // 3. Gráfico Pedidos por Cliente (Dona)
         let labelsClientes = Object.keys(dataClientes);
         let valuesClientes = Object.values(dataClientes);
 
@@ -696,7 +775,9 @@
                 labels: labelsClientes,
                 datasets: [{
                     data: valuesClientes,
-                    backgroundColor: ['#0ea5e9', '#ec4899', '#f43f5e', '#8b5cf6', '#14b8a6', '#f59e0b']
+                    backgroundColor: ['#3b82f6', '#ec4899', '#f43f5e', '#8b5cf6', '#14b8a6', '#f59e0b'],
+                    borderWidth: 1,
+                    borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a'
                 }]
             },
             options: {
@@ -704,14 +785,11 @@
                     title: { display: true, text: 'Composición de Pedidos por Cliente', font: { size: 14 } },
                     legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
                 },
-                cutout: '60%'
+                cutout: '65%'
             }
         });
     }
 
-    // ==========================================
-    // 🔥 FUNCIÓN PARA GENERAR PDF TIPO DASHBOARD 🔥
-    // ==========================================
     function generarPDF() {
         let btnPdf = document.getElementById('btnPdfTop');
         let oldHtml = btnPdf.innerHTML;
@@ -723,6 +801,18 @@
 
         document.body.classList.add('generando-pdf');
         document.getElementById('pdfFechaImpresion').innerText = new Date().toLocaleString('es-EC');
+        
+        Chart.defaults.color = '#000000';
+        let dataFlota = [];
+        document.querySelectorAll('.input-flota').forEach(input => {
+            let cant = parseInt(input.value) || 0;
+            if(cant>0) dataFlota.push({tipo: input.getAttribute('data-tipo'), costo: cant * parseFloat(input.getAttribute('data-precio'))});
+        });
+        let dataClientes = {};
+        pedidosProcesadosGlobal.forEach(p => {
+            if(!p.noEncontrado) dataClientes[p.cliente] = (dataClientes[p.cliente] || 0) + 1;
+        });
+        dibujarGraficos(totalesActuales.ingresosProyectados, totalesActuales.costoFlota, dataFlota, dataClientes);
 
         const elemento = document.getElementById('zonaImprimible');
         
@@ -745,6 +835,10 @@
             wrappers.forEach(w => w.style.overflow = 'auto'); 
             btnPdf.innerHTML = oldHtml;
             btnPdf.disabled = false;
+            
+            Chart.defaults.color = document.body.classList.contains('light-theme') ? '#64748b' : '#94a3b8';
+            dibujarGraficos(totalesActuales.ingresosProyectados, totalesActuales.costoFlota, dataFlota, dataClientes);
+            
         }).catch((err) => {
             console.error(err);
             document.body.classList.remove('generando-pdf');
@@ -763,29 +857,55 @@
 
     async function inicializarDatos() {
         document.getElementById('indicadorStatus').innerText = "⏳ Verificando Caché...";
-        document.getElementById('indicadorStatus').style.color = "var(--amber-600)";
-        document.getElementById('indicadorStatus').style.background = "var(--amber-50)";
+        document.getElementById('indicadorStatus').style.color = "var(--neon-amber)";
+        document.getElementById('indicadorStatus').style.background = "rgba(255,183,0,0.1)";
 
-        let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
-        let dMonitorCache = await obtenerDatoDB("monitorCargado"); 
+        try {
+            const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
+            const ping = await resPing.json();
+            if (ping.error) throw new Error(ping.error);
 
-        let necesitaTarifas = true;
-        let cache = null;
+            let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
+            let dMonitorCacheObj = await obtenerDatoDBCompleto("monitorCargado");
+            
+            let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
+            let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
 
-        if (cacheTarifasStr) {
-            cache = JSON.parse(cacheTarifasStr);
-            if (cache.tarifarioGlobalDB && cache.tarifarioGlobalDB.length > 0) necesitaTarifas = false; 
-        }
+            let necesitaMonitor = false;
+            if (!dMonitorCacheObj || !dMonitorCacheObj.data || dMonitorCacheObj.data.length === 0) {
+                necesitaMonitor = true;
+            } else if (ping.monitorTs && ping.monitorTs > dMonitorCacheObj.timestamp) {
+                necesitaMonitor = true;
+            }
 
-        let necesitaMonitor = !dMonitorCache || dMonitorCache.length === 0;
+            if (!necesitaTarifas && !necesitaMonitor) {
+                dTarifas = cacheTarifas.dTarifas; 
+                window.tfaPesoDB = tfaPesoDB = cacheTarifas.tfaPesoDB; 
+                window.tfaPedidoDB = tfaPedidoDB = cacheTarifas.tfaPedidoDB; 
+                window.tfaRangoDB = tfaRangoDB = cacheTarifas.tfaRangoDB; 
+                window.tfaMedidaDB = tfaMedidaDB = cacheTarifas.tfaMedidaDB; 
+                trayectoDB = cacheTarifas.trayectoDB || [];
+                tarifarioGlobalDB = cacheTarifas.tarifarioGlobalDB;
+                window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || []; 
+                if(cacheTarifas.arrHist) cacheTarifas.arrHist.forEach(id => pedidosHistoricos[id] = true);
+                
+                dMonitor = dMonitorCacheObj.data;
 
-        if (necesitaTarifas || necesitaMonitor) {
-            document.getElementById('indicadorStatus').innerText = "☁️ Conectando Nube...";
-            try {
-                if (necesitaTarifas) {
-                    let resT = await fetch(`${SCRIPT_URL}?action=getAllTarifas`);
-                    let allData = await resT.json();
-                    
+                document.getElementById('indicadorStatus').innerText = `✅ Sistema Conectado`;
+                document.getElementById('indicadorStatus').style.color = "var(--neon-green)";
+                document.getElementById('indicadorStatus').style.background = "rgba(0,255,157,0.1)";
+                cargarOpcionesSelectFlota();
+                return;
+            }
+
+            document.getElementById('indicadorStatus').innerText = "☁️ Descargando Nube...";
+            document.getElementById('indicadorStatus').style.color = "var(--neon-blue)";
+            document.getElementById('indicadorStatus').style.background = "rgba(0,240,255,0.1)";
+
+            const promesas = [];
+
+            if (necesitaTarifas) {
+                promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
                     dTarifas = allData.tarifas || []; 
                     window.tfaPesoDB = tfaPesoDB = allData.peso || [];
                     window.tfaPedidoDB = tfaPedidoDB = allData.pedido || []; 
@@ -808,52 +928,47 @@
                     
                     sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
                         dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, tarifarioGlobalDB, 
-                        tarifaExclusivosDB: window.tarifaExclusivosDB, arrHist
+                        tarifaExclusivosDB: window.tarifaExclusivosDB, arrHist, timestamp: ping.tarifarioTs
                     }));
-                } else {
-                    dTarifas = cache.dTarifas; 
-                    window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
-                    window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; 
-                    window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
-                    window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB;
-                    trayectoDB = cache.trayectoDB || [];
-                    tarifarioGlobalDB = cache.tarifarioGlobalDB;
-                    window.tarifaExclusivosDB = cache.tarifaExclusivosDB || []; 
-                    
-                    if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
-                }
-
-                if (necesitaMonitor) {
-                    let resM = await fetch(`${SCRIPT_URL}?action=getMonitorBQ`);
-                    let jsonM = await resM.json();
-                    if(!jsonM.error) {
-                        dMonitor = jsonM;
-                        await guardarDatoDB("monitorCargado", dMonitor, new Date().getTime());
-                    }
-                } else { dMonitor = dMonitorCache; }
-            } catch (error) {
-                document.getElementById('indicadorStatus').innerText = "❌ Error al descargar"; 
-                document.getElementById('indicadorStatus').style.color = "var(--red-600)";
-                document.getElementById('indicadorStatus').style.background = "var(--red-50)";
-                return;
+                }));
+            } else {
+                dTarifas = cacheTarifas.dTarifas; 
+                window.tfaPesoDB = tfaPesoDB = cacheTarifas.tfaPesoDB; 
+                window.tfaPedidoDB = tfaPedidoDB = cacheTarifas.tfaPedidoDB; 
+                window.tfaRangoDB = tfaRangoDB = cacheTarifas.tfaRangoDB; 
+                window.tfaMedidaDB = tfaMedidaDB = cacheTarifas.tfaMedidaDB;
+                trayectoDB = cacheTarifas.trayectoDB || [];
+                tarifarioGlobalDB = cacheTarifas.tarifarioGlobalDB;
+                window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || []; 
+                if(cacheTarifas.arrHist) cacheTarifas.arrHist.forEach(id => pedidosHistoricos[id] = true);
             }
-        } else {
-            dTarifas = cache.dTarifas; 
-            window.tfaPesoDB = tfaPesoDB = cache.tfaPesoDB; 
-            window.tfaPedidoDB = tfaPedidoDB = cache.tfaPedidoDB; 
-            window.tfaRangoDB = tfaRangoDB = cache.tfaRangoDB; 
-            window.tfaMedidaDB = tfaMedidaDB = cache.tfaMedidaDB; 
-            trayectoDB = cache.trayectoDB || [];
-            tarifarioGlobalDB = cache.tarifarioGlobalDB;
-            window.tarifaExclusivosDB = cache.tarifaExclusivosDB || []; 
-            if(cache.arrHist) cache.arrHist.forEach(id => pedidosHistoricos[id] = true);
-            dMonitor = dMonitorCache; 
-        }
 
-        document.getElementById('indicadorStatus').innerText = `✅ Sistema Conectado`;
-        document.getElementById('indicadorStatus').style.color = "var(--emerald-700)";
-        document.getElementById('indicadorStatus').style.background = "var(--emerald-100)";
-        cargarOpcionesSelectFlota();
+            if (necesitaMonitor) {
+                promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
+                    if(!jsonResponse.error) {
+                        dMonitor = reconstruirDesdeHeadersYFilas(jsonResponse); 
+                        await guardarDatoDB("monitorCargado", dMonitor, ping.monitorTs);
+                    } else {
+                        throw new Error(jsonResponse.error);
+                    }
+                }));
+            } else {
+                dMonitor = dMonitorCacheObj.data; 
+            }
+
+            await Promise.all(promesas);
+
+            document.getElementById('indicadorStatus').innerText = `✅ Sistema Conectado`;
+            document.getElementById('indicadorStatus').style.color = "var(--neon-green)";
+            document.getElementById('indicadorStatus').style.background = "rgba(0,255,157,0.1)";
+            cargarOpcionesSelectFlota();
+
+        } catch (error) {
+            console.error("Detalle del error en descarga:", error);
+            document.getElementById('indicadorStatus').innerHTML = `❌ Error al descargar <span style="font-size:0.7em;">(${error.message})</span>`; 
+            document.getElementById('indicadorStatus').style.color = "var(--neon-red)";
+            document.getElementById('indicadorStatus').style.background = "rgba(255,51,51,0.1)";
+        }
     }
 
     async function forzarDescarga() {
@@ -866,8 +981,6 @@
             tx.oncomplete = () => { location.reload(); };
         } catch(e) { location.reload(); }
     }
-
-    function cerrarSesion() { localStorage.removeItem('sesionActiva'); window.location.href = 'index.html'; }
 
     function abrirModalEditarProy() {
         document.getElementById('txtIdEditarProy').value = '';
@@ -895,13 +1008,13 @@
                     cargarDatosEnInterfaz(response.data[0]);
                 } else if (response.data.length > 1) {
                     resultadosBusquedaTemporal = response.data;
-                    let html = `<p style="font-size:0.85em; font-weight:bold; color:var(--slate-700); margin:0 0 10px;">Se encontraron varias proyecciones. Seleccione una:</p>`;
+                    let html = `<p style="font-size:0.85em; font-weight:bold; color:var(--text-muted); margin:0 0 10px;">Se encontraron varias proyecciones. Seleccione una:</p>`;
                     
                     response.data.forEach((p, index) => {
                         html += `
-                        <div onclick="seleccionarProyeccionDeLista(${index})" style="padding:12px; background:white; margin-bottom:8px; border-radius:8px; cursor:pointer; border:1px solid var(--slate-200); transition:all 0.2s;">
-                            <strong style="color:var(--blue-600); font-size:1.1em;">ID: #${p.id_llave_interna}</strong> | Utilidad: <span style="color:var(--emerald-600); font-weight:bold;">$${parseFloat(p.utilidad).toFixed(2)}</span> <br>
-                            <span style="font-size:0.85em; color:var(--slate-500);">Pedidos: ${p.totalPedidos} | Por: ${p.usuario}</span>
+                        <div onclick="seleccionarProyeccionDeLista(${index})" style="padding:12px; background:var(--input-bg); margin-bottom:8px; border-radius:8px; cursor:pointer; border:1px solid var(--border-color); transition:all 0.2s; color:var(--text-main);">
+                            <strong style="color:var(--neon-blue); font-size:1.1em;">ID: #${p.id_llave_interna}</strong> | Utilidad: <span style="color:var(--neon-green); font-weight:bold;">$${parseFloat(p.utilidad).toFixed(2)}</span> <br>
+                            <span style="font-size:0.85em; color:var(--text-muted);">Pedidos: ${p.totalPedidos} | Por: ${p.usuario}</span>
                         </div>`;
                     });
                     document.getElementById('listaResultadosFecha').innerHTML = html;
@@ -968,24 +1081,21 @@
         let tiposVehiculo = Object.keys(filaPrecios);
         let html = '';
 
-        // 🔥 NUEVO: Función para asignar un icono dependiendo del nombre del vehículo
         const obtenerIcono = (tipo) => {
             let nombre = String(tipo).toUpperCase();
-            
             if (nombre.includes('MOTO')) return '🏍️';
             if (nombre.includes('CAMIONETA') || nombre.includes('AUTO') || nombre.includes('FURGONETA')) return '🚐';
             if (nombre.includes('MONTACARGAS')) return '🚜';
             if (nombre.includes('PLATAFORMA')) return '🛻'; 
-            if (nombre.includes('20 TN') || nombre.includes('40 TN')) return '🚛'; // Camiones pesados o mulas
-            if (nombre.includes('TN')) return '🚚'; // Camiones normales
-            
-            return '📦'; // Icono por defecto por si agregas algo diferente luego
+            if (nombre.includes('20 TN') || nombre.includes('40 TN')) return '🚛'; 
+            if (nombre.includes('TN')) return '🚚'; 
+            return '📦'; 
         };
 
         tiposVehiculo.forEach((tipo) => {
             if(tipo && tipo !== 'undefined') {
                 let precio = parseDinero(filaPrecios[tipo]);
-                let icono = obtenerIcono(tipo); // Llamamos a la función
+                let icono = obtenerIcono(tipo); 
                 
                 html += `
                     <div class="veh-card">
@@ -1192,7 +1302,7 @@
         let htmlRows = ''; 
         let ingresosVisibles = 0;
         let conteoVisible = 0;
-        let dataClientes = {}; // Para el gráfico
+        let dataClientes = {}; 
 
         pedidosProcesadosGlobal.forEach(p => {
             let mostrar = true;
@@ -1209,21 +1319,20 @@
                     ingresosVisibles += p.cobro;
                     conteoVisible++;
 
-                    // Acumulamos para el gráfico de clientes
                     dataClientes[p.cliente] = (dataClientes[p.cliente] || 0) + 1;
                     
                     htmlRows += `
                         <tr>
-                            <td><strong>${p.id}</strong>${p.yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
+                            <td><strong style="color:var(--text-main);">${p.id}</strong>${p.yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
                             <td>${p.cliente}</td>
                             <td>${p.intentos === 1 ? 'No' : 'Sí'}</td>
                             <td>${p.servicio}</td>
                             <td><span class="badge-loc">${p.origen}</span></td>
-                            <td><span class="badge-loc" style="background:var(--blue-50); border-color:var(--blue-200); color:var(--blue-700);">${p.destino}</span></td>
+                            <td><span class="badge-loc" style="background:rgba(0,240,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); border-radius:4px; padding:2px 6px;">${p.destino}</span></td>
                             <td class="col-tarifa">${p.trayecto}</td>
                             <td>${p.bultos}</td>
                             <td>${p.peso.toFixed(2)}</td>
-                            <td class="col-total" style="${p.yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right;">$${p.cobro.toFixed(2)}</td>
+                            <td class="col-total" style="${p.yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right; font-weight:bold; color:var(--neon-green);">$${p.cobro.toFixed(2)}</td>
                             <td>
                                 <div class="action-cell">
                                     <button onclick="editarCobro('${p.id}')" class="btn-icon btn-edit" title="Editar Precio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
@@ -1234,20 +1343,20 @@
                     `;
                 } else {
                     htmlRows += `<tr>
-                        <td colspan="10" style="color:var(--red-600); text-align:left; padding-left:20px;">❌ ID no encontrado en monitor: <b>${p.id}</b></td>
+                        <td colspan="10" style="color:var(--neon-red); text-align:left; padding-left:20px;">❌ ID no encontrado en monitor: <b>${p.id}</b></td>
                         <td><div class="action-cell"><button onclick="eliminarPedido('${p.id}')" class="btn-icon btn-delete" title="Eliminar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></td>
                     </tr>`;
                 }
             }
         });
 
-        tbody.innerHTML = htmlRows || `<tr><td colspan="11" style="text-align:center; padding:40px; color:#94a3b8;">Ningún pedido coincide con los filtros aplicados.</td></tr>`;
+        tbody.innerHTML = htmlRows || `<tr><td colspan="11" style="text-align:center; padding:40px; color:var(--text-muted);">Ningún pedido coincide con los filtros aplicados.</td></tr>`;
         document.getElementById('badgeTotalPedidos').innerText = `Total Pedidos: ${conteoVisible}`;
 
         let costoFlotaTotal = 0;
         let resumenFlotaArr = [];
         let htmlCostos = '';
-        let dataFlota = []; // Para el gráfico
+        let dataFlota = []; 
 
         document.querySelectorAll('.input-flota').forEach(input => {
             let cant = parseInt(input.value) || 0;
@@ -1258,14 +1367,14 @@
             costoFlotaTotal += subtotal;
             if (cant > 0) {
                 resumenFlotaArr.push(`${cant}x ${tipo}`);
-                dataFlota.push({ tipo: tipo, costo: subtotal }); // Agregamos info para el gráfico
+                dataFlota.push({ tipo: tipo, costo: subtotal }); 
                 
                 htmlCostos += `
                     <tr>
-                        <td style="text-align:left; font-weight: 600;">${tipo}</td>
+                        <td style="text-align:left; font-weight: 600; color:var(--text-main);">${tipo}</td>
                         <td>${cant}</td>
                         <td>$${precio.toFixed(2)}</td>
-                        <td style="text-align:right; font-weight: 600;">$${subtotal.toFixed(2)}</td>
+                        <td style="text-align:right; font-weight: 600; color:var(--text-main);">$${subtotal.toFixed(2)}</td>
                     </tr>
                 `;
             }
@@ -1298,7 +1407,6 @@
                 }
             }
             
-            // Dibujar gráficos si hay datos
             dibujarGraficos(ingresosVisibles, costoFlotaTotal, dataFlota, dataClientes);
         }
 
@@ -1321,98 +1429,17 @@
         if(btnPdfTop) btnPdfTop.disabled = (conteoVisible === 0);
     }
 
-    async function guardarProyeccion() {
-        if (!totalesActuales.totalPedidos) return;
-        
-        let loader = document.getElementById('loaderCamion');
-        let loaderMsg = document.getElementById('lblLoaderMsg');
-        if (loader) loader.style.display = 'flex';
-        if (loaderMsg) loaderMsg.innerText = modoEdicionActivo ? "Sobrescribiendo Datos..." : "Guardando Proyección...";
-        
-        let btnSaveTop = document.getElementById('btnSaveTop');
-        if (btnSaveTop) btnSaveTop.disabled = true;
+    function reconstruirDesdeHeadersYFilas(payload) {
+        if (!payload || !payload.headers || !payload.rows) return [];
+        const headersCrudos = payload.headers.map(h => String(h).trim());
+        const headersLimpios = headersCrudos.map(h => h.toUpperCase().replace(/[^A-Z0-9_]/g, ""));
 
-        let accion = modoEdicionActivo ? 'update_proyeccion' : 'save_proyeccion';
-        let payload = { action: accion, id_proyeccion: idProyeccionEditando, ...totalesActuales };
-
-        try {
-            let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            let data = await res.json();
-            
-            if (loader) loader.style.display = 'none';
-            
-            document.getElementById('msgExitoGeneral').innerText = modoEdicionActivo 
-                ? "La proyección ha sido actualizada exitosamente." 
-                : "La proyección se ha guardado como nueva.";
-            document.getElementById('lblIdExito').innerText = `#${data.id_proyeccion}`;
-            document.getElementById('modalExitoProy').style.display = 'flex';
-            
-            document.getElementById('txtPedidos').value = '';
-            document.getElementById('lblCantIds').innerText = "0 IDs Únicos";
-            document.querySelectorAll('.input-flota').forEach(i => i.value = '0');
-            ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
-            document.getElementById('vMargen').innerText = '0.00%';
-            document.querySelector('#tblPedidos tbody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding:60px; color:#94a3b8; font-size:1.1em;">Operación exitosa. Listo para una nueva simulación.</td></tr>`;
-            document.querySelector('#tbodyCostosVehiculos').innerHTML = `<tr><td colspan="4" style="padding: 30px; font-style:italic; text-align:center;">Seleccione vehículos para ver el detalle.</td></tr>`;
-            document.getElementById('tfootTotalCosto').innerText = '$0.00';
-            document.getElementById('badgeTotalPedidos').innerText = 'Total Pedidos: 0';
-            
-            let badgeRentable = document.getElementById('badgeRentable');
-            if(badgeRentable) badgeRentable.style.display = 'none';
-            document.getElementById('panelGraficos').style.display = 'none';
-            
-            pedidosProcesadosGlobal = [];
-            totalesActuales = { ingresos: 0, costo: 0, utilidad: 0, ids: [] };
-            modoEdicionActivo = false;
-            idProyeccionEditando = null;
-            document.getElementById('btnPdfTop').disabled = true; 
-            
-        } catch(e) {
-            if (loader) loader.style.display = 'none';
-            alert("❌ Error al intentar guardar en la Nube. Verifique su conexión.");
-            if (btnSaveTop) btnSaveTop.disabled = false;
-        }
-    }
-
-    function copiarIdProyeccion() {
-        let idText = document.getElementById('lblIdExito').innerText.replace('#', '');
-        navigator.clipboard.writeText(idText).then(() => {
-            alert("¡ID " + idText + " copiado al portapapeles!");
+        return payload.rows.map(fila => {
+            let obj = {};
+            headersLimpios.forEach((hLimpio, i) => { obj[hLimpio] = fila[i]; });
+            headersCrudos.forEach((hCrudo, i) => { obj[hCrudo] = fila[i]; });
+            return obj;
         });
-    }
-
-    function editarCobro(id) {
-        let pedido = pedidosProcesadosGlobal.find(p => p.id === id);
-        if(!pedido) return;
-        let nuevoMonto = prompt(`💲 Editar tarifa para el pedido: ${id}\nIngrese el nuevo valor numérico:`, pedido.cobro.toFixed(2));
-        if (nuevoMonto !== null) {
-            let parseado = parseFloat(nuevoMonto.replace(',', '.'));
-            if (!isNaN(parseado) && parseado >= 0) {
-                pedido.cobro = parseado;
-                renderizarTabla(); 
-            } else {
-                alert("Monto inválido. Ingrese un número válido.");
-            }
-        }
-    }
-
-    function eliminarPedido(id) {
-        if(confirm(`¿Desea quitar el pedido ${id} de esta simulación?`)) {
-            pedidosProcesadosGlobal = pedidosProcesadosGlobal.filter(p => p.id !== id);
-            let ta = document.getElementById('txtPedidos');
-            let regex = new RegExp(id + ".*[\n\r]?", "g");
-            ta.value = ta.value.replace(regex, "");
-            
-            actualizarFiltrosUI(); 
-            renderizarTabla();     
-            validarEstadoBoton();  
-            
-            let tienePedidosOk = pedidosProcesadosGlobal.some(p => !p.noEncontrado);
-            let btnSaveTop = document.getElementById('btnSaveTop');
-            if(btnSaveTop) btnSaveTop.disabled = !tienePedidosOk;
-            let btnPdfTop = document.getElementById('btnPdfTop');
-            if(btnPdfTop) btnPdfTop.disabled = !tienePedidosOk;
-        }
     }
 </script>
 </body>

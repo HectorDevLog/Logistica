@@ -2,471 +2,608 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlexNet - Centro de Operaciones</title>
     <script src="config.js"></script>
     <script src="seguridad.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700&display=swap');
+
         :root { 
-            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-700: #334155; --slate-900: #0f172a;
-            --blue-600: #2563eb; --blue-50: #eff6ff;
-            --emerald-600: #059669; --emerald-50: #ecfdf5;
-            --amber-600: #d97706; --amber-50: #fffbeb;
-            --purple-600: #7c3aed; --purple-50: #f5f3ff;
-            --teal-600: #0d9488; --teal-50: #f0fdfa;
-            --red-600: #dc2626;
+            /* VARIABLES TEMA OSCURO (Por defecto) */
+            --bg-main: #070b14;
+            --bg-panel: rgba(17, 24, 39, 0.6);
+            --bg-card: #171717;
+            --card-overlay: rgba(23, 23, 23, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255,255,255,0.05);
             
-            /* Colores del búho */
-            --owl-body: #1e293b; --owl-belly: #cbd5e1; --owl-beak: #f59e0b;
+            --neon-blue: #00f0ff;
+            --neon-purple: #8a2be2;
+            --neon-green: #00ff9d;
+            --neon-amber: #ffb700;
+            --neon-red: #ff3333;
+            
+            /* Colores del Capibara Cyberpunk */
+            --capy-body: #a06b3e; 
+            --capy-snout: #8b572a; 
+            --capy-dark: #2a1608; 
+        }
+
+        /* VARIABLES TEMA CLARO */
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --bg-panel: rgba(255, 255, 255, 0.8);
+            --bg-card: #ffffff;
+            --card-overlay: rgba(255, 255, 255, 0.8);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0,0,0,0.1);
         }
         
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; color: var(--slate-700); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
+            margin: 0; padding: 0; color: var(--text-main); 
+            min-height: 100vh; overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
         
-        /* NAVBAR INVISIBLE */
+        /* NAVBAR */
         .navbar { 
-            background-color: var(--slate-900); color: white; padding: 20px 40px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            position: relative; z-index: 20; 
+            background: var(--bg-panel); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 4%; display: flex; align-items: center; justify-content: space-between; 
+            position: sticky; top: 0; z-index: 50; flex-wrap: wrap; gap: 15px;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
         }
-        .navbar-brand { font-size: 1.4em; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-        .user-info { display: flex; align-items: center; gap: 12px; font-size: 0.9em; font-weight: 500; }
+        
+        .navbar-brand { font-size: clamp(1.2em, 2vw, 1.4em); font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+        .navbar-brand svg { filter: drop-shadow(0 0 8px var(--neon-blue)); }
+
+        .user-info { display: flex; align-items: center; gap: 15px; font-size: clamp(0.85em, 1.5vw, 0.95em); font-weight: 500; flex-wrap: wrap; justify-content: flex-end;}
         
         .btn-nav { 
-            background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); 
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; 
+            background: transparent; color: var(--text-main); border: 1px solid var(--border-color); 
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;
         }
-        .btn-nav:hover { background: rgba(255,255,255,0.1); }
-        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+        .btn-nav:hover { background: var(--border-color); transform: translateY(-2px); }
+        
+        .btn-sync { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border-color: rgba(0, 255, 157, 0.3); box-shadow: 0 0 10px rgba(0, 255, 157, 0.1); }
+        .btn-sync:hover { background: var(--neon-green); color: #070b14; box-shadow: 0 0 15px rgba(0, 255, 157, 0.4); }
+
+        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
+        #theme-switch { display: none; }
+        .theme-label {
+            width: 90px; height: 34px; background-color: var(--border-color);
+            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2);
+        }
+        .theme-label .toggle {
+            position: absolute; width: 45px; height: 28px; background-color: #fff; left: 3px;
+            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
+            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
+        }
+        #theme-switch:checked + .theme-label .toggle {
+            transform: translateX(39px); background-color: #1e293b;
+        }
+        .theme-label .names {
+            font-size: 11px; font-weight: bolder; width: 100%; position: absolute;
+            display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main);
+        }
+        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
+        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
+        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
+        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
+        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
+
+
+        /* GRID PRINCIPAL RESPONSIVO ABSOLUTO */
+        .app-container {
+            display: flex; flex-direction: column; gap: 30px;
+            padding: 3vw 4%; max-width: 1500px; margin: 0 auto; box-sizing: border-box; width: 100%;
+        }
 
         /* HERO SECTION */
         .hero { 
-            background-color: var(--slate-900); padding: 40px 20px 140px; 
-            text-align: center; color: white; position: relative; overflow: hidden;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px 30px; position: relative; flex-wrap: wrap; gap: 20px;
         }
-        .hero h1 { font-size: 2.2em; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px; animation: fadeInDown 0.8s ease-out forwards; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
-        .hero p { color: #94a3b8; font-size: 1.1em; max-width: 600px; margin: 0 auto; animation: fadeInDown 0.8s ease-out forwards 0.2s; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
-
-        @keyframes fadeInDown {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* 🔥 BÚHO MASCOTA 🔥 */
-        .mascot-container {
-            position: absolute;
-            bottom: 75px;  
-            right: 40px;   
-            width: 100px;
-            height: 90px;
-            z-index: 15;   
-            animation: fadeInDown 0.8s ease-out forwards 0.6s;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        /* 🔥 NUBE DE DIÁLOGO DEL BÚHO 🔥 */
-        .owl-speech-bubble {
-            position: absolute; top: -45px; right: 50px; background: white;
-            border: 2px solid var(--slate-200); padding: 8px 15px; border-radius: 12px;
-            font-size: 0.9em; font-weight: 700; color: var(--slate-700);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            opacity: 0; transform: scale(0.8) translateY(10px);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 10; pointer-events: none; white-space: nowrap;
-        }
-        .owl-speech-bubble.show {
-            opacity: 1; transform: scale(1) translateY(0);
-        }
-        .owl-speech-bubble::after {
-            content: ''; position: absolute; bottom: -7px; right: 30px; width: 10px; height: 10px;
-            background: white; border-bottom: 2px solid var(--slate-200); border-right: 2px solid var(--slate-200);
-            transform: rotate(45deg);
-        }
-
-        .owl-body {
-            position: absolute; bottom: 0; left: 10px; width: 80px; height: 80px;
-            background: var(--owl-body); border-radius: 40px 40px 20px 20px; overflow: hidden;
-            z-index: 1;
-        }
+        .hero-texts { flex: 1; text-align: center; min-width: 280px;}
+        .hero h1 { font-size: clamp(2em, 4vw, 3em); margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px; animation: fadeUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px);}
+        .text-neon-cyan { color: var(--neon-blue); text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
+        body.light-theme .text-neon-cyan { color: #0284c7; text-shadow: none; }
         
-        .owl-belly {
-            position: absolute; bottom: -10px; left: 15px; width: 50px; height: 55px;
-            background: var(--owl-belly); border-radius: 50%;
-        }
+        .hero p { color: var(--text-muted); font-size: clamp(0.95em, 1.5vw, 1.1em); max-width: 650px; margin: 0 auto; animation: fadeUp 0.6s ease-out forwards 0.1s; opacity: 0; transform: translateY(20px);}
 
-        .owl-eye {
-            position: absolute; top: 20px; width: 24px; height: 24px;
-            background: white; border-radius: 50%; display: flex;
-            justify-content: center; align-items: center; overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 2;
-        }
-        .owl-eye.left { left: 12px; }
-        .owl-eye.right { right: 12px; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
-        .owl-pupil {
-            width: 10px; height: 10px; background: var(--slate-900); border-radius: 50%;
-            position: relative; transition: transform 0.1s ease-out;
-        }
-        .owl-pupil::after {
-            content: ''; position: absolute; top: 2px; right: 2px; width: 3px; height: 3px;
-            background: white; border-radius: 50%;
-        }
-
-        .owl-beak {
-            position: absolute; top: 38px; left: 35px; width: 10px; height: 12px;
-            background: var(--owl-beak); border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
-            z-index: 3;
-        }
-
-        /* Alas - Rediseñadas para movimientos cortos */
-        .owl-wing {
-            position: absolute; width: 35px; height: 40px; background: var(--owl-body); 
-            border-radius: 20px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 4; box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
-        }
-        .owl-wing.left { bottom: -5px; left: 15px; transform-origin: top right; transform: translateY(10px) rotate(-15deg); }
-        .owl-wing.right { bottom: -5px; right: 15px; transform-origin: top left; transform: translateY(10px) rotate(15deg); }
-        
-        /* Párpados */
-        .owl-eyelid {
-            position: absolute; top: -24px; left: 0; width: 24px; height: 24px;
-            background: var(--owl-body); z-index: 5;
-            animation: blink 4s infinite; 
-        }
-
-        @keyframes blink {
-            0%, 96%, 98%, 100% { transform: translateY(0); }
-            97%, 99% { transform: translateY(24px); } 
-        }
-
-        /* 🔥 ESTADOS DE ANIMACIÓN DEL BÚHO 🔥 */
-        @keyframes flapWings {
-            0%, 100% { transform: translateY(5px) rotate(15deg); }
-            50% { transform: translateY(-5px) rotate(35deg); } 
-        }
-        @keyframes flapWingsRight {
-            0%, 100% { transform: translateY(5px) rotate(-15deg); }
-            50% { transform: translateY(-5px) rotate(-35deg); }
-        }
-        @keyframes lookReading {
-            0%, 100% { transform: translateX(-4px); }
-            50% { transform: translateX(4px); }
-        }
-        
-        body.state-loading .owl-wing.left { animation: flapWings 0.3s infinite ease-in-out; } 
-        body.state-loading .owl-wing.right { animation: flapWingsRight 0.3s infinite ease-in-out; } 
-        body.state-loading .owl-pupil { animation: lookReading 1.2s infinite ease-in-out !important; } 
-        body.state-loading .owl-eyelid { display: block; transform: translateY(8px); animation: none; } 
-
-        @keyframes jumpHappy {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-        body.state-success .owl-body { animation: jumpHappy 0.4s ease 2; } 
-        body.state-success .owl-wing.left { transform: translateY(-20px) translateX(-5px) rotate(110deg); transform-origin: bottom right;} 
-        body.state-success .owl-wing.right { transform: translateY(-20px) translateX(5px) rotate(-110deg); transform-origin: bottom left;}
-        body.state-success .owl-pupil { transform: scale(1.3) translateY(2px) !important; } 
-        body.state-success .owl-eyelid { display: none; } 
-
-        /* 🔥 PANEL DE ESTADO EN VIVO (Píldoras) 🔥 */
-        .status-dashboard { display: flex; justify-content: center; gap: 15px; margin-top: 25px; flex-wrap: wrap; animation: fadeInDown 0.8s ease-out forwards 0.4s; opacity: 0; transform: translateY(-20px); position: relative; z-index: 10;}
+        /* PÍLDORAS DE ESTADO */
+        .status-dashboard { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 25px; animation: fadeUp 0.6s ease-out forwards 0.2s; opacity: 0; transform: translateY(20px);}
         .status-pill {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 18px; border-radius: 50px; font-size: 0.85em; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; backdrop-filter: blur(4px);
-            transition: all 0.3s ease;
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            padding: 10px 20px; border-radius: 50px; font-size: clamp(0.8em, 1.2vw, 0.9em); font-weight: 600;
+            display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px);
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .status-pill.success { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #a7f3d0; }
-        .status-pill.loading { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); color: #bfdbfe; }
-        .status-pill.error { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #fecaca; }
+        .status-pill.success { border-color: rgba(0, 255, 157, 0.3); color: var(--neon-green); box-shadow: 0 0 15px rgba(0, 255, 157, 0.1);}
+        .status-pill.loading { border-color: rgba(0, 240, 255, 0.3); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);}
+        .status-pill.error { border-color: rgba(255, 50, 50, 0.3); color: #ff4d4d; box-shadow: 0 0 15px rgba(255, 50, 50, 0.1);}
         
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-        .status-dot.success { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
-        .status-dot.loading { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; animation: pulseDot 1s infinite alternate; }
-        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        
+        body.light-theme .status-pill.success { color: #059669; }
+        body.light-theme .status-pill.loading { color: #0284c7; }
+        body.light-theme .status-pill.error { color: #dc2626; }
+
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;}
+        .status-dot.success { background-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+        .status-dot.loading { background-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); animation: pulseDot 1s infinite alternate; }
+        .status-dot.error { background-color: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; }
         @keyframes pulseDot { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
 
-        /* 🔥 MENSAJE DE BLOQUEO EN MÓVILES 🔥 */
+        /* 🔥 MENSAJE RESPALDO (SOLO SE VE EN MÓVILES) 🔥 */
         #msgBloqueo {
-            margin-top: 15px; padding: 10px 25px; background: #fffbeb; color: #d97706; 
-            border: 1px solid #fcd34d; border-radius: 50px; display: inline-block; 
-            font-weight: 700; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: all 0.5s ease; position: relative; z-index: 10;
+            margin-top: 15px; padding: 10px 20px; border-radius: 50px; font-size: 0.9em; font-weight: 600;
+            background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); border: 1px solid rgba(0, 240, 255, 0.3);
+            display: none; opacity: 0; transition: opacity 0.3s ease;
         }
-
-        @media (min-width: 951px) {
+        body.light-theme #msgBloqueo {
+            background: #eff6ff; color: #0284c7; border-color: #bae6fd;
+        }
+        @media (min-width: 1201px) {
             #msgBloqueo { display: none !important; }
         }
 
-        /* 🔥 CONTENEDOR SÚPER DINÁMICO 🔥 */
+        /* 🔥 CAPIBARA CYBERPUNK RESTAURADO 🔥 */
+        .mascot-wrapper {
+            position: absolute; right: 2%; top: 0; width: 120px; height: 120px;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
+            animation: floatMascot 4s ease-in-out infinite; z-index: 10;
+        }
+
+        @media (max-width: 1200px) {
+            /* En pantallas menores a 1200px (móviles/tablets pequeñas), escondemos al capibara y delegamos al msgBloqueo */
+            .mascot-wrapper { display: none; }
+        }
+
+        @keyframes floatMascot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .capy-speech-bubble {
+            position: absolute; top: -15px; left: -140px; background: var(--bg-panel);
+            border: 1px solid var(--neon-blue); padding: 8px 15px; border-radius: 12px;
+            font-size: 0.85em; font-weight: 600; color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+            opacity: 0; transform: scale(0.8) translateY(10px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10; pointer-events: none; white-space: nowrap; backdrop-filter: blur(5px);
+        }
+        .capy-speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+        .capy-speech-bubble::after {
+            content: ''; position: absolute; top: 10px; right: -6px; width: 10px; height: 10px;
+            background: var(--bg-panel); border-top: 1px solid var(--neon-blue); border-right: 1px solid var(--neon-blue);
+            transform: rotate(45deg);
+        }
+
+        .mascot-container { position: relative; width: 80px; height: 80px; margin-top: 10px;}
+        
+        @keyframes earTwitchLeft { 0%, 94%, 100% { transform: rotate(-30deg); } 96%, 98% { transform: rotate(-45deg); } }
+        @keyframes earTwitchRight { 0%, 94%, 100% { transform: rotate(30deg); } 96%, 98% { transform: rotate(45deg); } }
+        .capy-ear { position: absolute; top: 12px; width: 14px; height: 12px; background: var(--capy-dark); z-index: 0; transition: all 0.3s;}
+        .capy-ear.left { left: -2px; border-radius: 10px 5px 0 10px; transform: rotate(-30deg); animation: earTwitchLeft 6s infinite;}
+        .capy-ear.right { right: -2px; border-radius: 5px 10px 10px 0; transform: rotate(30deg); animation: earTwitchRight 8s infinite;}
+        
+        @keyframes breathe { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-2px) scaleY(1.02); } }
+        .capy-body { position: absolute; bottom: 0; left: 0; width: 80px; height: 75px; background: var(--capy-body); border-radius: 35px 35px 20px 20px; z-index: 1; overflow: hidden; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); animation: breathe 3s ease-in-out infinite; }
+        
+        .capy-snout { position: absolute; bottom: 5px; left: 12px; width: 56px; height: 35px; background: var(--capy-snout); border-radius: 20px 20px 25px 25px; z-index: 2; }
+        .capy-nose { position: absolute; top: 4px; left: 16px; width: 24px; height: 14px; background: var(--capy-dark); border-radius: 10px 10px 15px 15px; }
+        .capy-mouth { position: absolute; top: 18px; left: 27px; width: 2px; height: 8px; background: var(--capy-dark); transition: all 0.3s;}
+        .capy-mouth::after { content: ''; position: absolute; bottom: 0; left: -6px; width: 14px; height: 5px; border-bottom: 2px solid var(--capy-dark); border-radius: 50%; }
+        
+        .capy-eye { position: absolute; top: 22px; width: 12px; height: 12px; background: var(--capy-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 2; transition: all 0.3s;}
+        .capy-eye.left { left: 14px; } .capy-eye.right { right: 14px; }
+        .capy-pupil { width: 4px; height: 4px; background: var(--neon-blue); border-radius: 50%; position: relative; transition: transform 0.1s ease-out; transform: translate(1px, -1px); box-shadow: 0 0 5px var(--neon-blue);}
+        
+        .capy-blush { position: absolute; top: 32px; width: 10px; height: 5px; background: rgba(0, 240, 255, 0.4); border-radius: 50%; z-index: 1; transition: background 0.3s;}
+        .capy-blush.left { left: 8px; } .capy-blush.right { right: 8px; }
+        
+        .capy-eyelid { position: absolute; top: -14px; left: -2px; width: 16px; height: 16px; background: var(--capy-body); z-index: 5; animation: blink 5s infinite; transition: all 0.3s; transform: translateY(2px);}
+        @keyframes blink { 0%, 96%, 98%, 100% { transform: translateY(2px); } 97%, 99% { transform: translateY(12px); } }
+        
+        .capy-arm { position: absolute; width: 16px; height: 22px; background: var(--capy-snout); border-radius: 10px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 4; box-shadow: -2px 2px 4px rgba(0,0,0,0.3); }
+        .capy-arm.left { bottom: 5px; left: 4px; transform-origin: top center; transform: rotate(15deg); }
+        .capy-arm.right { bottom: 5px; right: 4px; transform-origin: top center; transform: rotate(-15deg); }
+
+        /* Emociones en tiempo real del Capibara */
+        @keyframes paddleArms { 0%, 100% { transform: translateY(0) rotate(15deg); } 50% { transform: translateY(-4px) rotate(45deg); } }
+        @keyframes paddleArmsRight { 0%, 100% { transform: translateY(0) rotate(-15deg); } 50% { transform: translateY(-4px) rotate(-45deg); } }
+        @keyframes lookReading { 0%, 100% { transform: translate(3px, 0); } 50% { transform: translate(-3px, 0); } }
+        @keyframes thinkBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        
+        body.state-loading .capy-arm.left { animation: paddleArms 0.4s infinite ease-in-out; } 
+        body.state-loading .capy-arm.right { animation: paddleArmsRight 0.4s infinite ease-in-out; } 
+        body.state-loading .capy-pupil { animation: lookReading 0.8s infinite ease-in-out !important; } 
+        body.state-loading .capy-eyelid { transform: translateY(-2px); animation: none; } 
+        body.state-loading .capy-body { animation: thinkBounce 1s infinite ease-in-out; }
+        body.state-loading .capy-ear.left { transform: rotate(-40deg) translateY(2px); }
+        body.state-loading .capy-ear.right { transform: rotate(40deg) translateY(2px); }
+
+        @keyframes jumpHappy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        body.state-success .capy-body, body.state-success .capy-ear, body.state-success .capy-arm { animation: jumpHappy 0.4s ease 2; } 
+        body.state-success .capy-arm.left { transform: translateY(-10px) rotate(130deg); } 
+        body.state-success .capy-arm.right { transform: translateY(-10px) rotate(-130deg); }
+        body.state-success .capy-eye { background: transparent !important; border-top: 3px solid var(--capy-dark); border-radius: 50% 50% 0 0; height: 6px; transform: translateY(4px);}
+        body.state-success .capy-pupil { display: none !important; } 
+        body.state-success .capy-eyelid { display: none !important; }
+        body.state-success .capy-blush { background: rgba(0, 255, 157, 0.5); } /* Rubor verde éxito */
+
+        /* Adapta el Capibara al Light Theme */
+        body.light-theme .capy-speech-bubble { background: white; border-color: var(--border-color); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        body.light-theme .capy-speech-bubble::after { background: white; border-color: var(--border-color); }
+        body.light-theme .capy-pupil { background: white; box-shadow: none; }
+        body.light-theme .capy-blush { background: rgba(239, 68, 68, 0.3); }
+        body.light-theme.state-success .capy-blush { background: rgba(239, 68, 68, 0.6); }
+
+
+        /* 🔥 TARJETAS DE MÓDULOS (FLUID GRID) 🔥 */
         .menu-grid { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; 
-            max-width: 1200px; margin: -80px auto 60px; padding: 0 20px; position: relative; z-index: 20;
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 2vw; 
             transition: all 0.5s ease;
+            padding-bottom: 50px;
+            width: 100%;
         }
 
-        /* ESTADO BLOQUEADO */
-        .menu-grid.locked {
-            pointer-events: none;
-            opacity: 0.4;
-            filter: grayscale(100%);
-        }
+        .menu-grid.locked { pointer-events: none; opacity: 0.4; filter: grayscale(100%); }
         
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* TARJETAS MODERNAS ADAPTABLES */
-        .menu-card { 
-            flex: 1 1 300px; 
-            max-width: 360px; 
-            background: white; border-radius: 12px; padding: 32px 24px; text-decoration: none; 
-            color: var(--slate-700); border: 1px solid var(--slate-200);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-            display: flex; flex-direction: column; align-items: flex-start;
+        /* Colores Base por Tarjeta */
+        .card-simulador { --card-glow: rgba(0, 240, 255, 0.6); --card-color: var(--neon-blue); }
+        .card-proyeccion { --card-glow: rgba(138, 43, 226, 0.6); --card-color: var(--neon-purple); }
+        .card-cp { --card-glow: rgba(0, 255, 157, 0.6); --card-color: var(--neon-green); }
+        .card-auditor { --card-glow: rgba(255, 183, 0, 0.6); --card-color: var(--neon-amber); }
+        .card-rentabilidad { --card-glow: rgba(16, 185, 129, 0.6); --card-color: #10b981; } 
+        .card-vehiculos { --card-glow: rgba(236, 72, 153, 0.6); --card-color: #ec4899; } 
+        .card-rutas { --card-glow: rgba(245, 158, 11, 0.6); --card-color: #f59e0b; } 
+        .card-registro { --card-glow: rgba(255, 255, 255, 0.5); --card-color: #94a3b8; } 
+
+        .space-card {
+            position: relative; width: 100%; min-height: 280px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background-color: var(--bg-card); color: var(--text-main);
+            font-family: 'Montserrat', sans-serif; padding: 1.5em; border-radius: 20px;
+            overflow: hidden; z-index: 1; text-decoration: none; box-sizing: border-box;
+            border: 1px solid var(--border-color);
             opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            background-color: #ffffff; 
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: none; /* Ocultas por defecto para el sistema de permisos */
+        }
+
+        .space-card:nth-child(1) { animation-delay: 0.05s; }
+        .space-card:nth-child(2) { animation-delay: 0.10s; }
+        .space-card:nth-child(3) { animation-delay: 0.15s; }
+        .space-card:nth-child(4) { animation-delay: 0.20s; }
+        .space-card:nth-child(5) { animation-delay: 0.25s; }
+        .space-card:nth-child(6) { animation-delay: 0.30s; }
+        .space-card:nth-child(7) { animation-delay: 0.35s; }
+        .space-card:nth-child(8) { animation-delay: 0.40s; }
+
+        .space-icon {
+            width: 70px; height: 70px; margin-bottom: 1em; z-index: 5;
+            color: var(--card-color); filter: drop-shadow(0 0 10px var(--card-glow));
+            transition: transform 0.4s ease;
+        }
+
+        .space-card:hover { 
+            cursor: pointer; transform: translateY(-8px); 
+            border-color: var(--card-color);
+            box-shadow: 0 10px 30px var(--card-glow);
+        }
+        .space-card:hover .space-icon { transform: scale(1.15) rotate(-5deg); }
+
+        /* Estrellas y Nebulosas de Fondo */
+        .space-card::before {
+            content: ""; position: absolute; width: 100%; height: 100%; inset: -3px;
+            border-radius: 10px; background: radial-gradient(rgba(133,133,133,0.15), transparent, transparent);
+            transform: translate(-5px, 200px); transition: 0.4s ease-in-out; z-index: -1;
+        }
+        .space-card:hover::before { width: 150%; height: 100%; margin-left: -4.25em; filter: blur(3px); background: radial-gradient(var(--card-glow), transparent, transparent);}
+        
+        .space-card::after {
+            content: ""; position: absolute; inset: 2px; border-radius: 20px;
+            background: var(--card-overlay); transition: all 0.4s ease-in-out; z-index: -1;
         }
         
-        .menu-card:nth-child(1) { animation-delay: 0.05s; }
-        .menu-card:nth-child(2) { animation-delay: 0.10s; }
-        .menu-card:nth-child(3) { animation-delay: 0.15s; }
-        .menu-card:nth-child(4) { animation-delay: 0.20s; }
-        .menu-card:nth-child(5) { animation-delay: 0.25s; }
-        .menu-card:nth-child(6) { animation-delay: 0.30s; }
-        .menu-card:nth-child(7) { animation-delay: 0.35s; }
-        .menu-card:nth-child(8) { animation-delay: 0.40s; }
-
-        .menu-card:hover { 
-            transform: translateY(-8px) scale(1.02); 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        /* Oculta las estrellas en modo claro porque se ven sucias */
+        body.light-theme .space-card::before,
+        body.light-theme .space-desc-container::before,
+        body.light-theme .space-desc-container::after,
+        body.light-theme .space-heading::before {
+            display: none;
         }
-        
-        .card-simulador:hover { border-color: var(--blue-600); }
-        .card-auditor:hover { border-color: var(--amber-600); }
-        .card-rentabilidad:hover { border-color: var(--emerald-600); }
-        .card-vehiculos:hover { border-color: var(--purple-600); }
-        .card-reportes:hover { border-color: var(--teal-600); }
-        .card-registro:hover { border-color: var(--slate-400); }
 
-        .icon-wrapper { 
-            width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; 
-            justify-content: center; font-size: 1.5em; margin-bottom: 20px; 
+        .space-heading { z-index: 2; transition: 0.4s ease-in-out; font-size: clamp(1.1em, 1.5vw, 1.25em); font-weight: 700; text-align: center; }
+        .space-card:hover .space-heading { letter-spacing: 0.025em; }
+
+        .space-heading::after {
+            content: ""; top: -10%; left: -10%; position: absolute; width: 8em; height: 8em;
+            border: none; outline: none; border-radius: 50%; background: #f9f9fb; opacity: 0.7;
+            box-shadow: 0px 0px 80px var(--card-glow), inset var(--card-color) 0px 0px 40px -12px;
+            transition: 0.4s ease-in-out; z-index: -1;
         }
-        
-        .menu-card .icon-wrapper svg { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .menu-card:hover .icon-wrapper svg { transform: scale(1.25) rotate(-5deg); }
-        
-        .card-simulador .icon-wrapper { background: var(--blue-50); color: var(--blue-600); }
-        .card-auditor .icon-wrapper { background: var(--amber-50); color: var(--amber-600); }
-        .card-rentabilidad .icon-wrapper { background: var(--emerald-50); color: var(--emerald-600); }
-        .card-vehiculos .icon-wrapper { background: var(--purple-50); color: var(--purple-600); }
-        .card-reportes .icon-wrapper { background: var(--teal-50); color: var(--teal-600); }
-        .card-registro .icon-wrapper { background: var(--slate-100); color: var(--slate-700); }
+        .space-card:hover .space-heading::after {
+            box-shadow: 0px 0px 150px var(--card-glow), inset var(--card-color) 0px 0px 40px -12px;
+        }
 
-        .card-title { font-size: 1.15em; font-weight: 700; margin-bottom: 8px; color: var(--slate-900); }
-        .card-desc { font-size: 0.9em; color: #64748b; line-height: 1.5; margin: 0; }
+        .space-heading::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
+            box-shadow: 220px 118px #fff, 140px 176px #fff, 40px 50px #fff, 60px 180px #fff, 120px 130px #fff, 180px 176px #fff, 220px 290px #fff, 280px 250px #fff, 200px 220px #fff, 50px 250px #fff, 10px 230px #fff;
+            z-index: -1; transition: 1s ease; animation: 1s glowing-stars linear alternate infinite;
+        }
+        .space-desc-container { z-index: 1; position: relative; width: 100%; }
+        .space-desc-container::before {
+            content: ""; position: absolute; top: -50px; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
+            box-shadow: 140px 20px #fff, 250px 20px #fff, 70px 120px #fff, 20px 130px #fff, 110px 80px #fff, 280px 80px #fff, 250px 250px #fff, 280px 230px #fff, 220px 190px #fff, 150px 100px #fff, 80px 80px #fff, 120px 50px #fff;
+            z-index: -1; transition: 1.5s ease; animation: 1s glowing-stars linear alternate infinite; animation-delay: 0.4s;
+        }
+        .space-desc-container::after {
+            content: ""; position: absolute; top: -50px; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
+            box-shadow: 190px 230px #fff, 120px 200px #fff, 220px 180px #fff, 180px 250px #fff, 246px 170px #fff, 120px 180px #fff, 170px 150px #fff, 200px 250px #fff, 80px 20px #fff, 190px 50px #fff, 270px 20px #fff, 120px 230px #fff, 150px -1px #fff, 150px 269px #fff;
+            z-index: -1; transition: 2s ease; animation: 1s glowing-stars linear alternate infinite; animation-delay: 0.8s;
+        }
+        .space-card:hover .space-heading::before, .space-card:hover .space-desc-container::before, .space-card:hover .space-desc-container::after { filter: blur(3px); }
+
+        .space-desc { z-index: 2; font-size: clamp(0.8em, 1.2vw, 0.9em); color: var(--text-muted); text-align: center; line-height: 1.5; margin-top: 15px; font-family: 'Inter', sans-serif; font-weight: normal; }
         
-        .arrow-link { margin-top: auto; padding-top: 20px; font-size: 0.85em; font-weight: 600; display: flex; align-items: center; gap: 5px; opacity: 0; transition: all 0.3s; transform: translateX(-10px); }
-        .menu-card:hover .arrow-link { opacity: 1; transform: translateX(0); }
-        
-        .card-simulador .arrow-link { color: var(--blue-600); }
-        .card-auditor .arrow-link { color: var(--amber-600); }
-        .card-rentabilidad .arrow-link { color: var(--emerald-600); }
-        .card-vehiculos .arrow-link { color: var(--purple-600); }
-        .card-reportes .arrow-link { color: var(--teal-600); }
-        .card-registro .arrow-link { color: var(--slate-700); }
+        .space-action { margin-top: 20px; font-size: 0.9em; color: var(--card-color); display: flex; align-items: center; justify-content: center; z-index: 2; font-weight: 600; opacity: 0; transform: translateY(10px); transition: all 0.3s;}
+        .space-card:hover .space-action { opacity: 1; transform: translateY(0); }
+
+        .shooting-star {
+            content: ""; position: absolute; top: -10%; left: 80%; rotate: -45deg; width: 5em; height: 1px;
+            background: linear-gradient(90deg, #ffffff, transparent);
+            animation: 4s shootingStar ease-in-out infinite; transition: 1s ease; opacity:0;
+        }
+        .space-card:hover .shooting-star { filter: blur(2px); }
+        .st-1 { animation-delay: 1s; top: 10%; left: 90%; }
+        .st-2 { animation-delay: 3s; top: 40%; left: 110%; }
+
+        @keyframes shootingStar {
+            0% { transform: translateX(0) translateY(0); opacity: 1; }
+            50% { transform: translateX(-55em) translateY(0); opacity: 1; }
+            70% { transform: translateX(-70em) translateY(0); opacity: 0; }
+            100% { transform: translateX(0) translateY(0); opacity: 0; }
+        }
+
+        @keyframes glowing-stars { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
         /* ================= MODAL PERFIL ================= */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
+            background: rgba(7, 11, 20, 0.8); backdrop-filter: blur(8px);
             display: none; align-items: center; justify-content: center; z-index: 1000; 
             opacity: 0; transition: opacity 0.3s;
         }
         .modal-overlay.active { opacity: 1; }
         .modal-box { 
-            background: white; width: 100%; max-width: 400px; padding: 30px; 
-            border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            background: var(--bg-panel); width: 100%; max-width: 400px; padding: 30px; 
+            border-radius: 16px; border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
             transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .modal-overlay.active .modal-box { transform: scale(1); }
         
-        .modal-box h3 { margin-top: 0; margin-bottom: 20px; color: var(--slate-900); display: flex; align-items: center; gap: 8px; }
-        .modal-box label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--slate-700); }
+        .modal-box h3 { margin-top: 0; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .modal-box label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--text-muted); }
         .modal-box input { 
-            width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid var(--slate-300); 
-            border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 0.95em;
+            width: 100%; padding: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); 
+            color: var(--text-main); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: all 0.3s;
         }
-        .modal-box input:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
+        .modal-box input:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 3px rgba(0,240,255,0.1); }
         
         .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .btn-cancel { background: var(--slate-200); color: var(--slate-700); }
-        .btn-cancel:hover { background: var(--slate-300); }
-        .btn-save { background: var(--blue-600); color: white; }
-        .btn-save:hover { background: #1d4ed8; }
-        .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
+        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-cancel { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-save { background: rgba(0, 240, 255, 0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);}
+        .btn-save:hover { background: var(--neon-blue); color: #070b14; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);}
 
-        /* 🔥 NOTIFICACIÓN FLOTANTE (TOAST) PARA AVISOS LARGOS 🔥 */
+        /* 🔥 NOTIFICACIÓN FLOTANTE (TOAST) 🔥 */
         .toast-container {
             position: fixed; bottom: 30px; right: 30px;
-            background: white; padding: 20px; border-radius: 10px;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.2);
-            border-left: 5px solid var(--amber-500);
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px); padding: 20px; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-left: 5px solid var(--neon-amber);
             display: flex; align-items: flex-start; gap: 15px;
-            transform: translateX(150%);
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 9999; max-width: 400px; line-height: 1.5; color: var(--slate-700);
+            transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999; max-width: 400px; line-height: 1.5; color: var(--text-muted);
         }
         .toast-container.show { transform: translateX(0); }
-        .toast-container strong { color: var(--slate-900); display: block; margin-bottom: 5px; font-size: 1.05em; }
-
-        /* Oculta el búho en pantallas menores a 950px */
-        @media (max-width: 950px) {
-            .mascot-container { display: none; }
-        }
+        .toast-container strong { color: var(--text-main); display: block; margin-bottom: 5px; font-size: 1.05em; }
 
         @media (max-width: 768px) {
             .navbar { flex-direction: column; gap: 15px; padding: 20px; text-align: center; }
-            .user-info { flex-wrap: wrap; justify-content: center; gap: 10px; line-height: 1.5; }
-            .hero { padding: 30px 15px 90px; }
-            .hero h1 { font-size: 1.8em; }
-            .menu-grid { margin-top: -60px; grid-template-columns: 1fr; }
+            .user-info { justify-content: center; }
             .toast-container { right: 5%; left: 5%; bottom: 20px; width: auto; max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <div class="navbar">
+    <nav class="navbar">
         <div class="navbar-brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-            FlexNet
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M8 15h8"></path></svg>
+            FlexNet<span style="color:var(--neon-blue);">.</span>
         </div>
+        
         <div class="user-info" id="infoUsuario">
-            </div>
-    </div>
-
-    <div class="hero">
-        <h1 id="lblBienvenida">Resumen Operativo</h1>
-        <p>Selecciona un módulo para gestionar la facturación, auditar rutas o analizar las métricas de rendimiento en tiempo real.</p>
-        
-        <div class="status-dashboard">
-            <div class="status-pill loading" id="pillTarifas">
-                <span class="status-dot loading" id="dotTarifas"></span>
-                <span id="txtTarifas">Tarifario: Verificando Nube...</span>
-            </div>
-            <div class="status-pill loading" id="pillMonitor">
-                <span class="status-dot loading" id="dotMonitor"></span>
-                <span id="txtMonitor">Base Operativa: Verificando Nube...</span>
-            </div>
+            <!-- Rellenado por JS -->
         </div>
+    </nav>
 
-        <div id="msgBloqueo">
-            ⏳ Verificando la nube...
-        </div>
+    <div class="app-container">
+        <main class="main-content">
+            
+            <header class="hero">
+                <div class="hero-texts">
+                    <h1>¡Bienvenido, <span id="lblNombre" class="text-neon-cyan"></span>!</h1>
+                    <p>Selecciona un módulo para gestionar la facturación, auditar rutas o analizar las métricas de rendimiento en tiempo real.</p>
+                    
+                    <div class="status-dashboard">
+                        <div class="status-pill loading" id="pillTarifas">
+                            <span class="status-dot loading" id="dotTarifas"></span>
+                            <span id="txtTarifas">Tarifario: Verificando...</span>
+                        </div>
+                        <div class="status-pill loading" id="pillMonitor">
+                            <span class="status-dot loading" id="dotMonitor"></span>
+                            <span id="txtMonitor">Base Operativa: Verificando...</span>
+                        </div>
+                    </div>
 
-        <div class="mascot-container">
-            <div class="owl-speech-bubble" id="owl-bubble"></div>
-            <div class="owl-body">
-                <div class="owl-belly"></div>
-                <div class="owl-eye left" id="eye-left">
-                    <div class="owl-eyelid"></div>
-                    <div class="owl-pupil" id="pupil-left"></div>
+                    <div id="msgBloqueo">⏳ Verificando la nube...</div>
                 </div>
-                <div class="owl-eye right" id="eye-right">
-                    <div class="owl-eyelid"></div>
-                    <div class="owl-pupil" id="pupil-right"></div>
+
+                <!-- 🔥 CAPIBARA CYBERPUNK MEJORADO 🔥 -->
+                <div class="mascot-wrapper">
+                    <div class="capy-speech-bubble" id="mascot-bubble"></div>
+                    <div class="mascot-container">
+                        <div class="capy-ear left"></div>
+                        <div class="capy-ear right"></div>
+                        <div class="capy-body">
+                            <div class="capy-blush left"></div>
+                            <div class="capy-blush right"></div>
+                            <div class="capy-snout">
+                                <div class="capy-nose"></div>
+                                <div class="capy-mouth"></div>
+                            </div>
+                            <div class="capy-eye left" id="eye-left">
+                                <div class="capy-eyelid"></div>
+                                <div class="capy-pupil" id="pupil-left"></div>
+                            </div>
+                            <div class="capy-eye right" id="eye-right">
+                                <div class="capy-eyelid"></div>
+                                <div class="capy-pupil" id="pupil-right"></div>
+                            </div>
+                        </div>
+                        <div class="capy-arm left"></div>
+                        <div class="capy-arm right"></div>
+                    </div>
                 </div>
-                <div class="owl-beak"></div>
+            </header>
+
+            <div class="menu-grid locked" id="menuGrid">
+                
+                <a href="Simulador.html" class="space-card card-simulador" id="cardSimuladorIds">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                    <div class="space-heading">Simulador (Por IDs)</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Herramienta de tarificación rápida pegando listados de IDs individuales.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="ProyeccionGlobal.html" class="space-card card-proyeccion" id="cardProyeccion">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    <div class="space-heading">Proyección Global</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Planea el costo de tu flota y proyecta la rentabilidad total del día con cientos de IDs.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="SimuladorCartaPorte.html" class="space-card card-cp" id="cardSimuladorCp">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                    <div class="space-heading">Simulador (Carta Porte)</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Calcula múltiples rutas extrayendo vehículos desde listados de Carta Porte.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="AuditorMasivo.html" class="space-card card-auditor" id="cardMasivo">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    <div class="space-heading">Auditor Masivo</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Sube matrices de Excel, audita la facturación de miles de pedidos e inyecta a la nube.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="Rentabilidad.html" class="space-card card-rentabilidad" id="cardRentabilidad">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <div class="space-heading">Rentabilidad Diaria</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Visualiza en tiempo real los ingresos, costos operativos y la utilidad neta.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="RentabilidadVehiculos.html" class="space-card card-vehiculos" id="cardVehiculos">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    <div class="space-heading">Auditoría de Vehículos</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Controla los viajes despachados y descubre el margen exacto de ganancia por placa.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="AuditoriaRutas.html" class="space-card card-rutas" id="cardAuditoria">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    <div class="space-heading">Auditoría de Rutas</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="Reportes.html" class="space-card card-proyeccion" id="cardReportes">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <div class="space-heading">Dashboard Gerencial</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Genera reportes corporativos en PDF con gráficos interactivos y KPIs financieros.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
+                <a href="Registro.html" class="space-card card-registro" id="cardRegistro">
+                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                    <div class="space-heading">Control de Accesos</div>
+                    <div class="space-desc-container">
+                        <div class="space-desc">Administra el alta de nuevos usuarios, roles, permisos y seguridad de la plataforma.</div>
+                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
+                    </div>
+                    <div class="space-action">Abrir Módulo &rarr;</div>
+                </a>
+
             </div>
-            <div class="owl-wing left"></div>
-            <div class="owl-wing right"></div>
-        </div>
+        </main>
     </div>
 
-    <div class="menu-grid locked" id="menuGrid">
-        
-        <a href="Simulador.html" class="menu-card card-simulador">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
-            <div class="card-title">Simulador (Por IDs)</div>
-            <p class="card-desc">Herramienta de tarificación rápida pegando listados de IDs individuales.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="ProyeccionGlobal.html" class="menu-card card-simulador">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg></div>
-            <div class="card-title">Proyección Global</div>
-            <p class="card-desc">Planea el costo de tu flota y proyecta la rentabilidad total del día con cientos de IDs.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="SimuladorCartaPorte.html" class="menu-card card-simulador">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
-            <div class="card-title">Simulador (Carta Porte)</div>
-            <p class="card-desc">Calcula múltiples rutas extrayendo vehículos desde listados de Carta Porte.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="AuditorMasivo.html" class="menu-card card-auditor" id="cardMasivo">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path></svg></div>
-            <div class="card-title">Auditor Masivo</div>
-            <p class="card-desc">Sube matrices de Excel, audita la facturación de miles de pedidos e inyecta a la nube.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="Rentabilidad.html" class="menu-card card-rentabilidad">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
-            <div class="card-title">Rentabilidad Diaria</div>
-            <p class="card-desc">Visualiza en tiempo real los ingresos, costos operativos y la utilidad neta de cada ciudad.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="RentabilidadVehiculos.html" class="menu-card card-vehiculos">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg></div>
-            <div class="card-title">Auditoría de Vehículos</div>
-            <p class="card-desc">Controla los viajes despachados y descubre el margen exacto de ganancia por placa.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="Reportes.html" class="menu-card card-reportes" id="cardReportes">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg></div>
-            <div class="card-title">Dashboard Gerencial</div>
-            <p class="card-desc">Genera reportes corporativos en PDF con gráficos interactivos y KPIs financieros.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="AuditoriaRutas.html" class="menu-card card-auditor" id="cardAuditoria">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></div>
-            <div class="card-title">Auditoría de Rutas</div>
-            <p class="card-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-        <a href="Registro.html" class="menu-card card-registro" id="cardRegistro">
-            <div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
-            <div class="card-title">Control de Accesos</div>
-            <p class="card-desc">Administra el alta de nuevos usuarios, roles, permisos y seguridad de la plataforma.</p>
-            <div class="arrow-link">Acceder al módulo &rarr;</div>
-        </a>
-
-    </div>
-
-    <div id="toastInfo" class="toast-container" style="border-left-color: var(--amber-500);">
+    <!-- 🔥 NOTIFICACIÓN FLOTANTE (TOAST) 🔥 -->
+    <div id="toastInfo" class="toast-container" style="border-left-color: var(--neon-amber);">
         <span style="font-size: 2em; line-height: 1;">💡</span>
         <div>
             <strong>Datos actualizados</strong>
-            <span style="font-size: 0.95em;">Si no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando. El sistema se actualizará automáticamente de forma progresiva. Si lo prefiere, puede actualizar la página manualmente desde la parte superior.</span>
+            <span style="font-size: 0.95em;">Si no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando de forma progresiva.</span>
         </div>
     </div>
 
+    <!-- ================= MODAL PERFIL ================= -->
     <div class="modal-overlay" id="modalPerfil">
         <div class="modal-box">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Actualizar Mi Perfil</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Actualizar Mi Perfil</h3>
             
             <label>Tu Usuario Original (Requerido para buscarte)</label>
             <input type="text" id="inpUsrOriginal" placeholder="Ej: admin123" required>
@@ -488,14 +625,72 @@
     </div>
 
 <script>
+    // 🔒 RECUPERAR SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
+    if (!sesion) { window.location.href = 'index.html'; }
+
     const bodyState = document.body;
 
-    // 🔥 SEGUIMIENTO DEL MOUSE PARA EL BÚHO MASCOTA 🔥
+    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
+    const savedTheme = localStorage.getItem('flexnet_theme');
+    let isDarkChecked = (!savedTheme || savedTheme === 'dark') ? 'checked' : '';
+    if (savedTheme === 'light') document.body.classList.add('light-theme');
+
+    function toggleTheme() {
+        const isChecked = document.getElementById('theme-switch').checked;
+        if (isChecked) {
+            document.body.classList.remove('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'dark');
+        } else {
+            document.body.classList.add('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'light');
+        }
+    }
+
+    // 🔥 APLICAR PERMISOS SEGÚN EL ROL DEL USUARIO 🔥
+    function aplicarPermisos() {
+        const cardSimIds = document.getElementById('cardSimuladorIds');
+        const cardProyeccion = document.getElementById('cardProyeccion');
+        const cardSimCp = document.getElementById('cardSimuladorCp');
+        const cardMasivo = document.getElementById('cardMasivo');
+        const cardRentabilidad = document.getElementById('cardRentabilidad');
+        const cardVehiculos = document.getElementById('cardVehiculos');
+        const cardAuditoria = document.getElementById('cardAuditoria');
+        const cardReportes = document.getElementById('cardReportes');
+        const cardRegistro = document.getElementById('cardRegistro');
+
+        // Por defecto, mostramos las tarjetas para que CSS Grid funcione, y luego ocultamos según el rol
+        const allCards = [cardSimIds, cardProyeccion, cardSimCp, cardMasivo, cardRentabilidad, cardVehiculos, cardAuditoria, cardReportes, cardRegistro];
+        allCards.forEach(card => { if(card) card.style.display = 'flex'; });
+
+        // Si NO es Administrador, empezamos a ocultar módulos críticos
+        if (sesion.rol !== 'Administrador') {
+            
+            // Ocultamos Control de Accesos (solo Admin puede verlo)
+            if (cardRegistro) cardRegistro.style.display = 'none';
+            // Ocultamos Reportes Gerenciales (solo Admin puede verlo)
+            if (cardReportes) cardReportes.style.display = 'none';
+
+            // Si es un "Usuario" estándar u "Operador"
+            if (sesion.rol === 'Usuario' || sesion.rol === 'Operador') {
+                if (cardRentabilidad) cardRentabilidad.style.display = 'none';
+                if (cardMasivo) cardMasivo.style.display = 'none';
+                if (cardVehiculos) cardVehiculos.style.display = 'none';
+                if (cardAuditoria) cardAuditoria.style.display = 'none';
+            }
+            
+            // Excepciones especiales (Ejemplo: Si creaste un rol llamado 'Auditor')
+            if (sesion.rol === 'Auditor') {
+                if (cardRentabilidad) cardRentabilidad.style.display = 'none'; 
+            }
+        }
+    }
+
+    // 🔥 SEGUIMIENTO DEL MOUSE PARA EL CAPIBARA MASCOTA 🔥
     const pupilLeft = document.getElementById('pupil-left');
     const pupilRight = document.getElementById('pupil-right');
-    const eyeLeft = document.querySelector('.owl-eye.left');
-    const eyeRight = document.querySelector('.owl-eye.right');
+    const eyeLeft = document.querySelector('.capy-eye.left');
+    const eyeRight = document.querySelector('.capy-eye.right');
 
     document.addEventListener('mousemove', (e) => {
         if(window.innerWidth <= 950) return; 
@@ -510,41 +705,43 @@
         
         const angleL = Math.atan2(e.clientY - cyL, e.clientX - cxL);
         const angleR = Math.atan2(e.clientY - cyR, e.clientX - cxR);
-        const maxDist = 4; 
+        const maxDist = 3; 
 
         pupilLeft.style.transform = `translate(${Math.cos(angleL) * maxDist}px, ${Math.sin(angleL) * maxDist}px)`;
         pupilRight.style.transform = `translate(${Math.cos(angleR) * maxDist}px, ${Math.sin(angleR) * maxDist}px)`;
     });
 
-    // 🔥 FUNCIÓN PARA CONTROLAR EL MENSAJE DEL BÚHO 🔥
-    function mostrarMensajeBuho(mensaje, duracionMs = 0) {
-        const bubble = document.getElementById('owl-bubble');
-        const msgMovil = document.getElementById('msgBloqueo'); // El respaldo en móviles
+    function mostrarMensajeMascota(mensaje, duracionMs = 0) {
+        const bubble = document.getElementById('mascot-bubble');
+        const msgMovil = document.getElementById('msgBloqueo'); 
         
         if (mensaje) {
             bubble.innerHTML = mensaje;
             bubble.classList.add('show');
-            msgMovil.innerHTML = mensaje;
-            msgMovil.style.display = 'inline-block';
-            setTimeout(() => msgMovil.style.opacity = '1', 10);
+            if(msgMovil) {
+                msgMovil.innerHTML = mensaje;
+                msgMovil.style.display = 'inline-block';
+                setTimeout(() => msgMovil.style.opacity = '1', 10);
+            }
         } else {
             bubble.classList.remove('show');
-            msgMovil.style.opacity = '0';
-            setTimeout(() => msgMovil.style.display = 'none', 300);
+            if(msgMovil) {
+                msgMovil.style.opacity = '0';
+                setTimeout(() => msgMovil.style.display = 'none', 300);
+            }
         }
 
         if (duracionMs > 0) {
             setTimeout(() => {
                 bubble.classList.remove('show');
-                msgMovil.style.opacity = '0';
-                setTimeout(() => msgMovil.style.display = 'none', 300);
+                if(msgMovil) {
+                    msgMovil.style.opacity = '0';
+                    setTimeout(() => msgMovil.style.display = 'none', 300);
+                }
             }, duracionMs);
         }
     }
 
-    // =========================================================================
-    // 🚀 MOTOR DE DESCARGA DIRECTA E INTELIGENTE (A NIVEL GLOBAL)
-    // =========================================================================
     const dbNamePreload = "SimuladorDB";
     const storeNamePreload = "MonitorStore";
 
@@ -583,14 +780,15 @@
         document.getElementById('txt' + id).innerText = text;
     }
 
-    // 🔥 FUNCIÓN PARA DESBLOQUEAR EL MENÚ 🔥
     function desbloquearMenu(mostrarAlerta = false) {
         document.getElementById('menuGrid').classList.remove('locked');
         
         let msg = document.getElementById('msgBloqueo');
-        msg.style.background = '#ecfdf5';
-        msg.style.color = '#059669';
-        msg.style.borderColor = '#a7f3d0';
+        if(msg) {
+            msg.style.background = 'rgba(0, 255, 157, 0.1)';
+            msg.style.color = 'var(--neon-green)';
+            msg.style.borderColor = 'rgba(0, 255, 157, 0.3)';
+        }
 
         if(mostrarAlerta) {
             setTimeout(() => {
@@ -603,20 +801,31 @@
 
     window.onload = async function() {
         window.dbRutasGlobal = [];
-
-        if(!sesion) return window.location.href = 'index.html';
         window.monitorGlobal = [];
 
         document.getElementById('infoUsuario').innerHTML = `
+            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
+            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                <div class="toggle"></div>
+                <div class="names">
+                    <p class="light">Light</p>
+                    <p class="dark">Dark</p>
+                </div>
+            </label>
+
+            <span style="opacity:0.3; margin: 0 10px;">|</span>
             <span>📍 ${sesion.ciudad}</span>
-            <span style="opacity:0.5;">|</span>
             <span>👤 <b id="uiNombre">${sesion.nombre}</b> (${sesion.rol})</span>
-            <button onclick="forzarDescarga()" class="btn-nav" style="background: var(--emerald-600); border-color: var(--emerald-600);" title="Sincronizar todo desde la Nube">🔄 Actualizar Nube</button>
+            <button onclick="forzarDescarga()" class="btn-nav btn-sync">☁️ Actualizar Nube</button>
             <button onclick="abrirModal()" class="btn-nav">⚙️ Perfil</button>
-            <button onclick="cerrarSesion()" class="btn-nav btn-logout">Salir</button>
+            <button onclick="cerrarSesion()" class="btn-nav">Salir</button>
         `;
         
-        document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${sesion.nombre}!`;
+        let primerNombre = sesion.nombre.split(' ')[0] || sesion.nombre;
+        document.getElementById('lblNombre').innerText = primerNombre;
+
+        // Ocultamos las tarjetas que el usuario no tiene permiso de ver
+        aplicarPermisos();
 
         try {
             const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
@@ -641,16 +850,18 @@
             }
 
             if (!necesitaTarifas && !necesitaMonitor) {
+                window.dbRutasGlobal = cacheTarifas.dbData || [];
+                window.monitorGlobal = cacheMonitorObj.data; 
+
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
-                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${cacheMonitorObj.data.length} reg)`);
+                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${window.monitorGlobal.length} reg)`);
                 desbloquearMenu(false);
                 
-                mostrarMensajeBuho(`✅ Todo al día y sincronizado con la Nube.`, 6000, true);
+                mostrarMensajeMascota(`✅ Todo al día y sincronizado con la Nube.`, 6000, true);
                 return; 
             }
 
-            // 🔥 BÚHO PIENSA Y AVISA QUE DESCARGA 🔥
-            mostrarMensajeBuho(`⏳ Sincronizando bases de datos...`);
+            mostrarMensajeMascota(`⏳ Sincronizando bases de datos...`);
             bodyState.classList.add('state-loading');
 
             const promesas = [];
@@ -704,7 +915,7 @@
                         setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
                     }));
                 } else {
-                window.dbRutasGlobal = cacheTarifas.dbData || []; // 🔥 RECUPERAR DE LA MEMORIA
+                window.dbRutasGlobal = cacheTarifas.dbData || []; 
                 setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
             }
 
@@ -712,47 +923,44 @@
                 setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
                 promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
                     if(!jsonResponse.error) {
-                        // 🔥 AHORA SÍ PASAMOS POR EL DESCOMPRESOR 🔥
                         window.monitorGlobal = reconstruirDesdeHeadersYFilas(jsonResponse); 
                         
                         await guardarDatoDBPreload("monitorCargado", window.monitorGlobal, ping.monitorTs);
                         setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${window.monitorGlobal.length} reg)`);
                     } else {
-                        setPillStatus('Monitor', 'error', 'Base Operativa: Error al cargar');
+                        throw new Error(jsonResponse.error);
                     }
                 }));
             } else {
-                window.monitorGlobal = cacheMonitorObj.data || cacheMonitorObj; // 🔥 ASIGNAR DATA DE CACHÉ
+                window.monitorGlobal = cacheMonitorObj.data; 
                 setPillStatus('Monitor', 'success', `Base Operativa: Lista (${window.monitorGlobal.length} reg)`);
             }
 
             await Promise.all(promesas);
             
-            // 🔥 BÚHO CELEBRA EL ÉXITO 🔥
             bodyState.classList.remove('state-loading');
             bodyState.classList.add('state-success');
 
-            // Ejecutar escáner proactivo 2 segundos después de que el búho termina
             setTimeout(() => { 
                 conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); 
             }, 2500);
             
-            mostrarMensajeBuho(`✅ ¡Bases de datos actualizadas con éxito!`, 5000, true); 
+            mostrarMensajeMascota(`✅ Todo al día y sincronizado con la Nube.`, 5000, true); 
             setTimeout(() => { bodyState.classList.remove('state-success'); }, 2000); 
             
             desbloquearMenu(true);
 
         } catch(e) { 
             console.log("⚠️ Error en descarga:", e); 
-            setPillStatus('Tarifas', 'error', 'Error de conexión a Internet');
-            setPillStatus('Monitor', 'error', 'Intente refrescar la página');
+            setPillStatus('Tarifas', 'error', 'Error de ejecución');
+            setPillStatus('Monitor', 'error', 'Mire la mascota para detalle');
             
-            mostrarMensajeBuho('❌ Hubo un error de conexión (Refresque con Ctrl+F5)');
+            // Ahora la mascota te dirá EXACTAMENTE cuál es el error para saber si es red o código.
+            mostrarMensajeMascota(`❌ Fallo: ${e.message}`, 10000);
             bodyState.classList.remove('state-loading');
         }
     };
 
-    // 🔥 FUNCIÓN DEL BOTÓN "ACTUALIZAR NUBE" MANUAL
     async function forzarDescarga() {
         if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
             setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
@@ -774,9 +982,6 @@
         }
     }
 
-    // =========================================================================
-    // MODAL PERFIL
-    // =========================================================================
     function abrirModal() {
         document.getElementById('inpNombre').value = sesion.nombre;
         document.getElementById('inpUsrOriginal').value = sesion.usuario || '';
@@ -821,8 +1026,9 @@
             sesion.nombre = nNom; sesion.usuario = nUsr;
             localStorage.setItem('sesionActiva', JSON.stringify(sesion));
             
+            let primerNombre = nNom.split(' ')[0] || nNom;
             document.getElementById('uiNombre').innerText = nNom;
-            document.getElementById('lblBienvenida').innerText = `¡Bienvenido, ${nNom}!`;
+            document.getElementById('lblNombre').innerText = primerNombre;
             
             alert("✅ Perfil actualizado correctamente.");
             cerrarModal();
@@ -842,17 +1048,15 @@
     }
 
     // =========================================================================
-    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA (DETECTA CAMBIOS DE CP) 🚀
+    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA
     // =========================================================================
 
     async function conciliarCambiosMonitor(dbRutas, monitor) {
         if (!dbRutas || !monitor || dbRutas.length === 0 || monitor.length === 0) return;
 
-        // 1. OBTENER FECHA ESTRICTA DE HOY (Zona Horaria Ecuador)
         let d = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
         let fechaHoyEC = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
 
-        // 2. FILTRAR POR HOY Y POR ROL
         let rutasDeHoy = dbRutas.filter(r => {
             let fLimpia = String(r.fecha || r.Fecha || '').trim();
             if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
@@ -870,7 +1074,6 @@
         let alertasHTML = '';
         let operacionesPendientes = [];
 
-        // 3. ANALIZAR CADA RUTA PARA DETECTAR FUGAS Y TRADUCIR COLUMNAS
         misRutas.forEach(ruta => {
             let valCP = ruta.cartaPorte || ruta['Carta Porte'] || ruta.CARTA_PORTE || ruta.Carta_Porte;
             let cpOriginal = String(valCP || '').trim().toUpperCase().replace(/\./g, '');
@@ -923,7 +1126,6 @@
                 }
             });
 
-            // PREPARAR REPORTE VISUAL SI HUBO CAMBIOS
             if (fugadosA_NoRegistrados.length > 0 || Object.keys(fugadosB_Registrados).length > 0) {
                 operacionesPendientes.push({
                     rutaOrigen: ruta,
@@ -944,11 +1146,10 @@
                     msj += `&nbsp;&nbsp;🔸 Se movieron ${dest.ids.length} pedidos hacia la CP <b>${cpDest}</b> de ${usrDestino}.<br>`;
                 });
 
-                alertasHTML += `<div style="background:var(--slate-50); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border-left: 4px solid var(--blue-500);">${msj}</div>`;
+                alertasHTML += `<div style="background:var(--bg-panel); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border-left: 4px solid var(--neon-blue);">${msj}</div>`;
             }
         });
 
-        // 4. SI HAY OPERACIONES, EL SISTEMA LAS EJECUTA EN SILENCIO Y LUEGO AVISA
         if (operacionesPendientes.length > 0) {
             let hashCambiosActuales = btoa(JSON.stringify(operacionesPendientes));
             if (sessionStorage.getItem('cambiosIgnoradosHoy') === hashCambiosActuales) return;
@@ -957,14 +1158,10 @@
         }
     }
 
-    // =========================================================================
-    // CORRECCIÓN SILENCIOSA EN GOOGLE SHEETS
-    // =========================================================================
     async function ejecutarCorreccionSilenciosa(operaciones, alertasHTML, hash) {
         let promesas = [];
         let rutasAActualizar = {}; 
 
-        // Preparar las matemáticas para mover el dinero y los paquetes
         operaciones.forEach(op => {
             let idOrig = op.rutaOrigen.idRegistro || op.rutaOrigen.id_registro;
             if (!rutasAActualizar[idOrig]) rutasAActualizar[idOrig] = JSON.parse(JSON.stringify(op.rutaOrigen));
@@ -995,7 +1192,6 @@
             });
         });
 
-        // Enviar silenciosamente a la base de datos
         Object.values(rutasAActualizar).forEach(rutaActualizada => {
             let idEnvio = rutaActualizada.idRegistro || rutaActualizada.id_registro;
             promesas.push(
@@ -1008,20 +1204,20 @@
 
         try {
             await Promise.all(promesas);
-            sessionStorage.setItem('cambiosIgnoradosHoy', hash); // Guardamos para no repetir el aviso
+            sessionStorage.setItem('cambiosIgnoradosHoy', hash); 
             
-            // Notificamos al usuario que el sistema ya arregló todo con un hermoso modal verde
             Swal.fire({
                 title: '✅ Ajuste Automático Realizado',
-                html: `<div style="text-align:left; font-size:14px; color:var(--slate-700);">
+                html: `<div style="text-align:left; font-size:14px; color:var(--text-main);">
                         El sistema detectó modificaciones en el Monitor y ha cuadrado tus finanzas y paquetes automáticamente:<br><br>
                         ${alertasHTML}
                        </div>`,
                 icon: 'success',
-                confirmButtonColor: 'var(--emerald-600)',
+                background: 'var(--bg-dark)',
+                color: 'white',
+                confirmButtonColor: 'var(--neon-green)',
                 confirmButtonText: 'Entendido'
             }).then(() => {
-                // Al darle a entendido, actualizamos la RAM local
                 sessionStorage.removeItem('cacheTarifarioFull');
                 location.reload();
             });
@@ -1031,14 +1227,6 @@
         }
     }
 
-    // Reconstruye el array de objetos a partir de {headers, rows}.
-    // Genera AMBAS versiones de cada clave (la "limpia" en mayúsculas y la
-    // "cruda" tal como viene de MySQL) porque distintas páginas del sistema
-    // (ej. SimuladorCartaPorte.html) dependen de p['idpedido'] o p.Cliente
-    // con el casing original, no solo de la versión IDPEDIDO/CLIENTE.
-    // Esta duplicación ahora se hace en el navegador (barata, en memoria)
-    // en vez de venir ya duplicada en el JSON transferido (que es lo que
-    // hacía pesado el payload antes).
     function reconstruirDesdeHeadersYFilas(payload) {
         if (!payload || !payload.headers || !payload.rows) return [];
         const headersCrudos = payload.headers.map(h => String(h).trim());

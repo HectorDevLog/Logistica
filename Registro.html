@@ -2,200 +2,343 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlexNet - Control de Accesos</title>
     <script src="seguridad.js"></script>
     <script src="config.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
         :root { 
-            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1; --slate-700: #334155; --slate-900: #0f172a;
-            --blue-600: #2563eb; --blue-50: #eff6ff;
-            --emerald-600: #059669; --emerald-50: #ecfdf5;
-            --red-600: #dc2626; --red-50: #fef2f2;
-            --amber-600: #d97706; --amber-50: #fffbeb;
-            --purple-600: #7c3aed; --purple-50: #f5f3ff;
+            /* VARIABLES TEMA OSCURO (Por defecto) */
+            --bg-main: #070b14;
+            --bg-panel: rgba(17, 24, 39, 0.6);
+            --bg-card: #171717;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255,255,255,0.05);
+            --border-hover: rgba(255,255,255,0.15);
+            --table-header: rgba(15, 23, 42, 0.9);
+            --table-row-hover: rgba(255,255,255,0.02);
+            --input-bg: rgba(0,0,0,0.3);
+            
+            --neon-blue: #00f0ff;
+            --neon-purple: #8a2be2;
+            --neon-green: #00ff9d;
+            --neon-amber: #ffb700;
+            --neon-red: #ff3333;
+        }
+
+        /* VARIABLES TEMA CLARO */
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --bg-panel: rgba(255, 255, 255, 0.8);
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0,0,0,0.1);
+            --border-hover: rgba(0,0,0,0.2);
+            --table-header: #f8fafc;
+            --table-row-hover: rgba(0,0,0,0.02);
+            --input-bg: #ffffff;
+            
+            --neon-blue: #0284c7; 
+            --neon-green: #059669; 
+            --neon-amber: #d97706; 
+            --neon-red: #dc2626; 
+            --neon-purple: #7e22ce;
         }
         
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--slate-100); margin: 0; padding: 0; font-size: 14px; color: var(--slate-700); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
+            margin: 0; padding: 0; font-size: 14px; color: var(--text-main); 
+            min-height: 100vh; overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
         
-        /* NAVBAR CORPORATIVO */
-        .navbar { background-color: var(--slate-900); color: white; padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .navbar-brand { font-size: 1.3em; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
-        .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .nav-links a { color: #f8fafc; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: background 0.2s; font-size: 0.95em; }
-        .nav-links a:hover { background: rgba(255,255,255,0.1); }
-        .nav-links a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+        /* NAVBAR NEON */
+        .navbar { 
+            background: var(--bg-panel); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 4%; display: flex; align-items: center; justify-content: space-between; 
+            position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 15px;
+            transition: all 0.4s ease;
+        }
+        .navbar-brand { font-size: clamp(1.1em, 2vw, 1.3em); font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+        .navbar-brand svg { filter: drop-shadow(0 0 8px var(--text-muted)); color: var(--text-main); }
         
-        .user-info { display: flex; align-items: center; gap: 15px; font-weight: 500; font-size: 0.95em; }
-        .btn-logout { background: transparent; color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-logout:hover { background: var(--red-600); border-color: var(--red-600); }
+        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 10px; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-menu-container::-webkit-scrollbar { display: none; }
+        
+        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
+        .nav-links a { 
+            color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9em;
+            display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 8px; transition: all 0.3s; white-space: nowrap;
+        }
+        .nav-links a:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .nav-links a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.1); font-weight: 600; box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);}
+        body.light-theme .nav-links a.active { box-shadow: none; background: rgba(0, 0, 0, 0.05); color: var(--text-main); }
 
-        /* CONTENEDOR PRINCIPAL */
-        .container { max-width: 1200px; margin: 30px auto; display: grid; grid-template-columns: 350px 1fr; gap: 25px; padding: 0 20px; align-items: start; }
+        .user-info { display: flex; align-items: center; gap: 10px; font-size: clamp(0.8em, 1.2vw, 0.9em); font-weight: 500; flex-wrap: wrap; justify-content: flex-end;}
+        .btn-logout { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-logout:hover { background: rgba(255,51,51,0.1); color: var(--neon-red); border-color: var(--neon-red); box-shadow: 0 0 10px rgba(255,51,51,0.2);}
+
+        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
+        #theme-switch { display: none; }
+        .theme-label {
+            width: 70px; height: 28px; background-color: var(--border-color);
+            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2); flex-shrink: 0;
+        }
+        .theme-label .toggle {
+            position: absolute; width: 34px; height: 22px; background-color: #fff; left: 3px;
+            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
+            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
+        }
+        #theme-switch:checked + .theme-label .toggle { transform: translateX(30px); background-color: #1e293b; }
+        .theme-label .names {
+            font-size: 10px; font-weight: bolder; width: 100%; position: absolute;
+            display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main);
+        }
+        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
+        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
+        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
+        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
+        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
+
+        /* GRID PRINCIPAL RESPONSIVO ABSOLUTO */
+        .container { 
+            display: flex; flex-wrap: wrap; gap: 2vw; align-items: flex-start; width: 100%; box-sizing: border-box;
+            max-width: 1400px; margin: 2vw auto; padding: 0 3%; 
+        }
         
+        .form-section { flex: 1 1 350px; min-width: 0; }
+        .table-section { flex: 2 1 600px; min-width: 0; }
+
         /* TARJETAS */
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); }
-        .card-header { margin: -25px -25px 20px -25px; padding: 20px 25px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); border-radius: 12px 12px 0 0; }
-        .card-header h3 { margin: 0; color: var(--slate-900); font-size: 1.15em; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .card { background: var(--bg-panel); padding: 25px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 1px solid var(--border-color); backdrop-filter: blur(10px); transition: border-color 0.3s; box-sizing: border-box;}
+        .card:hover { border-color: var(--border-hover); }
+        .card-header { margin: -25px -25px 20px -25px; padding: 20px 25px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); border-radius: 16px 16px 0 0; }
+        body.light-theme .card-header { background: rgba(0,0,0,0.05); }
+        .card-header h3 { margin: 0; color: var(--text-main); font-size: 1.15em; font-weight: 700; display: flex; align-items: center; gap: 8px; text-transform: uppercase;}
 
         /* FORMULARIO */
         .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--slate-700); }
-        input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--slate-300); border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: all 0.2s; background: white; }
-        input:focus, select:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-50); }
-        .help-text { font-size: 0.8em; color: #64748b; margin-top: 4px; display: block; font-weight: 500; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--text-muted); }
+        input, select { 
+            width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; 
+            box-sizing: border-box; font-family: inherit; font-size: 1em; transition: all 0.3s; 
+            background: var(--input-bg); color: var(--text-main);
+        }
+        input:hover, select:hover { border-color: var(--border-hover); }
+        input:focus, select:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 2px rgba(0,240,255,0.2); background-color: var(--input-bg); }
         
-        .row-flex { display: flex; gap: 15px; margin-bottom: 20px; }
-        .row-flex .form-group { margin-bottom: 0; flex: 1; }
+        .help-text { font-size: 0.8em; color: var(--text-muted); margin-top: 6px; display: block; font-weight: 500; opacity: 0.8;}
+        
+        .row-flex { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .row-flex .form-group { margin-bottom: 0; flex: 1; min-width: 120px;}
 
         /* BOTONES */
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 700; font-size: 0.95em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
-        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button.btn-save { 
+            width: 100%; padding: 14px; background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue); 
+            border-radius: 8px; font-weight: 700; font-size: 1em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;
+        }
+        button.btn-save:hover:not(:disabled) { background: var(--neon-blue); color: #000; transform: translateY(-2px); box-shadow: 0 0 15px rgba(0,240,255,0.4); }
+        button.btn-save:disabled { background: rgba(255,255,255,0.05); border-color: transparent; color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
         
-        .btn-save { background: var(--blue-600); color: white; }
-        .btn-save:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
-        
-        .btn-cancel { background: var(--slate-200); color: var(--slate-700); display: none; }
-        .btn-cancel:hover { background: var(--slate-300); }
+        button.btn-cancel { 
+            width: 100%; padding: 14px; background: transparent; color: var(--text-main); border: 1px solid var(--border-color); 
+            border-radius: 8px; font-weight: 700; font-size: 1em; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.3s;
+        }
+        button.btn-cancel:hover { background: rgba(255,255,255,0.05); border-color: var(--text-main); }
 
-        /* TABLA DE USUARIOS */
-        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid var(--slate-200); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95em; background: white; text-align: left; }
-        th, td { border-bottom: 1px solid var(--slate-200); padding: 14px 15px; }
-        th { background: var(--slate-50); color: var(--slate-900); font-weight: 700; border-bottom: 2px solid var(--slate-200); }
-        td { color: var(--slate-700); vertical-align: middle; }
+        /* TABLA DE USUARIOS RESPONSIVA */
+        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; }
+        .table-wrapper::-webkit-scrollbar { height: 8px; width: 8px;}
+        .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.95em; text-align: left; white-space: nowrap;}
+        th { background: var(--table-header); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border-color); padding: 15px 15px; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px;}
+        td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; color: var(--text-muted); vertical-align: middle; }
+        tbody tr:hover { background-color: var(--table-row-hover); }
         
         /* Badges en la tabla */
-        .badge-rol { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 600; }
-        .rol-admin { background: var(--purple-50); color: var(--purple-600); border: 1px solid #e9d5ff; }
-        .rol-rut { background: var(--emerald-50); color: var(--emerald-600); border: 1px solid #a7f3d0; }
+        .badge-rol { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; border: 1px solid transparent; }
+        .rol-admin { background: rgba(138,43,226,0.1); color: var(--neon-purple); border-color: rgba(138,43,226,0.3); }
+        .rol-rut { background: rgba(0,255,157,0.1); color: var(--neon-green); border-color: rgba(0,255,157,0.3); }
         
-        .badge-city { font-weight: 600; color: var(--blue-600); }
+        body.light-theme .rol-admin { background: #f3e8ff; color: #7e22ce; border-color: #d8b4fe; }
+        body.light-theme .rol-rut { background: #ecfdf5; color: #059669; border-color: #6ee7b7; }
+        
+        .badge-city { font-weight: 600; color: var(--neon-blue); }
+        body.light-theme .badge-city { color: #0284c7; }
 
         /* Botones de Acción en la Tabla */
         .action-cell { display: flex; gap: 8px; justify-content: center; }
-        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: none; background: transparent; }
-        .btn-edit { color: var(--amber-600); background: var(--amber-50); border: 1px solid #fde68a; }
-        .btn-edit:hover { background: #fef3c7; transform: translateY(-1px); }
-        .btn-delete { color: var(--red-600); background: var(--red-50); border: 1px solid #fecaca; }
-        .btn-delete:hover { background: #fee2e2; transform: translateY(-1px); }
+        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--input-bg); }
         
-        .current-user-tag { color: var(--emerald-600); font-size: 0.75em; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; background: var(--emerald-50); padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase; border: 1px solid #a7f3d0;}
-        .restricted-tag { color: var(--slate-400); font-size: 0.85em; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-edit { color: var(--neon-amber); }
+        .btn-edit:hover { background: rgba(255,183,0,0.1); border-color: var(--neon-amber); box-shadow: 0 0 10px rgba(255,183,0,0.2); transform: scale(1.05);}
+        
+        .btn-delete { color: var(--neon-red); }
+        .btn-delete:hover { background: rgba(255,51,51,0.1); border-color: var(--neon-red); box-shadow: 0 0 10px rgba(255,51,51,0.2); transform: scale(1.05);}
+        
+        .current-user-tag { 
+            color: var(--neon-green); font-size: 0.75em; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; 
+            background: rgba(0,255,157,0.1); padding: 3px 8px; border-radius: 6px; margin-left: 10px; text-transform: uppercase; 
+            border: 1px solid rgba(0,255,157,0.3); letter-spacing: 0.5px;
+        }
+        body.light-theme .current-user-tag { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+        
+        .restricted-tag { color: var(--text-muted); font-size: 0.85em; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; opacity: 0.7;}
+
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; padding: 15px; text-align: center;}
+            .user-info { justify-content: center; width: 100%; margin-top: 10px;}
+            .nav-links { justify-content: center; width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="navbar" id="navbar">
-    <div class="navbar-brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-        Control de Accesos
-    </div>
-    
-    <div class="nav-menu-container">
-        <div class="nav-links">
-            <a href="Inicio.html" id="linkInicio">🏠 Menú</a>
-            <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
-            <a href="Simulador.html" id="linkSimIDs">📝 Sim. (IDs)</a>
-            <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. (CP)</a>
-            <a href="AuditorMasivo.html" id="linkMasivo">⚡ Carga Masiva</a>
-            <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
-            <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
-            <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
-            <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
-            <a href="Registro.html" id="linkRegistro">🛡️ Accesos</a>
+    <nav class="navbar" id="navbar">
+        <div class="navbar-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+            Control de Accesos
         </div>
-    </div>
-
-    <div class="user-info" id="infoUsuario"></div>
-</div>
+        
+        <div class="nav-menu-container">
+            <div class="nav-links">
+                <a href="Inicio.html" id="linkInicio">🏠 Inicio</a>
+                <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
+                <a href="Simulador.html" id="linkSimIDs">📝 Sim. IDs</a>
+                <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. CP</a>
+                <a href="AuditorMasivo.html" id="linkMasivo">⚡ Masivo</a>
+                <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
+                <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
+                <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
+                <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
+                <a href="Registro.html" id="linkRegistro" class="active">🛡️ Accesos</a>
+            </div>
+        </div>
+        
+        <div class="user-info" id="infoUsuario">
+            <!-- Renderizado por JS -->
+        </div>
+    </nav>
 
     <div class="container">
         
-        <div class="card">
-            <div class="card-header">
-                <h3 id="formTitulo">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                    Nuevo Usuario
-                </h3>
+        <div class="form-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="formTitulo">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        Nuevo Usuario
+                    </h3>
+                </div>
+                
+                <form id="formRegistro">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
+                        <span class="help-text">Solo letras y espacios.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Usuario (Login)</label>
+                        <input type="text" id="usuario" placeholder="Ej. jperez" required>
+                        <span class="help-text">Solo letras, sin espacios.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="text" id="password" placeholder="Mínimo 6 caracteres" required>
+                        <span class="help-text">Solo letras y números.</span>
+                    </div>
+
+                    <div class="row-flex">
+                        <div class="form-group">
+                            <label>Rol Asignado</label>
+                            <select id="rol">
+                                <option value="Ruteador">Ruteador</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Región / Ciudad</label>
+                            <select id="ciudad">
+                                <option value="QUITO">Quito</option>
+                                <option value="GUAYAQUIL">Guayaquil</option>
+                                <option value="CUENCA">Cuenca</option>
+                                <option value="GENERAL">General</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" id="btnGuardar" class="btn-save">Guardar Registro</button>
+                        <button type="button" id="btnCancelar" class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
+                    </div>
+                </form>
             </div>
-            
-            <form id="formRegistro">
-                <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
-                    <span class="help-text">Solo letras y espacios.</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Usuario (Login)</label>
-                    <input type="text" id="usuario" placeholder="Ej. jperez" required>
-                    <span class="help-text">Solo letras, sin espacios.</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="text" id="password" placeholder="Mínimo 6 caracteres" required>
-                    <span class="help-text">Solo letras y números.</span>
-                </div>
-
-                <div class="row-flex">
-                    <div class="form-group">
-                        <label>Rol</label>
-                        <select id="rol">
-                            <option value="Ruteador">Ruteador</option>
-                            <option value="Administrador">Administrador</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Ciudad / Región</label>
-                        <select id="ciudad">
-                            <option value="QUITO">Quito</option>
-                            <option value="GUAYAQUIL">Guayaquil</option>
-                            <option value="CUENCA">Cuenca</option>
-                            <option value="GENERAL">General</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" id="btnGuardar" class="btn-save">Guardar Registro</button>
-                    <button type="button" id="btnCancelar" class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
-                </div>
-            </form>
         </div>
 
-        <div class="card" style="padding: 0; overflow: hidden;">
-            <div class="card-header" style="margin: 0; border-radius: 12px 12px 0 0;">
-                <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    Directorio del Sistema
-                </h3>
-            </div>
-            
-            <div class="table-wrapper" style="border: none; border-radius: 0;">
-                <table id="tblUsuarios">
-                    <thead>
-                        <tr>
-                            <th>Nombre Completo</th>
-                            <th>Credencial (Login)</th>
-                            <th>Rol Asignado</th>
-                            <th>Región Base</th>
-                            <th style="text-align:center; width: 120px;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td colspan="5" style="text-align:center; padding:40px; color:#64748b;">⏳ Cargando directorio de usuarios...</td></tr>
-                    </tbody>
-                </table>
+        <div class="table-section">
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div class="card-header" style="margin: 0; border-radius: 16px 16px 0 0; border-bottom: none;">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        Directorio del Sistema
+                    </h3>
+                </div>
+                
+                <div class="table-wrapper" style="border: none; border-radius: 0; border-top: 1px solid var(--border-color);">
+                    <table id="tblUsuarios">
+                        <thead>
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th>Credencial (Login)</th>
+                                <th>Rol Asignado</th>
+                                <th>Región Base</th>
+                                <th style="text-align:center; width: 120px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">⏳ Cargando directorio de usuarios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
     </div>
 
 <script>
-    // Recuperamos los datos de la sesión para la lógica interna (seguridad.js ya protegió la página)
+    // 🔒 RECUPERAR SESIÓN
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (!sesion) { window.location.href = 'index.html'; }
+
+    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
+    const savedTheme = localStorage.getItem('flexnet_theme');
+    let isDarkChecked = (!savedTheme || savedTheme === 'dark') ? 'checked' : '';
+    if (savedTheme === 'light') document.body.classList.add('light-theme');
+
+    function toggleTheme() {
+        const isChecked = document.getElementById('theme-switch').checked;
+        if (isChecked) {
+            document.body.classList.remove('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'dark');
+        } else {
+            document.body.classList.add('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'light');
+        }
+    }
 
     let modoEdicion = false;
     let usuarioOriginal = "";
@@ -208,7 +351,17 @@
 
     window.onload = function() {
         document.getElementById('infoUsuario').innerHTML = `
-            <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre} ${esSuperAdmin ? '👑' : ''}</span>
+            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
+            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                <div class="toggle"></div>
+                <div class="names">
+                    <p class="light">Light</p>
+                    <p class="dark">Dark</p>
+                </div>
+            </label>
+            <span style="opacity:0.3; margin: 0 5px;">|</span>
+            <span>📍 ${sesion.ciudad}</span>
+            <span>👤 <b>${sesion.nombre}</b> ${esSuperAdmin ? '👑' : ''}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
         cargarUsuarios();
@@ -225,7 +378,7 @@
             listaUsuarios = await res.json();
             dibujarTabla();
         } catch (e) {
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="color:var(--red-600); text-align:center; padding:30px;">❌ Error de conexión al cargar usuarios.</td></tr>`;
+            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="color:var(--neon-red); text-align:center; padding:40px;">❌ Error de conexión al cargar la base de datos.</td></tr>`;
         }
     }
 
@@ -241,7 +394,7 @@
             let uUsuario = String(u.usuario).toLowerCase().trim();
             let esMiCuenta = (uNombre === nombreSesion) || (usrSesion !== "" && uUsuario === usrSesion);
 
-            let badgeSesion = esMiCuenta ? `<span class="current-user-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> TÚ</span>` : '';
+            let badgeSesion = esMiCuenta ? `<span class="current-user-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> TÚ</span>` : '';
             
             // --- LÓGICA DE PERMISOS DE EDICIÓN ---
             let puedeEditar = false;
@@ -266,13 +419,13 @@
                     </div>
                 `;
             } else {
-                botones = `<div class="restricted-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Restringido</div>`;
+                botones = `<div class="restricted-tag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Bloqueado</div>`;
             }
 
             tbody.innerHTML += `
                 <tr>
-                    <td style="font-weight:600; color:var(--slate-900);">${u.nombre} ${badgeSesion}</td>
-                    <td style="font-family:monospace; color:var(--slate-500);">${u.usuario}</td>
+                    <td style="font-weight:600; color:var(--text-main); font-size:1.05em;">${u.nombre} ${badgeSesion}</td>
+                    <td style="font-family:monospace; opacity:0.8; letter-spacing:0.5px;">${u.usuario}</td>
                     <td>${badgeRol}</td>
                     <td class="badge-city">${u.ciudad}</td>
                     <td>${botones}</td>
@@ -299,7 +452,7 @@
         usuarioOriginal = user.usuario;
 
         document.getElementById('formTitulo').innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--amber-600);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--neon-amber);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             Editar Credenciales
         `;
         document.getElementById('nombre').value = user.nombre;
@@ -308,18 +461,18 @@
         document.getElementById('rol').value = user.rol;
         document.getElementById('ciudad').value = user.ciudad;
 
-        document.getElementById('btnGuardar').innerText = "Guardar Cambios";
-        document.getElementById('btnCancelar').style.display = "block";
+        document.getElementById('btnGuardar').innerHTML = "Guardar Cambios";
+        document.getElementById('btnCancelar').style.display = "flex";
     }
 
     function cancelarEdicion() {
         modoEdicion = false;
         usuarioOriginal = "";
         document.getElementById('formTitulo').innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
             Nuevo Usuario
         `;
-        document.getElementById('btnGuardar').innerText = "Guardar Registro";
+        document.getElementById('btnGuardar').innerHTML = "Guardar Registro";
         document.getElementById('btnCancelar').style.display = "none";
         document.getElementById('formRegistro').reset();
     }
@@ -371,7 +524,8 @@
         // ==========================================
 
         const btn = document.getElementById('btnGuardar');
-        btn.innerText = "Procesando...";
+        let txtOld = btn.innerHTML;
+        btn.innerHTML = `<span class="loader-spinner"></span> Procesando...`;
         btn.disabled = true;
 
         const dataUsuario = {
@@ -395,6 +549,7 @@
             setTimeout(() => {
                 cancelarEdicion();
                 cargarUsuarios();
+                btn.innerHTML = txtOld;
                 btn.disabled = false;
                 
                 // Si la persona se editó a sí misma, actualizar el nombre en memoria para que no tenga que volver a iniciar sesión
@@ -405,7 +560,16 @@
                     sesion.usuario = usuarioVal;
                     localStorage.setItem('sesionActiva', JSON.stringify(sesion));
                     document.getElementById('infoUsuario').innerHTML = `
-                        <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 ${sesion.nombre} ${esSuperAdmin ? '👑' : ''}</span>
+                        <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
+                        <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                            <div class="toggle"></div>
+                            <div class="names">
+                                <p class="light">Light</p>
+                                <p class="dark">Dark</p>
+                            </div>
+                        </label>
+                        <span style="opacity:0.3; margin: 0 5px;">|</span>
+                        <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 <b>${sesion.nombre}</b> ${esSuperAdmin ? '👑' : ''}</span>
                         <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
                     `;
                 }
@@ -415,6 +579,7 @@
         } catch (error) {
             alert("❌ Error de conexión al guardar los datos.");
             cancelarEdicion();
+            btn.innerHTML = txtOld;
             btn.disabled = false;
         }
     });
@@ -438,7 +603,7 @@
                 body: JSON.stringify({ action: 'delete_user', usuario: username })
             });
             
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--red-600);">🗑️ Eliminando registro de la base de datos...</td></tr>`;
+            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--neon-red);"><span class="loader-spinner" style="margin-right:10px;"></span> 🗑️ Eliminando registro de la base de datos...</td></tr>`;
             
             setTimeout(() => { cargarUsuarios(); }, 1000);
         } catch (error) {

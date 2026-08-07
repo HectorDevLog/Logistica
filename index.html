@@ -7,24 +7,56 @@
     <script src="seguridad.js"></script>
     <script src="config.js"></script>
     <style>
-        :root {
-            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1; 
-            --slate-500: #64748b; --slate-700: #334155; --slate-900: #0f172a;
-            --blue-600: #2563eb; --blue-700: #1d4ed8; --blue-50: #eff6ff;
-            --red-600: #dc2626; --red-50: #fef2f2;
-            --owl-body: #1e293b; --owl-belly: #cbd5e1; --owl-beak: #f59e0b;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700&display=swap');
+
+        :root { 
+            /* VARIABLES TEMA OSCURO (Por defecto) */
+            --bg-main: #070b14;
+            --bg-panel: rgba(17, 24, 39, 0.6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255,255,255,0.05);
+            --input-bg: rgba(0,0,0,0.3);
+            
+            --neon-blue: #00f0ff;
+            --neon-purple: #8a2be2;
+            --neon-green: #00ff9d;
+            --neon-red: #ff3333;
+            
+            /* Colores del Capibara Cyberpunk */
+            --capy-body: #a06b3e; 
+            --capy-snout: #8b572a; 
+            --capy-dark: #2a1608; 
+        }
+
+        /* VARIABLES TEMA CLARO */
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --bg-panel: rgba(255, 255, 255, 0.9);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0,0,0,0.1);
+            --input-bg: #ffffff;
+            
+            --neon-blue: #0284c7; 
+            --neon-green: #059669; 
+            --neon-red: #dc2626; 
         }
 
         body { 
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-            background-color: var(--slate-100);
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
             display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; color: var(--slate-700); overflow: hidden;
+            min-height: 100vh; margin: 0; color: var(--text-main); overflow: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
         @keyframes wrapperEnter {
             0% { opacity: 0; transform: scale(0.95) translateY(30px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+            100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         }
 
         @keyframes fadeInUp {
@@ -32,211 +64,230 @@
             100% { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
-
         /* CONTENEDOR PRINCIPAL DIVIDIDO */
         .login-wrapper {
-            display: flex; width: 1000px; max-width: 95%; height: 620px;
-            background: white; border-radius: 20px; overflow: hidden; opacity: 0; 
+            display: flex; width: 1000px; max-width: 95%; min-height: 620px;
+            background: var(--bg-panel); border-radius: 20px; overflow: hidden; opacity: 0; 
+            border: 1px solid var(--border-color); backdrop-filter: blur(15px);
             animation: wrapperEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 0.1s;
             position: relative;
         }
 
         /* PANEL IZQUIERDO */
         .brand-panel {
-            flex: 1; background: linear-gradient(135deg, var(--slate-900) 0%, #1e293b 100%);
+            flex: 1; background: linear-gradient(135deg, rgba(7, 11, 20, 0.9) 0%, rgba(138, 43, 226, 0.2) 100%);
             color: white; padding: 50px; display: flex; flex-direction: column;
             justify-content: center; position: relative; overflow: hidden;
+            border-right: 1px solid var(--border-color);
         }
+        body.light-theme .brand-panel { background: linear-gradient(135deg, var(--neon-blue) 0%, #1e40af 100%); }
 
         .bg-circle { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.03); pointer-events: none; }
         .circle-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
         .circle-2 { width: 500px; height: 500px; bottom: -200px; left: -100px; }
 
-        .brand-panel h1 { font-size: 2.5em; margin: 0 0 10px 0; font-weight: 800; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.3s; }
-        .brand-panel p { font-size: 1.1em; color: var(--slate-300); line-height: 1.6; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.4s; }
+        .brand-panel h1 { font-size: clamp(2em, 3vw, 2.8em); margin: 0 0 10px 0; font-weight: 800; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.3s; line-height: 1.1;}
+        .brand-panel h1 span { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
+        body.light-theme .brand-panel h1 span { color: #bae6fd; text-shadow: none; }
+        
+        .divider { width: 50px; height: 4px; background-color: var(--neon-blue); margin: 25px 0; border-radius: 2px; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.4s; box-shadow: 0 0 10px var(--neon-blue);}
+        body.light-theme .divider { background-color: white; box-shadow: none;}
+
+        .brand-panel p { font-size: 1.1em; color: rgba(255,255,255,0.8); line-height: 1.6; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.5s; }
 
         /* PANEL DERECHO */
         .form-panel {
-            flex: 1; padding: 40px 80px; display: flex; flex-direction: column;
-            justify-content: center; background: white; align-items: center;
+            flex: 1; padding: 40px 6vw; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; position: relative;
         }
 
-        /* 🔥 EL BÚHO ANIMADO 🔥 */
-        .owl-container {
-            width: 120px; height: 100px; position: relative; margin-bottom: 5px;
-            opacity: 0; animation: fadeInUp 0.6s ease forwards 0.3s;
+        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
+        .theme-switch-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
+        #theme-switch { display: none; }
+        .theme-label {
+            width: 70px; height: 28px; background-color: var(--border-color);
+            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2);
         }
+        .theme-label .toggle {
+            position: absolute; width: 34px; height: 22px; background-color: #fff; left: 3px;
+            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
+            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
+        }
+        #theme-switch:checked + .theme-label .toggle { transform: translateX(30px); background-color: #1e293b; }
+        .theme-label .names { font-size: 10px; font-weight: bolder; width: 100%; position: absolute; display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main); }
+        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
+        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
+        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
+        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
+        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
+
+        /* 🔥 ANATOMÍA CORRECTA DEL CAPIBARA 🔥 */
+        .mascot-container { position: relative; width: 80px; height: 80px; margin-bottom: 20px; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.3s;}
         
-        .owl-body {
-            position: absolute; bottom: 0; left: 20px; width: 80px; height: 85px;
-            background: var(--owl-body); border-radius: 40px 40px 20px 20px; overflow: hidden;
-            z-index: 1;
-        }
-        
-        .owl-belly {
-            position: absolute; bottom: -10px; left: 15px; width: 50px; height: 60px;
-            background: var(--owl-belly); border-radius: 50%;
-        }
-
-        .owl-eye {
-            position: absolute; top: 25px; width: 26px; height: 26px;
-            background: white; border-radius: 50%; display: flex;
-            justify-content: center; align-items: center; overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 2;
-        }
-        .owl-eye.left { left: 12px; }
-        .owl-eye.right { right: 12px; }
-
-        /* Párpados (Para expresiones de tristeza, alegría o ENOJO) */
-        .owl-eye::before {
-            content: ''; position: absolute; top: -30px; left: -5px; width: 40px; height: 30px;
-            background: var(--owl-body); transition: transform 0.3s ease; z-index: 5;
-        }
-
-        .owl-pupil {
-            width: 12px; height: 12px; background: var(--slate-900); border-radius: 50%;
-            transition: transform 0.1s ease-out; position: relative;
-        }
-        .owl-pupil::after {
-            content: ''; position: absolute; top: 2px; right: 2px; width: 4px; height: 4px;
-            background: white; border-radius: 50%;
-        }
-
-        .owl-beak {
-            position: absolute; top: 45px; left: 35px; width: 10px; height: 12px;
-            background: var(--owl-beak); border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
-            z-index: 3;
-        }
-
-        /* Las alas */
-        .owl-wing {
-            position: absolute; width: 35px; height: 40px; background: var(--owl-body); 
-            border-radius: 20px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 4; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
-        }
-        .owl-wing.left { bottom: -5px; left: 15px; transform-origin: bottom center; transform: translateY(10px) rotate(-15deg); }
-        .owl-wing.right { bottom: -5px; right: 15px; transform-origin: bottom center; transform: translateY(10px) rotate(15deg); }
-
-        /* 🔥 NUBE DE DIÁLOGO (Escondida por defecto) 🔥 */
-        .owl-speech-bubble {
-            position: absolute; top: -45px; right: -90px; background: white;
-            border: 2px solid var(--slate-200); padding: 8px 12px; border-radius: 12px;
-            font-size: 0.85em; font-weight: 700; color: var(--slate-700);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        .capy-speech-bubble {
+            position: absolute; top: -35px; left: -140px; background: var(--bg-panel);
+            border: 1px solid var(--neon-blue); padding: 8px 15px; border-radius: 12px;
+            font-size: 0.85em; font-weight: 600; color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
             opacity: 0; transform: scale(0.8) translateY(10px);
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 10; pointer-events: none; white-space: nowrap;
+            z-index: 10; pointer-events: none; white-space: nowrap; backdrop-filter: blur(5px);
         }
-        .owl-speech-bubble::after {
-            content: ''; position: absolute; bottom: -7px; left: 20px; width: 10px; height: 10px;
-            background: white; border-bottom: 2px solid var(--slate-200); border-right: 2px solid var(--slate-200);
+        .capy-speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+        .capy-speech-bubble::after {
+            content: ''; position: absolute; top: 10px; right: -6px; width: 10px; height: 10px;
+            background: var(--bg-panel); border-top: 1px solid var(--neon-blue); border-right: 1px solid var(--neon-blue);
             transform: rotate(45deg);
         }
 
-        /* 🔥 Animación de Saludo (Ciclo de 6s: 1.5s saluda suave, 4.5s pausa) 🔥 */
-        @keyframes waveHello {
-            0% { transform: translateY(10px) rotate(15deg); }
-            6% { transform: translateY(-10px) rotate(75deg); }
-            12% { transform: translateY(10px) rotate(5deg); }
-            18% { transform: translateY(-10px) rotate(75deg); }
-            25% { transform: translateY(10px) rotate(15deg); }
-            100% { transform: translateY(10px) rotate(15deg); } /* Reposo por el resto del ciclo */
+        .capy-ear { position: absolute; top: 12px; width: 14px; height: 12px; background: var(--capy-dark); z-index: 0; transition: all 0.3s;}
+        .capy-ear.left { left: -2px; border-radius: 10px 5px 0 10px; transform: rotate(-30deg); }
+        .capy-ear.right { right: -2px; border-radius: 5px 10px 10px 0; transform: rotate(30deg); }
+        
+        .capy-body { position: absolute; bottom: 0; left: 0; width: 80px; height: 75px; background: var(--capy-body); border-radius: 35px 35px 20px 20px; z-index: 1; overflow: hidden; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); transition: transform 0.3s;}
+        .capy-snout { position: absolute; bottom: 5px; left: 12px; width: 56px; height: 35px; background: var(--capy-snout); border-radius: 20px 20px 25px 25px; z-index: 2; }
+        .capy-nose { position: absolute; top: 4px; left: 16px; width: 24px; height: 14px; background: var(--capy-dark); border-radius: 10px 10px 15px 15px; }
+        .capy-mouth { position: absolute; top: 18px; left: 27px; width: 2px; height: 8px; background: var(--capy-dark); transition: all 0.3s;}
+        .capy-mouth::after { content: ''; position: absolute; bottom: 0; left: -6px; width: 14px; height: 5px; border-bottom: 2px solid var(--capy-dark); border-radius: 50%; }
+        
+        .capy-eye { position: absolute; top: 22px; width: 12px; height: 12px; background: var(--capy-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 2; transition: all 0.3s;}
+        .capy-eye.left { left: 14px; } .capy-eye.right { right: 14px; }
+        .capy-pupil { width: 4px; height: 4px; background: var(--neon-blue); border-radius: 50%; position: relative; transition: transform 0.1s ease-out; transform: translate(1px, -1px); box-shadow: 0 0 5px var(--neon-blue);}
+        
+        .capy-blush { position: absolute; top: 32px; width: 10px; height: 5px; background: rgba(0, 240, 255, 0.4); border-radius: 50%; z-index: 1; transition: all 0.3s ease;}
+        .capy-blush.left { left: 8px; } .capy-blush.right { right: 8px; }
+        
+        .capy-eyelid { position: absolute; top: -14px; left: -2px; width: 16px; height: 16px; background: var(--capy-body); z-index: 5; animation: blink 5s infinite; transition: all 0.3s; transform: translateY(2px);}
+        @keyframes blink { 0%, 96%, 98%, 100% { transform: translateY(2px); } 97%, 99% { transform: translateY(12px); } }
+        
+        /* El eje de rotación DEBE ser 'top center' (los hombros) */
+        .capy-arm { position: absolute; width: 16px; height: 22px; background: var(--capy-snout); border-radius: 10px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 4; box-shadow: -2px 2px 4px rgba(0,0,0,0.3); transform-origin: top center; }
+        .capy-arm.left { bottom: 5px; left: 4px; transform: rotate(15deg); cursor: pointer; }
+        .capy-arm.right { bottom: 5px; right: 4px; transform: rotate(-15deg); cursor: pointer; }
+
+        /* Animación Saludo Inicio */
+        @keyframes waveHello { 0%, 100% { transform: translateY(0) rotate(-15deg); } 50% { transform: translateY(-10px) rotate(-110deg); } }
+        .capy-arm.right.waving { animation: waveHello 2s ease-in-out; }
+
+        /* 🔥 ESTADOS EMOCIONALES GEOMÉTRICAMENTE PERFECTOS 🔥 */
+
+        /* 1. Tapado (Contraseña): Brazos giran sobre el hombro hacia la cara */
+        body.state-password .capy-arm.left { transform: translateY(-10px) translateX(8px) rotate(150deg); }
+        body.state-password .capy-arm.right { transform: translateY(-10px) translateX(-8px) rotate(-150deg); }
+        body.state-password .capy-eyelid { transform: translateY(14px); animation: none; } 
+        body.state-password .capy-pupil { display: none !important; }
+
+        /* 2. Espiando: Mano derecha baja y ojo derecho abre */
+        body.state-peek .capy-arm.left { transform: translateY(-10px) translateX(8px) rotate(150deg); } 
+        body.state-peek .capy-arm.right { transform: translateY(0px) translateX(0px) rotate(-15deg); }
+        body.state-peek .capy-eye.left .capy-eyelid { transform: translateY(14px); animation: none; } 
+        body.state-peek .capy-eye.right .capy-eyelid { transform: translateY(0px); animation: none; } 
+        body.state-peek .capy-eye.left .capy-pupil { display: none !important; }
+        body.state-peek .capy-eye.right .capy-pupil { transform: translate(-3px, 2px) scale(0.9) !important; }
+
+        /* 3. Error (Llorando): Párpados tristes \ /, lágrimas */
+        body.state-error .capy-ear.left { transform: rotate(-50deg) translateY(4px) translateX(-2px); } 
+        body.state-error .capy-ear.right { transform: rotate(50deg) translateY(4px) translateX(2px); }
+        body.state-error .capy-mouth { height: 10px; width: 6px; border-radius: 5px; background: var(--capy-dark); left: 25px; top: 19px;} 
+        body.state-error .capy-mouth::after { display:none; }
+        body.state-error .capy-eyelid { animation:none; } 
+        body.state-error .capy-eye.left .capy-eyelid { transform: translateY(8px) rotate(-25deg); } /* \ */
+        body.state-error .capy-eye.right .capy-eyelid { transform: translateY(8px) rotate(25deg); }  /* / */
+        body.state-error .capy-blush { 
+            background: var(--neon-blue); height: 12px; width: 4px; border-radius: 4px; top: 30px; box-shadow: 0 0 5px var(--neon-blue);
         }
-        .owl-wing.right.waving { animation: waveHello 6s ease-in-out infinite; }
+        body.state-error .capy-blush.left { transform: translate(10px, 5px); } /* Cae exacto debajo del ojo */
+        body.state-error .capy-blush.right { transform: translate(-10px, 5px); }
+        body.state-error .capy-pupil { transform: translateY(3px) scale(0.9) !important; } /* Mirada baja triste */
 
-        /* Animación de Despedida (Muy rápida) */
-        @keyframes waveGoodbye {
-            0%, 100% { transform: translateY(-30px) translateX(15px) rotate(110deg); }
-            50% { transform: translateY(-30px) translateX(25px) rotate(140deg); }
+        /* 4. Angry (Enojado por inactividad): Párpados enojados / \, brazos cruzados */
+        body.state-angry .capy-arm.left { transform: translateY(-2px) translateX(4px) rotate(60deg); } 
+        body.state-angry .capy-arm.right { transform: translateY(-2px) translateX(-4px) rotate(-60deg); }
+        body.state-angry .capy-eyelid { animation: none;} 
+        body.state-angry .capy-eye.left .capy-eyelid { transform: translateY(8px) rotate(25deg); }  /* / */
+        body.state-angry .capy-eye.right .capy-eyelid { transform: translateY(8px) rotate(-25deg); } /* \ */
+        body.state-angry .capy-pupil { transform: translateY(1px) scale(0.85) !important; }
+        body.state-angry .capy-speech-bubble { opacity: 1; transform: scale(1) translateY(0); } 
+
+        /* 5. Éxito (Celebración: Saltito y mano derecha saludando) */
+        @keyframes jumpHappy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @keyframes waveGoodbye { 
+            0%, 100% { transform: translateY(-10px) rotate(-130deg); } 
+            50% { transform: translateY(-10px) rotate(-90deg); } 
         }
+        
+        /* 🔥 SOLUCIÓN PARA QUE NO DESAPAREZCA: Fijamos la opacidad a 1 🔥 */
+        body.state-success .mascot-container { 
+            opacity: 1 !important; 
+            animation: jumpHappy 0.4s ease 2 forwards; 
+        } 
+        
+        body.state-success .capy-arm.left { transform: translateY(0px) rotate(15deg); } /* Reposa */
+        body.state-success .capy-arm.right { animation: waveGoodbye 0.3s ease-in-out infinite !important; }
+        body.state-success .capy-eye { background: transparent !important; border-top: 3px solid var(--capy-dark); border-radius: 50% 50% 0 0; height: 6px; transform: translateY(4px);}
+        body.state-success .capy-pupil, body.state-success .capy-eyelid { display: none !important; } 
+        body.state-success .capy-blush { background: rgba(0, 255, 157, 0.6); box-shadow: 0 0 5px rgba(0, 255, 157, 0.8);}
 
-        /* 🔥 ESTADOS EMOCIONALES DEL BÚHO 🔥 */
+        /* Adapta el Capibara al Light Theme */
+        body.light-theme .capy-speech-bubble { background: white; border-color: var(--border-color); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        body.light-theme .capy-speech-bubble::after { background: white; border-color: var(--border-color); }
+        body.light-theme .capy-pupil { background: white; box-shadow: none; }
+        body.light-theme .capy-blush { background: rgba(239, 68, 68, 0.3); }
+        body.light-theme.state-success .capy-blush { background: rgba(16, 185, 129, 0.5); box-shadow: none;}
+        body.light-theme.state-error .capy-blush { background: #0ea5e9; box-shadow: none; } /* Lágrimas azules en modo claro */
 
-        /* 1. Tapado (Contraseña) */
-        body.state-password .owl-wing.left { transform: translateY(-40px) translateX(10px) rotate(35deg); }
-        body.state-password .owl-wing.right { transform: translateY(-40px) translateX(-10px) rotate(-35deg); }
-        body.state-password .owl-pupil { transform: scale(0.8) !important; }
-
-        /* 2. Espiando */
-        body.state-peek .owl-wing.left { transform: translateY(-10px) translateX(-25px) rotate(-50deg); } 
-        body.state-peek .owl-wing.right { transform: translateY(-10px) translateX(25px) rotate(50deg); }
-        body.state-peek .owl-pupil { transform: translate(-4px, 2px) scale(0.9) !important; }
-
-        /* 3. Error en el Login (Triste) */
-        body.state-error .owl-wing.left { transform: translateY(15px) rotate(-5deg); } 
-        body.state-error .owl-wing.right { transform: translateY(15px) rotate(5deg); }
-        body.state-error .owl-pupil { transform: translateY(6px) scale(0.9) !important; } 
-        body.state-error .owl-eye.left::before { transform: translateY(18px) rotate(15deg); } 
-        body.state-error .owl-eye.right::before { transform: translateY(18px) rotate(-15deg); }
-
-        /* 4. Despedida / Éxito (Entrando al Sistema) */
-        body.state-success .owl-wing.left { transform: translateY(10px) rotate(-15deg); } 
-        body.state-success .owl-wing.right { animation: waveGoodbye 0.3s ease-in-out infinite !important; transform-origin: bottom center; } 
-        body.state-success .owl-pupil { transform: scale(1.15) !important; } 
-        body.state-success .owl-eye.left::before { transform: translateY(10px) rotate(-15deg); } 
-        body.state-success .owl-eye.right::before { transform: translateY(10px) rotate(15deg); }
-
-        /* 5. 🔥 ENOJADO (Inactividad 15 seg) 🔥 */
-        body.state-angry .owl-wing.left { transform: translateY(20px) rotate(-40deg); } /* Brazos de jarra */
-        body.state-angry .owl-wing.right { transform: translateY(20px) rotate(40deg); }
-        body.state-angry .owl-pupil { transform: translateY(2px) scale(0.85) !important; } /* Mirada intensa */
-        body.state-angry .owl-eye.left::before { transform: translateY(16px) rotate(25deg); } /* Ceño fruncido intenso */
-        body.state-angry .owl-eye.right::before { transform: translateY(16px) rotate(-25deg); }
-        body.state-angry .owl-speech-bubble { opacity: 1; transform: scale(1) translateY(0); } /* Muestra la nube de diálogo */
 
         /* Elementos del Formulario */
-        h2 { color: var(--slate-900); margin: 0 0 5px 0; font-size: 1.8em; font-weight: 800; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.4s; width: 100%; text-align: left; }
-        p.subtitle { color: var(--slate-500); margin: 0 0 25px 0; font-size: 0.95em; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.5s; width: 100%; text-align: left; }
+        h2 { color: var(--text-main); margin: 0 0 5px 0; font-size: 1.8em; font-weight: 800; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.4s; width: 100%; text-align: center; }
+        p.subtitle { color: var(--text-muted); margin: 0 0 25px 0; font-size: 0.95em; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.5s; width: 100%; text-align: center; }
 
-        form { width: 100%; }
+        form { width: 100%; max-width: 320px; }
         .form-group { margin-bottom: 20px; position: relative; }
         .form-group:nth-child(1) { opacity: 0; animation: fadeInUp 0.6s ease forwards 0.6s; }
         .form-group:nth-child(2) { opacity: 0; animation: fadeInUp 0.6s ease forwards 0.7s; }
 
-        label { display: block; font-size: 0.85em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--slate-700); }
+        label { display: block; font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); }
 
         input { 
-            width: 100%; padding: 14px 16px; border: 2px solid var(--slate-200); 
-            border-radius: 10px; box-sizing: border-box; font-size: 1.05em; 
-            font-family: inherit; transition: all 0.3s; background: var(--slate-50); color: var(--slate-900);
+            width: 100%; padding: 14px 16px; border: 1px solid var(--border-color); 
+            border-radius: 8px; box-sizing: border-box; font-size: 1em; 
+            font-family: inherit; transition: all 0.3s; background: var(--input-bg); color: var(--text-main);
         }
-        input:focus { outline: none; border-color: var(--blue-600); background: white; box-shadow: 0 0 0 4px var(--blue-50); transform: translateY(-1px); }
+        input:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 2px rgba(0,240,255,0.2); transform: translateY(-1px); }
 
-        /* Elimina el ojito nativo de Chrome/Edge */
         input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear, input[type="password"]::-webkit-reveal { display: none; width: 0; height: 0; }
 
         .btn-toggle-pass {
-            position: absolute; right: 15px; top: 38px; background: none; border: none;
-            color: var(--slate-400); cursor: pointer; padding: 0; transition: color 0.2s; z-index: 5;
+            position: absolute; right: 12px; top: 35px; background: none; border: none;
+            color: var(--text-muted); cursor: pointer; padding: 0; transition: color 0.2s; z-index: 5;
         }
-        .btn-toggle-pass:hover { color: var(--blue-600); }
+        .btn-toggle-pass:hover { color: var(--neon-blue); }
 
         button.btn-submit { 
-            width: 100%; padding: 16px; background: var(--blue-600); color: white; 
-            border: none; border-radius: 10px; font-weight: 700; font-size: 1.1em; 
+            width: 100%; padding: 14px; background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue);
+            border-radius: 8px; font-weight: 700; font-size: 1em; 
             cursor: pointer; transition: all 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px;
             opacity: 0; animation: fadeInUp 0.6s ease forwards 0.8s;
         }
-        button.btn-submit:hover:not(:disabled) { background: var(--blue-700); transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4); }
+        button.btn-submit:hover:not(:disabled) { background: var(--neon-blue); color: #000; transform: translateY(-2px); box-shadow: 0 0 15px rgba(0,240,255,0.4); }
         button.btn-submit:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
-        button.btn-submit:disabled { background: var(--slate-300); cursor: not-allowed; transform: none; box-shadow: none; }
+        button.btn-submit:disabled { background: rgba(255,255,255,0.05); border-color: transparent; color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
 
         #errorMsg { 
-            background: var(--red-50); color: var(--red-600); padding: 14px; border-radius: 10px; font-size: 0.95em; 
-            display: none; margin-bottom: 20px; font-weight: 600; border: 1px solid #fecaca; align-items: center; gap: 8px; animation: fadeInUp 0.4s ease; width: 100%; box-sizing: border-box;
+            background: rgba(255,51,51,0.1); color: var(--neon-red); padding: 12px; border-radius: 8px; font-size: 0.9em; 
+            display: none; margin-bottom: 20px; font-weight: 600; border: 1px solid rgba(255,51,51,0.3); align-items: center; gap: 8px; animation: fadeInUp 0.4s ease; width: 100%; box-sizing: border-box; justify-content: center; text-align: center;
         }
 
-        .loader-spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        .loader-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: currentColor; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
-        .footer-text { margin-top: 30px; font-size: 0.8em; color: var(--slate-400); text-align: center; opacity: 0; animation: fadeIn 1s ease forwards 1s; }
+        .footer-text { margin-top: 30px; font-size: 0.75em; color: var(--text-muted); text-align: center; opacity: 0; animation: fadeIn 1s ease forwards 1s; }
 
         @media (max-width: 850px) {
-            .login-wrapper { flex-direction: column; height: auto; max-width: 450px; }
+            .login-wrapper { flex-direction: column; height: auto; max-width: 450px; min-height: auto;}
             .brand-panel { display: none; }
-            .form-panel { padding: 40px 30px; }
-            h2, p.subtitle { text-align: center; }
+            .form-panel { padding: 50px 30px; }
+            form { max-width: 100%; }
         }
     </style>
 </head>
@@ -246,29 +297,52 @@
     <div class="brand-panel">
         <div class="bg-circle circle-1"></div>
         <div class="bg-circle circle-2"></div>
-        <h1>FlexNet Operaciones</h1>
+        <h1>FlexNet<br><span>Operaciones</span></h1>
+        <div class="divider"></div>
         <p>Sistema centralizado de Control Logístico, Tarifación Dinámica y Auditoría de Flotas. Acceso exclusivo para personal autorizado.</p>
     </div>
 
     <div class="form-panel">
-        
-        <div class="owl-container">
-            <div class="owl-speech-bubble">¿Ya va a iniciar sesión?</div>
-            <div class="owl-body">
-                <div class="owl-belly"></div>
-                <div class="owl-eye left" id="eye-left"><div class="owl-pupil" id="pupil-left"></div></div>
-                <div class="owl-eye right" id="eye-right"><div class="owl-pupil" id="pupil-right"></div></div>
-                <div class="owl-beak"></div>
+        <div class="theme-switch-container">
+            <input id="theme-switch" type="checkbox" onchange="toggleTheme()">
+            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                <div class="toggle"></div>
+                <div class="names">
+                    <p class="light">Light</p>
+                    <p class="dark">Dark</p>
+                </div>
+            </label>
+        </div>
+
+        <div class="mascot-container">
+            <div class="capy-speech-bubble" id="mascot-bubble">¿Ya va a iniciar sesión?</div>
+            <div class="capy-ear left"></div>
+            <div class="capy-ear right"></div>
+            <div class="capy-body">
+                <div class="capy-blush left"></div>
+                <div class="capy-blush right"></div>
+                <div class="capy-snout">
+                    <div class="capy-nose"></div>
+                    <div class="capy-mouth"></div>
+                </div>
+                <div class="capy-eye left" id="eye-left">
+                    <div class="capy-eyelid"></div>
+                    <div class="capy-pupil" id="pupil-left"></div>
+                </div>
+                <div class="capy-eye right" id="eye-right">
+                    <div class="capy-eyelid"></div>
+                    <div class="capy-pupil" id="pupil-right"></div>
+                </div>
             </div>
-            <div class="owl-wing left" onclick="togglePasswordView()"></div>
-            <div class="owl-wing right waving" id="wing-right" onclick="togglePasswordView()"></div>
+            <div class="capy-arm left" onclick="togglePasswordView()"></div>
+            <div class="capy-arm right waving" id="arm-right" onclick="togglePasswordView()"></div>
         </div>
 
         <h2>¡Hola de nuevo!</h2>
         <p class="subtitle">Ingresa tus credenciales para continuar</p>
         
         <div id="errorMsg" style="display: none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             <span id="txtError">Usuario o contraseña incorrectos.</span>
         </div>
 
@@ -289,29 +363,49 @@
 
             <button type="submit" id="btnIngresar" class="btn-submit">
                 Acceder al Sistema
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
             </button>
         </form>
         
         <div class="footer-text">
             FlexNet v5.0 &copy; 2026. Todos los derechos reservados.<br>
-            Desarrollado por: <strong>Héctor Torres</strong>
+            Desarrollado por: <strong style="color:var(--neon-blue);">Héctor Torres</strong>
         </div>
     </div>
 </div>
 
 <script>
+    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
+    const savedTheme = localStorage.getItem('flexnet_theme');
+    const themeSwitch = document.getElementById('theme-switch');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+    } else {
+        themeSwitch.checked = true; // Por defecto es Dark, el switch muestra Dark activo
+    }
+
+    function toggleTheme() {
+        if (themeSwitch.checked) {
+            document.body.classList.remove('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'dark');
+        } else {
+            document.body.classList.add('light-theme'); 
+            localStorage.setItem('flexnet_theme', 'light');
+        }
+    }
+
     let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
     if (sesion && sesion.status === 'success') window.location.href = 'Inicio.html';
 
     const userField = document.getElementById('user');
     const passField = document.getElementById('pass');
     const bodyState = document.body;
-    const rightWing = document.getElementById('wing-right');
+    const armRight = document.getElementById('arm-right');
     const pupilLeft = document.getElementById('pupil-left');
     const pupilRight = document.getElementById('pupil-right');
     const eyeLeft = document.getElementById('eye-left');
     const eyeRight = document.getElementById('eye-right');
+    const mascotBubble = document.getElementById('mascot-bubble');
 
     // 🔥 TIMER DE INACTIVIDAD ESTRICTO (15 seg) 🔥
     let idleTimer;
@@ -319,36 +413,31 @@
     function resetIdleTimer() {
         clearTimeout(idleTimer);
         
-        // Si estaba enojado, lo contentamos
-        if (bodyState.className === 'state-angry') {
-            bodyState.className = '';
-            rightWing.classList.add('waving'); // Vuelve a saludar
+        if (bodyState.className.includes('state-angry')) {
+            bodyState.classList.remove('state-angry');
+            mascotBubble.classList.remove('show');
         }
         
-        // Inicia la cuenta regresiva de 15 segundos
         idleTimer = setTimeout(() => {
-            // Solo se enoja si está en estado normal (no queremos interrumpir si está tapado/espiando/triste)
-            if (bodyState.className === '') {
-                bodyState.className = 'state-angry';
-                rightWing.classList.remove('waving');
+            if (bodyState.className === '' || bodyState.className === 'light-theme') {
+                bodyState.classList.add('state-angry');
+                armRight.classList.remove('waving');
+                mascotBubble.innerHTML = "¿Sigues ahí?";
+                mascotBubble.classList.add('show');
             }
         }, 15000);
     }
 
-    // Iniciar el timer apenas carga la página
     resetIdleTimer();
 
-    // Solo los clicks o la escritura en el formulario reinician el timer de paciencia del búho
     userField.addEventListener('input', resetIdleTimer);
     passField.addEventListener('input', resetIdleTimer);
     userField.addEventListener('click', resetIdleTimer);
     passField.addEventListener('click', resetIdleTimer);
 
-
     // Seguimiento del mouse para las pupilas
     document.addEventListener('mousemove', (e) => {
-        // Ignora el mouse si el búho está en una emoción fuerte (enojado, triste, contraseña)
-        if (bodyState.className !== '') return;
+        if (bodyState.className.includes('state-password') || bodyState.className.includes('state-peek') || bodyState.className.includes('state-error') || bodyState.className.includes('state-success') || bodyState.className.includes('state-angry')) return;
 
         const rectL = eyeLeft.getBoundingClientRect();
         const rectR = eyeRight.getBoundingClientRect();
@@ -356,62 +445,73 @@
         const cyL = rectL.top + rectL.height / 2;
         const cxR = rectR.left + rectR.width / 2;
         const cyR = rectR.top + rectR.height / 2;
+        
         const angleL = Math.atan2(e.clientY - cyL, e.clientX - cxL);
         const angleR = Math.atan2(e.clientY - cyR, e.clientX - cxR);
-        const maxDist = 5;
+        const maxDist = 3;
 
         pupilLeft.style.transform = `translate(${Math.cos(angleL) * maxDist}px, ${Math.sin(angleL) * maxDist}px)`;
         pupilRight.style.transform = `translate(${Math.cos(angleR) * maxDist}px, ${Math.sin(angleR) * maxDist}px)`;
     });
 
     userField.addEventListener('input', () => {
-        rightWing.classList.remove('waving');
-        if(bodyState.className === 'state-error') bodyState.className = '';
+        armRight.classList.remove('waving');
+        bodyState.classList.remove('state-error');
     });
     
     passField.addEventListener('input', () => {
-        if(bodyState.className === 'state-error') {
-            bodyState.className = passField.type === 'password' ? 'state-password' : 'state-peek';
+        if(bodyState.className.includes('state-error')) {
+            bodyState.classList.remove('state-error');
+            if(passField.type === 'password') bodyState.classList.add('state-password');
+            else bodyState.classList.add('state-peek');
         }
     });
 
     userField.addEventListener('focus', () => {
-        rightWing.classList.remove('waving');
-        if (bodyState.className !== 'state-angry') bodyState.className = ''; 
+        armRight.classList.remove('waving');
+        bodyState.classList.remove('state-angry');
+        bodyState.classList.remove('state-password');
+        bodyState.classList.remove('state-peek');
     });
 
     passField.addEventListener('focus', () => {
-        rightWing.classList.remove('waving');
+        armRight.classList.remove('waving');
         pupilLeft.style.transform = '';
         pupilRight.style.transform = '';
+        bodyState.classList.remove('state-angry');
 
         if(passField.type === 'password') {
-            bodyState.className = 'state-password';
+            bodyState.classList.add('state-password');
+            bodyState.classList.remove('state-peek');
         } else {
-            bodyState.className = 'state-peek';
+            bodyState.classList.add('state-peek');
+            bodyState.classList.remove('state-password');
         }
     });
 
     passField.addEventListener('blur', () => {
-        if(bodyState.className !== 'state-error' && bodyState.className !== 'state-success' && bodyState.className !== 'state-angry') {
-            bodyState.className = ''; 
+        if(!bodyState.className.includes('state-error') && !bodyState.className.includes('state-success') && !bodyState.className.includes('state-angry')) {
+            bodyState.classList.remove('state-password');
+            bodyState.classList.remove('state-peek');
         }
     });
 
     function togglePasswordView() {
-        rightWing.classList.remove('waving');
+        armRight.classList.remove('waving');
         pupilLeft.style.transform = '';
         pupilRight.style.transform = '';
-        resetIdleTimer(); // Darle click al ojo también resetea su paciencia
+        resetIdleTimer(); 
         
         if(passField.type === 'password') {
             passField.type = 'text';
-            bodyState.className = 'state-peek'; 
+            bodyState.classList.remove('state-password');
+            bodyState.classList.add('state-peek'); 
             document.getElementById('icon-eye-open').style.display = 'none';
             document.getElementById('icon-eye-closed').style.display = 'block';
         } else {
             passField.type = 'password';
-            bodyState.className = passField === document.activeElement ? 'state-password' : ''; 
+            bodyState.classList.remove('state-peek');
+            if (passField === document.activeElement) bodyState.classList.add('state-password');
             document.getElementById('icon-eye-open').style.display = 'block';
             document.getElementById('icon-eye-closed').style.display = 'none';
         }
@@ -420,16 +520,22 @@
     // LOGIN AL SERVIDOR
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        clearTimeout(idleTimer); // Detiene el timer si ya está haciendo login
-        bodyState.className = ''; 
+        clearTimeout(idleTimer);
+        
+        bodyState.classList.remove('state-password');
+        bodyState.classList.remove('state-peek');
+        bodyState.classList.remove('state-error');
+        bodyState.classList.remove('state-angry');
+        
         pupilLeft.style.transform = '';
         pupilRight.style.transform = '';
+        mascotBubble.classList.remove('show');
         
         const btn = document.getElementById('btnIngresar');
         const errorDiv = document.getElementById('errorMsg');
         const txtError = document.getElementById('txtError');
         
-        btn.innerHTML = `<span class="loader-spinner"></span> Validando acceso...`;
+        btn.innerHTML = `<span class="loader-spinner"></span> Validando...`;
         btn.disabled = true;
         errorDiv.style.display = 'none'; 
 
@@ -439,14 +545,19 @@
         try {
             const urlLogin = `${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&v=${new Date().getTime()}`;
             const response = await fetch(urlLogin);
+            
+            if (!response.ok) throw new Error("No se pudo conectar a la base de datos.");
+            
             const data = await response.json();
 
             if (data.status === 'success') {
                 localStorage.setItem('sesionActiva', JSON.stringify(data));
                 
-                bodyState.className = 'state-success';
-                btn.innerHTML = `Acceso Correcto <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                btn.style.background = "var(--emerald-600)";
+                bodyState.classList.add('state-success');
+                btn.innerHTML = `Acceso Correcto <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                btn.style.background = "rgba(0,255,157,0.1)"; 
+                btn.style.color = "var(--neon-green)";
+                btn.style.borderColor = "var(--neon-green)";
                 
                 setTimeout(() => {
                     document.body.style.transition = "opacity 0.5s ease";
@@ -455,15 +566,15 @@
                 }, 1500);
 
             } else {
-                bodyState.className = 'state-error';
-                txtError.innerText = "Usuario o contraseña incorrectos.";
+                bodyState.classList.add('state-error');
+                txtError.innerHTML = `<b>Error:</b> ${data.message || "Usuario o contraseña incorrectos."}`;
                 errorDiv.style.display = 'flex';
                 resetBoton(btn);
-                resetIdleTimer(); // Reinicia el timer después de fallar
+                resetIdleTimer();
             }
         } catch (err) {
-            bodyState.className = 'state-error';
-            txtError.innerText = "Error de conexión con el servidor.";
+            bodyState.classList.add('state-error');
+            txtError.innerHTML = `<b>Fallo en conexión:</b><br>${err.message}`;
             errorDiv.style.display = 'flex';
             resetBoton(btn);
             resetIdleTimer();
@@ -471,7 +582,7 @@
     });
 
     function resetBoton(btn) {
-        btn.innerHTML = `Acceder al Sistema <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>`;
+        btn.innerHTML = `Acceder al Sistema <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>`;
         btn.disabled = false;
     }
 </script>
