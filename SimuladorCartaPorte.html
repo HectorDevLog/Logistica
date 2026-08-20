@@ -111,13 +111,13 @@
 
         /* GRID PRINCIPAL RESPONSIVO ABSOLUTO */
         .wrapper { 
-            display: flex; flex-wrap: wrap; gap: 2vw; align-items: stretch; width: 100%; box-sizing: border-box;
-            max-width: 1700px; margin: 2vw auto; padding: 0 3%; 
+            display: flex; flex-wrap: wrap; gap: 1vw; align-items: stretch; width: 100%; box-sizing: border-box;
+            max-width: 100%; margin: 1vw auto; padding: 0 1.5%; 
         }
-        aside { flex: 1 1 350px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
-        main { flex: 3 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        aside { flex: 0 0 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
         
-        .card { background: var(--bg-panel); padding: 25px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 1px solid var(--border-color); backdrop-filter: blur(10px); transition: border-color 0.3s; box-sizing: border-box;}
+        .card { background: var(--bg-panel); padding: 20px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 1px solid var(--border-color); backdrop-filter: blur(10px); transition: border-color 0.3s; box-sizing: border-box;}
         .card:hover { border-color: var(--border-hover); }
         .card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.15em; color: var(--text-main); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 700; text-transform: uppercase;}
 
@@ -186,7 +186,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* KPIs SUPERIORES */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-box { 
             background: var(--bg-panel); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); 
             transition: transform 0.3s; position: relative; overflow: hidden; backdrop-filter: blur(10px);
@@ -201,19 +201,20 @@
         .box-cos { --accent: var(--neon-red); } .box-cos span { color: var(--neon-red); text-shadow: 0 0 10px rgba(255,51,51,0.3); }
         .box-ren { --accent: var(--neon-green); } .box-ren span { color: var(--neon-green); text-shadow: 0 0 10px rgba(0,255,157,0.3); }
 
-        /* TABLA DE RESULTADOS RESPONSIVA */
+        /* TABLA DE RESULTADOS RESPONSIVA MEJORADA */
         .table-wrapper { width: 100%; overflow-x: auto; background: transparent; border-radius: 8px; max-height:60vh; border: 1px solid var(--border-color);}
         .table-wrapper::-webkit-scrollbar { height: 10px; width: 10px;}
         .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 5px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 0.85em; white-space: nowrap; }
-        th { background: var(--table-header); padding: 15px 12px; text-align: left; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; text-transform: uppercase; letter-spacing: 0.5px;}
-        td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-muted);}
+        /* 🔥 CAMBIO AQUI: quitamos el white-space nowrap global para que no haya scroll horizontal 🔥 */
+        table { width: 100%; border-collapse: collapse; font-size: 0.8em; } 
+        th { background: var(--table-header); padding: 12px 6px; text-align: left; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; text-transform: uppercase; letter-spacing: 0.5px;}
+        td { padding: 10px 6px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-muted); word-wrap: break-word;}
         tbody tr:hover { background-color: var(--table-row-hover); }
         
         .col-tarifa { color: var(--text-muted); font-size: 0.9em; }
-        .col-total { font-weight: 700; color: var(--neon-green); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(0,255,157,0.05);}
+        .col-total { font-weight: 700; color: var(--neon-green); background: rgba(0,255,157,0.05);}
         body.light-theme .col-total { background: #ecfdf5; color: var(--neon-green);}
         
         .badge-prov { background: rgba(255,255,255,0.1); color: var(--text-main); padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8em; border: 1px solid var(--border-color);}
@@ -223,10 +224,10 @@
         .tarifa-modificada { background: rgba(255,183,0,0.1) !important; color: var(--neon-amber) !important; border: 1px dashed var(--neon-amber); }
         
         .badge-redespacho { background: rgba(255,51,51,0.1); color: var(--neon-red); padding: 3px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; border: 1px solid rgba(255,51,51,0.3); display: inline-block; margin-top: 4px;}
-        .badge-cobrado { background: rgba(255,183,0,0.1); color: var(--neon-amber); padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; border: 1px solid rgba(255,183,0,0.3); display: inline-block; margin-top: 4px; line-height: 1.4;}
+        .badge-cobrado { background: rgba(255,183,0,0.1); color: var(--neon-amber); padding: 4px 8px; border-radius: 6px; font-size: 0.7em; font-weight: bold; border: 1px solid rgba(255,183,0,0.3); display: inline-block; margin-top: 4px; line-height: 1.4;}
         
         /* BADGES DINÁMICOS */
-        .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 700; display: inline-block; letter-spacing: 0.5px;}
+        .badge-srv { padding: 4px 8px; border-radius: 12px; font-size: 0.7em; font-weight: 700; display: inline-block; letter-spacing: 0.5px;}
         .srv-normal { background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid rgba(0,240,255,0.3);}
         .srv-exclusivo { background: rgba(255,183,0,0.1); color: var(--neon-amber); border: 1px solid rgba(255,183,0,0.3);}
         .srv-default { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid var(--border-color);}
@@ -235,7 +236,7 @@
         body.light-theme .srv-exclusivo { background: #fef08a; color: #b45309; border-color: #fde047; }
         body.light-theme .srv-default { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 
-        .badge-loc { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main);}
+        .badge-loc { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); display: inline-block; line-height: 1.2;}
         body.light-theme .badge-loc { background: #f8fafc; color: var(--slate-700); }
 
         .btn-edit-tfa { background: transparent; border: none; border-radius: 6px; cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;}
@@ -1357,7 +1358,10 @@
         let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
         let estItsaG = document.getElementById('estibasItsa').value || 0;
         let heItsaG = document.getElementById('heItsa').value || 0;
-        let cFijoManualG = document.getElementById('costoManual').value || 0;
+        
+        let cFijoManualG = parseFloat(document.getElementById('costoManual').value) || 0;
+        if (cFijoManualG === 0) cFijoManualG = 90; // Forzar a 90 por defecto
+
         let estManualG = document.getElementById('estibasManual').value || 0;
 
         let btn = document.getElementById('btnCalc');
@@ -1440,20 +1444,20 @@
                                 ${controlesHtml}
                             </div>
                             <div class="table-wrapper" style="max-height: 300px; box-shadow:none; border:none; border-radius:0;">
-                                <table style="width:100%; border-collapse:collapse; font-size:0.85em; white-space:nowrap;">
+                                <table style="width:100%; border-collapse:collapse; font-size:0.8em;">
                                     <thead style="background:var(--table-header); position:sticky; top:0; z-index:10;">
                                         <tr>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">ID Pedido</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Cliente</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color); text-align:center;">Int</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Servicio</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Loc. Origen</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Loc. Destino (CP)</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Trayecto Base</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color); text-align:center;">Bultos</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color); text-align:center;">Peso (Kg)</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color);">Tarifa Nube</th>
-                                            <th style="padding:10px; border-bottom:1px solid var(--border-color); text-align:right;">Tarifa Final</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">ID Pedido</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Cliente</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color); text-align:center;">Int</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Servicio</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Loc. Origen</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Loc. Destino (CP)</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Trayecto Base</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color); text-align:center;">Bultos</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color); text-align:center;">Peso (Kg)</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color);">Tarifa Nube</th>
+                                            <th style="padding:12px 6px; border-bottom:1px solid var(--border-color); text-align:right;">Tarifa Final</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_${idTarjeta}"></tbody>
@@ -1489,296 +1493,316 @@
     }
 
     function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa) {
-    let placaLimpia = String(placa).toUpperCase().replace(/[-\s]/g, '');
-    
-    let opt = dTarifas.find(t => {
-        let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
-        return tP === placaLimpia;
-    }) || {};
-    let pedidos = window.agrupacionVehiculos[cpKey] || [];
-    let elTipo = document.getElementById(`tipo_${idTarjeta}`);
-    let tipo = elTipo ? elTipo.value : '';
-    
-    let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
-    
-    let esActualizacionData = cpsEnActualizacion[cpKey];
-    let esRutaManualRestaurada = false;
+        let placaLimpia = String(placa).toUpperCase().replace(/[-\s]/g, '');
+        
+        let opt = dTarifas.find(t => {
+            let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
+            return tP === placaLimpia;
+        }) || {};
+        let pedidos = window.agrupacionVehiculos[cpKey] || [];
+        let elTipo = document.getElementById(`tipo_${idTarjeta}`);
+        let tipo = elTipo ? elTipo.value : '';
+        
+        let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
+        
+        let esActualizacionData = cpsEnActualizacion[cpKey];
+        let esRutaManualRestaurada = false;
 
-    if (esActualizacionData && (!elTipo || elTipo.dataset.modificado !== "true")) {
-        let rutaAntigua = esActualizacionData.rutaAntigua || {};
-        if (['EXCLUSIVO', 'POR RUTA', 'POR PUNTO'].includes(rutaAntigua.tipoRuta)) {
-            esRutaManualRestaurada = true;
-            tipo = rutaAntigua.tipoRuta;
-            cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
-            cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
-            cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
-            cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
-            
-            if (elTipo) elTipo.value = tipo;
-            let inputCosto = document.getElementById(`costo_${idTarjeta}`);
-            let inputEstibas = document.getElementById(`estibas_${idTarjeta}`);
-            if(inputCosto) inputCosto.value = cExc; 
-            if(inputEstibas) inputEstibas.value = cEstibas / 15; 
-        }
-    }
+        if (esActualizacionData && (!elTipo || elTipo.dataset.modificado !== "true")) {
+            let rutaAntigua = esActualizacionData.rutaAntigua || {};
+            if (['EXCLUSIVO', 'POR RUTA', 'POR PUNTO'].includes(rutaAntigua.tipoRuta)) {
+                esRutaManualRestaurada = true;
+                tipo = rutaAntigua.tipoRuta;
+                cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
+                cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
+                cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
+                cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
+                
+                // Aplicar la misma regla al restaurar
+                if (cBase === 0 && cExc === 0) cExc = 90;
 
-    if (!esRutaManualRestaurada) {
-        if (isItsa) {
-            let estInput = document.getElementById(`estibas_${idTarjeta}`);
-            let heInput = document.getElementById(`he_${idTarjeta}`);
-            let est = estInput ? (parseFloat(estInput.value) || 0) : 0;
-            let he = heInput ? (parseFloat(heInput.value) || 0) : 0;
-            
-            cEstibas = est * 30;
-            let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
-            cHE = he * heTarifa;
-            
-            if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']);
-            else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']);
-            else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']);
-        } else {
-            let costoInput = document.getElementById(`costo_${idTarjeta}`);
-            let costoVal = costoInput ? parseFloat(costoInput.value) || 0 : 0;
-            
-            let estInput = document.getElementById(`estibas_${idTarjeta}`);
-            let est = estInput ? parseFloat(estInput.value) || 0 : 0;
-            
-            cEstibas = est * 15; 
-            
-            if (tipo === 'POR PUNTO') {
-                let ptsBase = parseFloat(document.getElementById('cantPuntosBase')?.value) || 0;
-                let precBase = parseFloat(document.getElementById('precioPuntosBase')?.value) || 0;
-                let precAd = parseFloat(document.getElementById('precioPuntoAdicional')?.value) || 0;
-                let ptsTotales = pedidos.length;
-                cExc = ptsTotales <= ptsBase ? precBase : precBase + ((ptsTotales - ptsBase) * precAd);
-            } else if (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA') {
-                cExc = costoVal; 
+                if (elTipo) elTipo.value = tipo;
+                let inputCosto = document.getElementById(`costo_${idTarjeta}`);
+                let inputEstibas = document.getElementById(`estibas_${idTarjeta}`);
+                if(inputCosto) inputCosto.value = cExc > 0 ? cExc : cBase; 
+                if(inputEstibas) inputEstibas.value = cEstibas / 15; 
             }
         }
-    }
 
-    let costoVehiculo = cBase + cEstibas + cExc + cHE;
-    let ingresosVehiculo = 0;
-    let pesoTotalVehiculo = 0; 
-    let idsArrConPrecio = [];
-    let htmlFilas = '';
+        if (!esRutaManualRestaurada) {
+            if (isItsa) {
+                let estInput = document.getElementById(`estibas_${idTarjeta}`);
+                let heInput = document.getElementById(`he_${idTarjeta}`);
+                let est = estInput ? (parseFloat(estInput.value) || 0) : 0;
+                let he = heInput ? (parseFloat(heInput.value) || 0) : 0;
+                
+                cEstibas = est * 30;
+                let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
+                cHE = he * heTarifa;
+                
+                if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']) || 90;
+                else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']) || 90;
+                else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']) || 90;
+            } else {
+                let costoInput = document.getElementById(`costo_${idTarjeta}`);
+                let costoVal = costoInput ? parseFloat(costoInput.value) || 0 : 0;
+                
+                // 🔥 REGLA DE NEGOCIO: NUNCA 0 PARA VEHÍCULOS EXTERNOS 🔥
+                if (costoVal === 0) {
+                    costoVal = 90;
+                    if (costoInput) costoInput.value = 90; 
+                }
 
-    let pesoAcumuladoRuta = 0;
-    let ingresoA_Repartir = parseFloat(document.getElementById('ingresoRepartir')?.value) || 0;
-    let tipoGlobal = document.getElementById('tipoServicioGlobal')?.value || 'NORMAL';
+                let estInput = document.getElementById(`estibas_${idTarjeta}`);
+                let est = estInput ? parseFloat(estInput.value) || 0 : 0;
+                
+                cEstibas = est * 15; 
+                
+                if (tipo === 'POR PUNTO') {
+                    let ptsBase = parseFloat(document.getElementById('cantPuntosBase')?.value) || 0;
+                    let precBase = parseFloat(document.getElementById('precioPuntosBase')?.value) || 0;
+                    let precAd = parseFloat(document.getElementById('precioPuntoAdicional')?.value) || 0;
+                    let ptsTotales = pedidos.length;
+                    cExc = ptsTotales <= ptsBase ? precBase : precBase + ((ptsTotales - ptsBase) * precAd);
+                    if (cExc === 0) cExc = 90; // Forzar a 90 si da 0
+                } else {
+                    cExc = costoVal; 
+                }
+            }
+        }
 
-    // Pre-cálculo de peso acumulado con protección contra nulos
-    if(tipoGlobal === 'NORMAL' && ingresoA_Repartir > 0) {
+        let costoVehiculo = cBase + cEstibas + cExc + cHE;
+        let ingresosVehiculo = 0;
+        let pesoTotalVehiculo = 0; 
+        let idsArrConPrecio = [];
+        let htmlFilas = '';
+
+        let pesoAcumuladoRuta = 0;
+        let ingresoA_Repartir = parseFloat(document.getElementById('ingresoRepartir')?.value) || 0;
+        let tipoGlobal = document.getElementById('tipoServicioGlobal')?.value || 'NORMAL';
+
+        // Pre-cálculo de peso acumulado con protección contra nulos
+        if(tipoGlobal === 'NORMAL' && ingresoA_Repartir > 0) {
+            pedidos.forEach(p => {
+                try {
+                    let locDest = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                    let trMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDest);
+                    let trBase = trMatch ? String(trMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+                    
+                    let objM = {
+                        Cliente: String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase(),
+                        Tipo_Servicio: String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase(),
+                        Trayecto: trBase,
+                        Origen: String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase(),
+                        Destino: locDest,
+                        peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
+                        cantidad_bultos: parseInt(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || 1) || 1
+                    };
+                    let clN = calcularTarifasAutomaticas(objM);
+                    pesoAcumuladoRuta += (clN && clN.pesoUsado) ? clN.pesoUsado : 0;
+                } catch(e) {
+                    console.warn("Aviso en pre-calculo de peso:", e);
+                }
+            });
+        }
+
+        // Iteración de pedidos protegida
         pedidos.forEach(p => {
             try {
-                let locDest = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-                let trMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDest);
-                let trBase = trMatch ? String(trMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+                let id = String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido'] || 'SIN_ID').trim();
+                let clienteStr = String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase();
+                let locDestino = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
+                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0) || 0;
+                let intentosNum = incidencias > 0 ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
                 
-                let objM = {
-                    Cliente: String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase(),
-                    Tipo_Servicio: String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase(),
-                    Trayecto: trBase,
-                    Origen: String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase(),
-                    Destino: locDest,
+                let esActualizacionLocalData = cpsEnActualizacion[cpKey];
+                let esDeRutaVieja = esActualizacionLocalData && (esActualizacionLocalData.viejosIds || []).includes(id);
+                let yaExiste = !!pedidosHistoricos[id] && !esDeRutaVieja;
+                let esNuevoActualizacion = esActualizacionLocalData && (esActualizacionLocalData.nuevosIds || []).includes(id);
+
+                p['VEHICULO'] = placa;
+                p['PLACA'] = placa;
+                
+                let origen = String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase();
+                let bultos = String(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || '1');
+                
+                let trayectoMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
+                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+
+                let objMotor = {
+                    Cliente: clienteStr,
+                    Tipo_Servicio: servicioMonitor,
+                    Trayecto: p['TipoTrayecto'],
+                    Origen: origen,
+                    Destino: locDestino,
                     peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
-                    cantidad_bultos: parseInt(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || 1) || 1
+                    cantidad_bultos: parseInt(bultos) || 1
                 };
-                let clN = calcularTarifasAutomaticas(objM);
-                pesoAcumuladoRuta += (clN && clN.pesoUsado) ? clN.pesoUsado : 0;
-            } catch(e) {
-                console.warn("Aviso en pre-calculo de peso:", e);
-            }
-        });
-    }
 
-    // Iteración de pedidos protegida
-    pedidos.forEach(p => {
-        try {
-            let id = String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido'] || 'SIN_ID').trim();
-            let clienteStr = String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase();
-            let locDestino = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-            let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
-            let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0) || 0;
-            let intentosNum = incidencias > 0 ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-            
-            let esActualizacionLocalData = cpsEnActualizacion[cpKey];
-            let esDeRutaVieja = esActualizacionLocalData && (esActualizacionLocalData.viejosIds || []).includes(id);
-            let yaExiste = !!pedidosHistoricos[id] && !esDeRutaVieja;
-            let esNuevoActualizacion = esActualizacionLocalData && (esActualizacionLocalData.nuevosIds || []).includes(id);
+                // Cálculo blindado contra errores en motorTarifas.js
+                try {
+                    p._calcNube = calcularTarifasAutomaticas(objMotor); 
+                } catch(errMotor) {
+                    console.error(`Error procesando tarifa para ID ${id}:`, errMotor);
+                    p._calcNube = { total: 0, pesoUsado: objMotor.peso_total_kg };
+                }
 
-            p['VEHICULO'] = placa;
-            p['PLACA'] = placa;
-            
-            let origen = String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase();
-            let bultos = String(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || '1');
-            
-            let trayectoMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
-            p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+                if (!p._calcNube) p._calcNube = { total: 0, pesoUsado: 0 };
+                
+                let tarifaFijaObj = null;
+                if (window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
+                    tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
+                        let idFound = "";
+                        for (let key in tf) {
+                            if (key.toUpperCase().includes("PEDIDO") || key.toUpperCase() === "ID") {
+                                idFound = String(tf[key]).trim();
+                                break;
+                            }
+                        }
+                        return idFound === id;
+                    });
+                }
 
-            let objMotor = {
-                Cliente: clienteStr,
-                Tipo_Servicio: servicioMonitor,
-                Trayecto: p['TipoTrayecto'],
-                Origen: origen,
-                Destino: locDestino,
-                peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
-                cantidad_bultos: parseInt(bultos) || 1
-            };
+                let cobroReal = 0; 
+                let classTotal = "col-total"; 
+                let htmlStatus = "";
+                let styleFila = esNuevoActualizacion ? "background-color: rgba(0,255,157,0.1);" : "";
+                
+                if(document.body.classList.contains('light-theme') && esNuevoActualizacion) {
+                    styleFila = "background-color: #ecfdf5;";
+                }
 
-            // Cálculo blindado contra errores en motorTarifas.js
-            try {
-                p._calcNube = calcularTarifasAutomaticas(objMotor); 
-            } catch(errMotor) {
-                console.error(`Error procesando tarifa para ID ${id}:`, errMotor);
-                p._calcNube = { total: 0, pesoUsado: objMotor.peso_total_kg };
-            }
-
-            if (!p._calcNube) p._calcNube = { total: 0, pesoUsado: 0 };
-            
-            let tarifaFijaObj = null;
-            if (window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
-                tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
-                    let idFound = "";
-                    for (let key in tf) {
-                        if (key.toUpperCase().includes("PEDIDO") || key.toUpperCase() === "ID") {
-                            idFound = String(tf[key]).trim();
+                if (yaExiste) {
+                    cobroReal = 0; 
+                    classTotal += " col-tachada";
+                    htmlStatus = `<div class="badge-cobrado" style="display:block; font-size:0.7em;">YA EN SISTEMA</div>`;
+                } 
+                else if (window.tarifasModificadas && window.tarifasModificadas[id] !== undefined) {
+                    cobroReal = parseFloat(window.tarifasModificadas[id]) || 0; 
+                    classTotal += " tarifa-modificada";
+                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                } 
+                else if (tarifaFijaObj) {
+                    let montoFijo = 0;
+                    for (let key in tarifaFijaObj) {
+                        if (key.toUpperCase().includes("TARIFA")) {
+                            montoFijo = parseFloat(String(tarifaFijaObj[key]).replace(',', '.')) || 0;
                             break;
                         }
                     }
-                    return idFound === id;
-                });
-            }
+                    cobroReal = montoFijo;
+                    classTotal += " tarifa-modificada"; 
+                    htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em;">TARIFA FIJADA</div>`;
+                } 
+                else if (esDeRutaVieja || (esNuevoActualizacion && preciosHistoricos[id] !== undefined)) {
+                    cobroReal = parseFloat(preciosHistoricos[id]) || 0;
+                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                } 
+                else if (ingresoA_Repartir > 0 && tipoGlobal === 'NORMAL') {
+                    if (pesoAcumuladoRuta > 0) {
+                        let porcentaje = (p._calcNube.pesoUsado || 0) / pesoAcumuladoRuta;
+                        cobroReal = ingresoA_Repartir * porcentaje;
+                    }
+                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                }
+                else {
+                    cobroReal = (p._calcNube && p._calcNube.total > 0) ? p._calcNube.total : 0;
 
-            let cobroReal = 0; 
-            let classTotal = "col-total"; 
-            let htmlStatus = "";
-            let styleFila = esNuevoActualizacion ? "background-color: rgba(0,255,157,0.1);" : "";
-            
-            if(document.body.classList.contains('light-theme') && esNuevoActualizacion) {
-                styleFila = "background-color: #ecfdf5;";
-            }
-
-            if (yaExiste) {
-                cobroReal = 0; 
-                classTotal += " col-tachada";
-                htmlStatus = `<div class="badge-cobrado" style="display:block; font-size:0.7em;">YA EN SISTEMA</div>`;
-            } 
-            else if (window.tarifasModificadas && window.tarifasModificadas[id] !== undefined) {
-                cobroReal = parseFloat(window.tarifasModificadas[id]) || 0; 
-                classTotal += " tarifa-modificada";
-                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-            } 
-            else if (tarifaFijaObj) {
-                let montoFijo = 0;
-                for (let key in tarifaFijaObj) {
-                    if (key.toUpperCase().includes("TARIFA")) {
-                        montoFijo = parseFloat(String(tarifaFijaObj[key]).replace(',', '.')) || 0;
-                        break;
+                    // 🔥 NUEVA REGLA: TARIFA MÍNIMA SÓLO SI EL CÁLCULO FUE CERO (INTENTO 1) 🔥
+                    if (intentosNum === 1 && !yaExiste) {
+                        if (cobroReal === 0) {
+                            if (servicioMonitor.includes("EXCLUSIVO")) {
+                                cobroReal = 40.00;
+                            } else {
+                                cobroReal = 2.50;
+                            }
+                            if (!classTotal.includes("tarifa-modificada")) classTotal += " tarifa-modificada";
+                            htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em; margin-top:4px;">MIN. AUTOMÁTICO</div>`;
+                        }
+                    } else if (intentosNum > 1 && !esNuevoActualizacion) {
+                        htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
                     }
                 }
-                cobroReal = montoFijo;
-                classTotal += " tarifa-modificada"; 
-                htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em;">TARIFA FIJADA</div>`;
-            } 
-            else if (esDeRutaVieja || (esNuevoActualizacion && preciosHistoricos[id] !== undefined)) {
-                cobroReal = parseFloat(preciosHistoricos[id]) || 0;
-                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-            } 
-            else if (ingresoA_Repartir > 0 && tipoGlobal === 'NORMAL') {
-                if (pesoAcumuladoRuta > 0) {
-                    let porcentaje = (p._calcNube.pesoUsado || 0) / pesoAcumuladoRuta;
-                    cobroReal = ingresoA_Repartir * porcentaje;
-                }
-                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+
+                ingresosVehiculo += cobroReal;
+                pesoTotalVehiculo += (p._calcNube.pesoUsado || 0); 
+                idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
+
+                let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
+                let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${id}')" title="Desvincular de ruta anterior" style="color:var(--neon-amber);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
+
+                htmlFilas += `
+                    <tr style="${styleFila}" data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
+                        <td style="white-space:nowrap;"><strong style="color:var(--text-main);">${id}</strong>${yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
+                        <td style="font-size:0.85em;">${clienteStr}</td>
+                        <td style="text-align:center; white-space:nowrap;"><b>${intentosNum}</b><br>${htmlStatus}</td>
+                        <td style="white-space:nowrap;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
+                        <td style="font-size:0.85em; max-width:120px;">${origen}</td>
+                        <td style="max-width:120px;"><span class="badge-loc" style="background:rgba(0,240,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); border-radius:4px; padding:2px 6px; display:inline-block; line-height:1.2;">${locDestino}</span></td>
+                        <td style="font-size:0.85em; max-width:100px;">${p.TipoTrayecto}</td>
+                        <td style="text-align:center; white-space:nowrap;">${bultos}</td>
+                        <td style="text-align:center; white-space:nowrap;">${(p._calcNube.pesoUsado || 0).toFixed(2)}</td>
+                        <td style="color:var(--text-muted); white-space:nowrap;">$${(p._calcNube.total || 0).toFixed(2)}</td>
+                        <td class="${classTotal}" style="${yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right; white-space:nowrap;">
+                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:5px;">
+                                <span style="margin-right:4px;">$${cobroReal.toFixed(2)}</span>
+                                <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa">✏️</button>
+                                ${btnDesvincular}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } catch(errPedido) {
+                console.error("Error omitido en fila individual:", errPedido);
             }
-            else {
-                if (servicioMonitor.includes("EXCLUSIVO") && tipo !== 'NORMAL') {
-                    cobroReal = 0; 
-                } else {
-                    cobroReal = (p._calcNube.total && p._calcNube.total > 0) ? p._calcNube.total : 0;
-                }
-                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+        });
+
+        let tbody = document.getElementById(`tbody_${idTarjeta}`);
+        if(tbody) tbody.innerHTML = htmlFilas;
+
+        let util = ingresosVehiculo - costoVehiculo;
+        let elIng = document.getElementById(`ing_${idTarjeta}`); if(elIng) elIng.innerText = `$${ingresosVehiculo.toFixed(2)}`;
+        let elCos = document.getElementById(`cos_${idTarjeta}`); if(elCos) elCos.innerText = `$${costoVehiculo.toFixed(2)}`;
+        let elUtil = document.getElementById(`util_${idTarjeta}`); 
+        if(elUtil) {
+            elUtil.innerText = `$${util.toFixed(2)}`;
+            elUtil.style.color = util < 0 ? 'var(--neon-red)' : 'var(--neon-green)';
+            if(document.body.classList.contains('light-theme')) {
+                elUtil.style.color = util < 0 ? 'var(--neon-red)' : '#059669';
             }
-
-            ingresosVehiculo += cobroReal;
-            pesoTotalVehiculo += (p._calcNube.pesoUsado || 0); 
-            idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
-
-            let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
-            let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${id}')" title="Desvincular de ruta anterior" style="color:var(--neon-amber);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
-
-            htmlFilas += `
-                <tr style="${styleFila}" data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
-                    <td><strong style="color:var(--text-main);">${id}</strong>${yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
-                    <td style="font-size:0.85em;">${clienteStr}</td>
-                    <td style="text-align:center;"><b>${intentosNum}</b><br>${htmlStatus}</td>
-                    <td><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
-                    <td style="font-size:0.85em;">${origen}</td>
-                    <td><span class="badge-loc" style="background:rgba(0,240,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); border-radius:4px; padding:2px 6px;">${locDestino}</span></td>
-                    <td style="font-size:0.85em;">${p.TipoTrayecto}</td>
-                    <td style="text-align:center;">${bultos}</td>
-                    <td style="text-align:center;">${(p._calcNube.pesoUsado || 0).toFixed(2)}</td>
-                    <td style="color:var(--text-muted);">$${(p._calcNube.total || 0).toFixed(2)}</td>
-                    <td class="${classTotal}" style="${yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right;">
-                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:5px;">
-                            <span style="margin-right:4px;">$${cobroReal.toFixed(2)}</span>
-                            <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa">✏️</button>
-                            ${btnDesvincular}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        } catch(errPedido) {
-            console.error("Error omitido en fila individual:", errPedido);
         }
-    });
 
-    let tbody = document.getElementById(`tbody_${idTarjeta}`);
-    if(tbody) tbody.innerHTML = htmlFilas;
+        let objRuta = {
+            fecha: document.getElementById('fechaDespacho')?.value || '',
+            ciudad: (sesion?.ciudad || '').trim().toUpperCase(),
+            pedidos: pedidos.length,
+            ingresos: ingresosVehiculo,
+            cBase: cBase,
+            cAyudantes: cEstibas,
+            cExc: cExc,
+            cHE: cHE,
+            placa: placa,
+            listaIds: idsArrConPrecio.join(', '), 
+            usuario: sesion?.nombre || 'SISTEMA',
+            proveedor: isItsa ? "ITSACOURIER" : "MANUAL",
+            tipoRuta: tipo,
+            cartaPorte: cpKey,
+            pesoTotal: pesoTotalVehiculo 
+        };
 
-    let util = ingresosVehiculo - costoVehiculo;
-    let elIng = document.getElementById(`ing_${idTarjeta}`); if(elIng) elIng.innerText = `$${ingresosVehiculo.toFixed(2)}`;
-    let elCos = document.getElementById(`cos_${idTarjeta}`); if(elCos) elCos.innerText = `$${costoVehiculo.toFixed(2)}`;
-    let elUtil = document.getElementById(`util_${idTarjeta}`); 
-    if(elUtil) {
-        elUtil.innerText = `$${util.toFixed(2)}`;
-        elUtil.style.color = util < 0 ? 'var(--neon-red)' : 'var(--neon-green)';
-        if(document.body.classList.contains('light-theme')) {
-            elUtil.style.color = util < 0 ? 'var(--neon-red)' : '#059669';
+        let indiceGuardar = (window.rutasAguardar || []).findIndex(r => r.cartaPorte === cpKey);
+        if (indiceGuardar > -1) {
+            window.rutasAguardar[indiceGuardar] = objRuta;
+        } else {
+            if(!window.rutasAguardar) window.rutasAguardar = [];
+            window.rutasAguardar.push(objRuta);
         }
+
+        actualizarGlobales();
+        let esActualizacionGlobal = Object.keys(cpsEnActualizacion || {}).length > 0;
+        if (esActualizacionGlobal) dibujarComparativoGeneral();
     }
-
-    let objRuta = {
-        fecha: document.getElementById('fechaDespacho')?.value || '',
-        ciudad: (sesion?.ciudad || '').trim().toUpperCase(),
-        pedidos: pedidos.length,
-        ingresos: ingresosVehiculo,
-        cBase: cBase,
-        cAyudantes: cEstibas,
-        cExc: cExc,
-        cHE: cHE,
-        placa: placa,
-        listaIds: idsArrConPrecio.join(', '), 
-        usuario: sesion?.nombre || 'SISTEMA',
-        proveedor: isItsa ? "ITSACOURIER" : "MANUAL",
-        tipoRuta: tipo,
-        cartaPorte: cpKey,
-        pesoTotal: pesoTotalVehiculo 
-    };
-
-    let indiceGuardar = (window.rutasAguardar || []).findIndex(r => r.cartaPorte === cpKey);
-    if (indiceGuardar > -1) {
-        window.rutasAguardar[indiceGuardar] = objRuta;
-    } else {
-        if(!window.rutasAguardar) window.rutasAguardar = [];
-        window.rutasAguardar.push(objRuta);
-    }
-
-    actualizarGlobales();
-    let esActualizacionGlobal = Object.keys(cpsEnActualizacion || {}).length > 0;
-    if (esActualizacionGlobal) dibujarComparativoGeneral();
-}
 
     function actualizarGlobales() {
         let totalIngresos = 0, totalCostos = 0;
@@ -2071,7 +2095,7 @@
                 locDestino = String(monitorData['CP'] || monitorData['Localidad'] || '').trim().toUpperCase();
                 bultos = String(monitorData.Bultos || monitorData.BULTOS || monitorData.Cajas || '1');
 
-                let trayectoMatch = trayectoDB.find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
+                let trayectoMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
                 trayectoBase = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
 
                 let objMotor = {
