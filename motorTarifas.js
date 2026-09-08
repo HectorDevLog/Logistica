@@ -175,7 +175,15 @@ function calcularTarifasAutomaticas(p) {
             else if (peso <= 100) colRango = "(hasta 100 kg)";
             else colRango = "(hasta 150 kg)"; 
 
-            res.tfaRango = leerNum(matchRango[colRango]);
+            let tarifaBaseRango = leerNum(matchRango[colRango]);
+
+            if (peso > 150 && cliente === 'MIRGOR') {
+                let tarifaMaxima = leerNum(matchRango["(hasta 150 kg)"]);
+                // Regla de 3: (Peso * Precio de 150kg) / 150
+                res.tfaRango = (peso * tarifaMaxima) / 150;
+            } else {
+                res.tfaRango = tarifaBaseRango;
+            }
         }
     }
 

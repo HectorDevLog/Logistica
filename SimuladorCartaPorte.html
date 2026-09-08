@@ -202,15 +202,14 @@
         .box-ren { --accent: var(--neon-green); } .box-ren span { color: var(--neon-green); text-shadow: 0 0 10px rgba(0,255,157,0.3); }
 
         /* TABLA DE RESULTADOS RESPONSIVA MEJORADA */
-        .table-wrapper { width: 100%; overflow-x: auto; background: transparent; border-radius: 8px; max-height:60vh; border: 1px solid var(--border-color);}
+        .table-wrapper { width: 100%; overflow-x: auto; background: transparent; border-radius: 8px; max-height:60vh; border: 1px solid var(--border-color); border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;}
         .table-wrapper::-webkit-scrollbar { height: 10px; width: 10px;}
         .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 5px; }
         
-        /* 🔥 CAMBIO AQUI: quitamos el white-space nowrap global para que no haya scroll horizontal 🔥 */
-        table { width: 100%; border-collapse: collapse; font-size: 0.8em; } 
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; } 
         th { background: var(--table-header); padding: 12px 6px; text-align: left; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; text-transform: uppercase; letter-spacing: 0.5px;}
-        td { padding: 10px 6px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-muted); word-wrap: break-word;}
+        td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-muted); word-wrap: break-word; line-height: 1.3;}
         tbody tr:hover { background-color: var(--table-row-hover); }
         
         .col-tarifa { color: var(--text-muted); font-size: 0.9em; }
@@ -628,6 +627,48 @@
     let preciosHistoricos = {}; 
     let cloudLista = false, monitorListo = false;
 
+    // DICCIONARIO DE PRECIOS POR TIPO DE VEHÍCULO
+    const PRECIOS_TIPO_VEHICULO = {
+        "CAMION FURGON 2.5 TON": 156.66,
+        "MOTOCICLETA": 55,
+        "FORGONETA OPEL VIVARO": 130, 
+        "FURGONETA DFSK - 0.8 TON": 130,
+        "CAMION FURGON 3.5 TON": 156.66,
+        "CAMIONETA CHEVROLET DIMAX 4X4 DIESEL": 130,
+        "FURGONETA LIFANI 2000": 130,
+        "CAMION FURGON 5 TON": 156.66,
+        "AUTOMOVIL": 130,
+        "FURGONETA PEUGEOT PARTNER MAXI PACK 1TN": 130,
+        "CONTENEDOR 40": 156.66,
+        "FURGONETA X30 0.7 TON": 130,
+        "FURGONETA  X30 0.7 TON": 130, 
+        "CAMION FURGON 2.9 TON": 156.66,
+        "CAMIONETA FURGONADA": 130,
+        "PICK UP R": 130,
+        "CAMION FURGON 12 TONELADAS": 156.66,
+        "FURGONETA JUMPER CITROEN": 130,
+        "CAMION GH 12 TON": 156.66,
+        "PLATAFORMA 40 TON": 156.66,
+        "CAMION 10 TONELADAS": 156.66,
+        "CAMION FURGON 7 TON": 156.66,
+        "CAMION FURGON 5.5 TON": 156.66,
+        "AUTOCARGABLE 10 MT": 156.66,
+        "CAMION PLATAFORMA 7 TON": 156.66,
+        "3,5 TON U": 156.66,
+        "3.5 TON U": 156.66,
+        "3,5 TON R": 156.66,
+        "3.5 TON R": 156.66,
+        "FURGONETA TOYOTA": 130,
+        "12 TON U": 156.66,
+        "CAMION CONTENEDOR 20 TON": 156.66,
+        "PICK UP U": 130,
+        "5 TON U": 156.66,
+        "5 TON R": 156.66,
+        "12 TON R": 156.66,
+        "MOTO GENERICO": 55,
+        "CAMION FURGON 6 TONELADAS": 156.66
+    };
+
     const parsearCosto = (valor) => {
         if (valor === undefined || valor === null || valor === '') return 0;
         if (typeof valor === 'number') return valor;
@@ -638,6 +679,9 @@
     window.rutasAguardar = [];
     window.tarifasModificadas = {}; 
     window.tarifasFijadasDB = []; 
+    
+    // Variables para adicionales
+    window.estadoAdicionales = {};
 
     function setPillStatus(id, state, text) {
         let pill = document.getElementById('pill' + id);
@@ -1316,11 +1360,8 @@
                 return tP === placa;
             });
             
-            let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
-            if(!provOriginal && agrupado[cp].length > 0) {
-                let p = agrupado[cp][0];
-                provOriginal = String(p['TRANSPORTISTA'] || p['Transportista'] || 'SIN PROVEEDOR').toUpperCase().trim();
-            }
+            let provOriginal = String(agrupado[cp][0]['TRANSPORTISTA'] || agrupado[cp][0]['Transportista'] || '').toUpperCase().trim();
+            if(!provOriginal && provMatch) provOriginal = String(provMatch.PROVEEDOR || '').toUpperCase().trim();
 
             if(provOriginal.includes("ENTREGAR S.A") || provOriginal.includes("ENTREGAR")) {
                 provOriginal = "ITSACOURIER";
@@ -1341,6 +1382,77 @@
         ejecutarCalculo();
     }
 
+    // 🔥 FUNCIONES DE ADICIONALES Y ESTIBAS 🔥
+    window.checkEstibasDefault = function(idTarjeta, isItsa, baseNormal) {
+        let estInput = document.getElementById(`estibas_${idTarjeta}`);
+        let pEstibaInput = document.getElementById(`precio_estiba_${idTarjeta}`);
+        let costoInput = document.getElementById(`costo_${idTarjeta}`);
+
+        if(estInput && pEstibaInput && costoInput) {
+            let est = parseFloat(estInput.value) || 0;
+            let currentPriceEstiba = parseFloat(pEstibaInput.value) || 0;
+            let cVehiculo = parseFloat(costoInput.value) || 0;
+            
+            // Si agregaron estibas y no hay precio de estiba, poner el default
+            if(est > 0 && currentPriceEstiba === 0) {
+                pEstibaInput.value = isItsa ? 30 : 20; 
+            } else if (est === 0) {
+                pEstibaInput.value = 0;
+            }
+
+            // Si agregaron estibas y el vehículo estaba en su precio base, bajar el veh a 20.
+            if(est > 0 && (cVehiculo === 0 || cVehiculo === baseNormal)) {
+                costoInput.value = 20;
+            } else if (est === 0 && cVehiculo === 20) {
+                costoInput.value = baseNormal;
+            }
+        }
+    };
+
+    window.agregarAdicional = function(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, adicObj = null) {
+        let container = document.getElementById(`lista_adicionales_${idTarjeta}`);
+        if(!container) return;
+        let div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '15px';
+        div.style.alignItems = 'center';
+        div.style.background = 'var(--input-bg)';
+        div.style.padding = '8px 12px';
+        div.style.borderRadius = '8px';
+        div.style.border = '1px solid var(--border-color)';
+        
+        let vDesc = adicObj ? adicObj.desc : 'Custodia';
+        let vCosto = adicObj ? adicObj.costo : '0';
+        let vPaga = adicObj ? adicObj.paga : 'NO';
+
+        div.innerHTML = `
+            <select class="adic-desc" style="flex:2; padding:6px; margin:0; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-main);" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+                <option value="Custodia" ${vDesc==='Custodia'?'selected':''}>Custodia</option>
+                <option value="Grua" ${vDesc==='Grua'?'selected':''}>Grúa</option>
+                <option value="Peaje" ${vDesc==='Peaje'?'selected':''}>Peaje</option>
+                <option value="Viaticos" ${vDesc==='Viaticos'?'selected':''}>Viáticos</option>
+                <option value="Otros" ${vDesc==='Otros'?'selected':''}>Otros</option>
+            </select>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="margin:0; font-size:0.8em; white-space:nowrap;">Costo ($):</label>
+                <input type="number" class="adic-costo" value="${vCosto}" min="0" step="0.01" style="padding:6px; width:80px; margin:0;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="margin:0; font-size:0.8em; white-space:nowrap;">¿Cliente Paga?</label>
+                <select class="adic-paga" style="padding:6px; margin:0; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-main);" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+                    <option value="NO" ${vPaga === 'NO' ? 'selected' : ''}>No</option>
+                    <option value="SI" ${vPaga === 'SI' ? 'selected' : ''}>Sí</option>
+                </select>
+            </div>
+            <button type="button" style="background:transparent; border:none; color:var(--neon-red); cursor:pointer; font-size:1.2em; padding:0; margin:0 5px;" onclick="this.parentElement.remove(); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" title="Eliminar">✖</button>
+        `;
+        container.appendChild(div);
+        if(!adicObj) {
+            recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, false);
+        }
+    };
+
+
     // 🔥 EJECUTAR CÁLCULO BLINDADO 🔥
     function ejecutarCalculo() {
         let fecha = document.getElementById('fechaDespacho').value;
@@ -1354,14 +1466,30 @@
             contenedor.style.flexDirection = 'column';
             contenedor.style.gap = '20px';
         }
+
+        // Respaldar adicionales existentes antes de re-renderizar
+        window.estadoAdicionales = {};
+        Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
+            let idTarjeta = `tarjeta_${index}`;
+            let adicContainer = document.getElementById(`lista_adicionales_${idTarjeta}`);
+            if (adicContainer) {
+                let currentAdics = [];
+                for (let row of adicContainer.children) {
+                    currentAdics.push({
+                        desc: row.querySelector('.adic-desc').value,
+                        costo: row.querySelector('.adic-costo').value,
+                        paga: row.querySelector('.adic-paga').value
+                    });
+                }
+                window.estadoAdicionales[idTarjeta] = currentAdics;
+            }
+        });
         
         let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
         let estItsaG = document.getElementById('estibasItsa').value || 0;
         let heItsaG = document.getElementById('heItsa').value || 0;
         
         let cFijoManualG = parseFloat(document.getElementById('costoManual').value) || 0;
-        if (cFijoManualG === 0) cFijoManualG = 90; // Forzar a 90 por defecto
-
         let estManualG = document.getElementById('estibasManual').value || 0;
 
         let btn = document.getElementById('btnCalc');
@@ -1380,20 +1508,28 @@
                     let placaRaw = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA');
                     let placa = placaRaw.toUpperCase().replace(/[-\s]/g, ''); 
 
-                    let provMatch = dTarifas.find(t => {
-                        let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
-                        return tP === placa;
-                    });
+                    let provOriginal = String(pedidos[0]['TRANSPORTISTA'] || pedidos[0]['Transportista'] || '').toUpperCase().trim();
+                    if(!provOriginal) provOriginal = "MANUAL"; 
                     
-                    let provOriginal = provMatch ? String(provMatch.PROVEEDOR || '').toUpperCase().trim() : "";
-                    if(!provOriginal && pedidos.length > 0) {
-                        let trans = String(pedidos[0]['TRANSPORTISTA'] || pedidos[0]['Transportista'] || '').toUpperCase().trim();
-                        if(trans) provOriginal = trans;
+                    let isItsa = provOriginal.includes("ENTREGAR") || provOriginal.includes("ITSACOURIER");
+                    if (isItsa) provOriginal = "ITSACOURIER";
+                    
+                    let tipoVehiculo = String(pedidos[0]['TIPO_VEHICULO'] || pedidos[0]['Tipo_Vehiculo'] || pedidos[0]['TipoVehiculo'] || '').toUpperCase().trim();
+                    if (!tipoVehiculo) {
+                        let provMatch = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placa);
+                        tipoVehiculo = provMatch ? (provMatch['TIPO VEHICULO'] || provMatch.TIPO_VEHICULO || provMatch.Tipo_Vehiculo || provMatch.TIPO || 'VEHÍCULO') : 'VEHÍCULO';
                     }
 
-                    let prov = provOriginal;
-                    if (prov.includes("ENTREGAR")) prov = "ITSACOURIER";
-                    let isItsa = prov === "ITSACOURIER";
+                    // Determinar el costo base del vehículo según el diccionario
+                    let baseVehiculoReal = PRECIOS_TIPO_VEHICULO[tipoVehiculo] || 90;
+                    if (window.tarifaExclusivosDB && window.tarifaExclusivosDB.length > 0) {
+                        let trVehiculo = window.tarifaExclusivosDB.find(t => String(t['Tipo Vehiculo'] || t['TIPO VEHICULO'] || t.TIPO_VEHICULO || '').toUpperCase().trim() === tipoVehiculo);
+                        if (trVehiculo) {
+                            let precioDB = parseDinero(trVehiculo['Precio'] || trVehiculo.PRECIO || trVehiculo.precio);
+                            if (precioDB > 0) baseVehiculoReal = precioDB;
+                        }
+                    }
+                    let costoInicialVehiculo = cFijoManualG > 0 ? cFijoManualG : baseVehiculoReal;
 
                     let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
                     
@@ -1413,27 +1549,35 @@
 
                     let controlesHtml = isItsa ? `
                         <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
                             <option value="NORMAL" ${selNormal}>Normal</option>
                             <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
                             <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
                         </select></div>
-                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
-                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
+                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="0" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:90px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
                     ` : `
                         <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
                             <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
                             <option value="POR PUNTO" ${selPunto}>Por Punto</option>
                         </select></div>
-                        <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo / P.Base ($):</label><input type="number" id="costo_${idTarjeta}" value="${cFijoManualG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
-                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})"></div>
+                        <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
+                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="0" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
                     `;
 
                     todasLasTarjetasHTML += `
                         <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--border-color); margin-bottom:20px; background:var(--bg-panel);">
                             <div style="background:rgba(0,0,0,0.1); padding:15px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                                <h3 style="margin:0; border:none; padding:0; color:var(--text-main); font-size:1.1em;">📄 CP: ${cpKey} <span class="badge-prov" style="margin-left:10px;">${placa}</span></h3>
+                                <h3 style="margin:0; border:none; padding:0; color:var(--text-main); font-size:1.1em; display:flex; align-items:center; gap:8px;">
+                                    📄 CP: ${cpKey} 
+                                    <span class="badge-prov">${placa}</span>
+                                    <span class="badge-loc" style="font-weight:normal; font-size:0.75em; background:rgba(255,255,255,0.1); border:1px solid var(--border-color);">${tipoVehiculo}</span>
+                                    <span class="badge-srv ${isItsa ? 'srv-normal' : 'srv-default'}">${provOriginal}</span>
+                                </h3>
                                 <div style="display:flex; gap:15px; font-size:0.95em; font-weight:bold; background:var(--input-bg); padding:5px 15px; border-radius:20px; border:1px solid var(--border-color);">
                                     <span style="color:var(--text-muted)">Ingresos: <span id="ing_${idTarjeta}" style="color:var(--neon-blue)">$0.00</span></span>
                                     <span style="color:var(--text-muted)">Costos: <span id="cos_${idTarjeta}" style="color:var(--neon-red)">$0.00</span></span>
@@ -1463,6 +1607,13 @@
                                     <tbody id="tbody_${idTarjeta}"></tbody>
                                 </table>
                             </div>
+                            <div style="background:rgba(0,0,0,0.2); padding:10px 20px; border-bottom:1px solid var(--border-color);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <span style="font-weight:600; color:var(--text-muted); font-size:0.85em;">➕ Adicionales de Ruta</span>
+                                    <button type="button" class="btn-main btn-outline" style="width:auto; margin:0; padding:4px 10px; font-size:0.75em; height:auto;" onclick="agregarAdicional('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">+ Agregar Adicional</button>
+                                </div>
+                                <div id="lista_adicionales_${idTarjeta}" style="display:flex; flex-direction:column; gap:8px;"></div>
+                            </div>
                         </div>
                     `;
                 });
@@ -1472,12 +1623,19 @@
                 Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
                     let idTarjeta = `tarjeta_${index}`;
                     let placa = String(window.agrupacionVehiculos[cpKey][0]['VEHICULO'] || window.agrupacionVehiculos[cpKey][0]['Vehiculo'] || 'SIN_PLACA').toUpperCase().trim();
-                    let prov = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().trim() === placa)?.PROVEEDOR || "";
-                    if(prov.includes("ENTREGAR")) prov = "ITSACOURIER";
-                    let isItsa = prov === "ITSACOURIER";
+                    let provOriginal = String(window.agrupacionVehiculos[cpKey][0]['TRANSPORTISTA'] || window.agrupacionVehiculos[cpKey][0]['Transportista'] || '').toUpperCase().trim();
+                    if(!provOriginal) provOriginal = "MANUAL";
+                    let isItsa = provOriginal.includes("ENTREGAR") || provOriginal.includes("ITSACOURIER");
                     let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
 
-                    recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa);
+                    // Restaurar adicionales guardados antes de recalcular
+                    if (window.estadoAdicionales[idTarjeta]) {
+                        window.estadoAdicionales[idTarjeta].forEach(adic => {
+                            agregarAdicional(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, adic);
+                        });
+                    }
+
+                    recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, true);
                 });
                 
             } catch(e) {
@@ -1492,7 +1650,7 @@
         }, 50);
     }
 
-    function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa) {
+    function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, isInit = false) {
         let placaLimpia = String(placa).toUpperCase().replace(/[-\s]/g, '');
         
         let opt = dTarifas.find(t => {
@@ -1509,69 +1667,138 @@
         let esRutaManualRestaurada = false;
 
         if (esActualizacionData && (!elTipo || elTipo.dataset.modificado !== "true")) {
+            esRutaManualRestaurada = true; 
+        }
+
+        let costoInput = document.getElementById(`costo_${idTarjeta}`);
+        let estInput = document.getElementById(`estibas_${idTarjeta}`);
+        let precioEstibaInput = document.getElementById(`precio_estiba_${idTarjeta}`);
+        let heInput = document.getElementById(`he_${idTarjeta}`);
+
+        let tipoVehiculo = String(pedidos[0]['TIPO_VEHICULO'] || pedidos[0]['Tipo_Vehiculo'] || pedidos[0]['TipoVehiculo'] || '').toUpperCase().trim();
+        if (!tipoVehiculo) {
+            let provMatch = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placaLimpia);
+            tipoVehiculo = provMatch ? (provMatch['TIPO VEHICULO'] || provMatch.TIPO_VEHICULO || provMatch.Tipo_Vehiculo || provMatch.TIPO || 'VEHÍCULO') : 'VEHÍCULO';
+        }
+
+        let fallbackBase = PRECIOS_TIPO_VEHICULO[tipoVehiculo] || 90;
+        
+        let costoVehiculoExterno = 0;
+        if (window.tarifaExclusivosDB && window.tarifaExclusivosDB.length > 0) {
+            let trVehiculo = window.tarifaExclusivosDB.find(t => String(t['Tipo Vehiculo'] || t['TIPO VEHICULO'] || t.TIPO_VEHICULO || '').toUpperCase().trim() === tipoVehiculo);
+            if (trVehiculo) {
+                let pExt = parseDinero(trVehiculo['Precio'] || trVehiculo.PRECIO || trVehiculo.precio);
+                if(pExt > 0) costoVehiculoExterno = pExt;
+            }
+        }
+
+        let fallbackFinal = costoVehiculoExterno > 0 ? costoVehiculoExterno : fallbackBase;
+
+        if (esRutaManualRestaurada && isInit) {
             let rutaAntigua = esActualizacionData.rutaAntigua || {};
-            if (['EXCLUSIVO', 'POR RUTA', 'POR PUNTO'].includes(rutaAntigua.tipoRuta)) {
-                esRutaManualRestaurada = true;
+            if (['EXCLUSIVO', 'POR RUTA', 'POR PUNTO', 'NORMAL', 'EXCLUSIVO HORARIO LABORAL', 'EXCLUSIVO FUERA HORARIO'].includes(rutaAntigua.tipoRuta)) {
                 tipo = rutaAntigua.tipoRuta;
                 cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
                 cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
                 cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
                 cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
                 
-                // Aplicar la misma regla al restaurar
-                if (cBase === 0 && cExc === 0) cExc = 90;
+                let cTotalFijo = cBase > 0 ? cBase : cExc;
+                if (cTotalFijo === 0) cTotalFijo = fallbackFinal;
 
                 if (elTipo) elTipo.value = tipo;
-                let inputCosto = document.getElementById(`costo_${idTarjeta}`);
-                let inputEstibas = document.getElementById(`estibas_${idTarjeta}`);
-                if(inputCosto) inputCosto.value = cExc > 0 ? cExc : cBase; 
-                if(inputEstibas) inputEstibas.value = cEstibas / 15; 
+                if (costoInput) costoInput.value = cTotalFijo; 
+                
+                let cantPrevias = 0;
+                let precioPrevio = 0;
+                if (cEstibas > 0) {
+                    cantPrevias = 1;
+                    precioPrevio = cEstibas;
+                }
+                if (estInput) estInput.value = cantPrevias;
+                if (precioEstibaInput) precioEstibaInput.value = precioPrevio;
+
+                if (heInput && isItsa) heInput.value = cHE / (parseDinero(opt['HORAS EXTRAS']) || 6.25);
             }
         }
 
-        if (!esRutaManualRestaurada) {
+        if (!esRutaManualRestaurada || !isInit) {
+            let est = estInput ? (parseFloat(estInput.value) || 0) : 0;
+            let pEstiba = precioEstibaInput ? (parseFloat(precioEstibaInput.value) || 0) : 0;
+            let he = heInput ? (parseFloat(heInput.value) || 0) : 0;
+            
+            cEstibas = est * pEstiba; 
+
             if (isItsa) {
-                let estInput = document.getElementById(`estibas_${idTarjeta}`);
-                let heInput = document.getElementById(`he_${idTarjeta}`);
-                let est = estInput ? (parseFloat(estInput.value) || 0) : 0;
-                let he = heInput ? (parseFloat(heInput.value) || 0) : 0;
-                
-                cEstibas = est * 30;
                 let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
                 cHE = he * heTarifa;
                 
-                if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']) || 90;
-                else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']) || 90;
-                else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']) || 90;
-            } else {
-                let costoInput = document.getElementById(`costo_${idTarjeta}`);
-                let costoVal = costoInput ? parseFloat(costoInput.value) || 0 : 0;
-                
-                // 🔥 REGLA DE NEGOCIO: NUNCA 0 PARA VEHÍCULOS EXTERNOS 🔥
-                if (costoVal === 0) {
-                    costoVal = 90;
-                    if (costoInput) costoInput.value = 90; 
+                if (isInit || (elTipo && elTipo.dataset.changed === 'true')) {
+                    if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']) || fallbackFinal;
+                    else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']) || fallbackFinal;
+                    else if (tipo === 'EXCLUSIVO FUERA HORARIO') cExc = parseDinero(opt['EXCLUSIVO FUERA HORARIO']) || fallbackFinal;
+                    
+                    let baseTotal = cBase > 0 ? cBase : cExc;
+                    if (costoInput) costoInput.value = baseTotal;
+                    if (elTipo) elTipo.dataset.changed = 'false';
+                } else {
+                    let costoVal = parseFloat(costoInput.value);
+                    if (isNaN(costoVal)) costoVal = 0;
+                    
+                    let fallback = est > 0 ? 20 : fallbackFinal;
+                    let costoEfectivo = (costoVal === 0 && !isInit) ? fallback : costoVal;
+                    if (isInit && costoVal === 0) { costoEfectivo = fallback; if(costoInput) costoInput.value = fallback; }
+                    
+                    if (tipo === 'NORMAL') cBase = costoEfectivo;
+                    else cExc = costoEfectivo;
                 }
+            } else {
+                let costoVal = parseFloat(costoInput.value);
+                if (isNaN(costoVal)) costoVal = 0;
+                
+                let fallback = est > 0 ? 20 : fallbackFinal;
+                let costoEfectivo = (costoVal === 0 && !isInit) ? fallback : costoVal;
 
-                let estInput = document.getElementById(`estibas_${idTarjeta}`);
-                let est = estInput ? parseFloat(estInput.value) || 0 : 0;
-                
-                cEstibas = est * 15; 
-                
                 if (tipo === 'POR PUNTO') {
                     let ptsBase = parseFloat(document.getElementById('cantPuntosBase')?.value) || 0;
                     let precBase = parseFloat(document.getElementById('precioPuntosBase')?.value) || 0;
                     let precAd = parseFloat(document.getElementById('precioPuntoAdicional')?.value) || 0;
                     let ptsTotales = pedidos.length;
                     cExc = ptsTotales <= ptsBase ? precBase : precBase + ((ptsTotales - ptsBase) * precAd);
-                    if (cExc === 0) cExc = 90; // Forzar a 90 si da 0
+                    if (cExc === 0 && isInit) {
+                        cExc = fallback; 
+                        if (costoInput) costoInput.value = fallback;
+                    }
                 } else {
-                    cExc = costoVal; 
+                    if (isInit && costoVal === 0) {
+                        costoEfectivo = fallback;
+                        if (costoInput) costoInput.value = fallback;
+                    }
+                    cExc = costoEfectivo; 
                 }
             }
         }
 
-        let costoVehiculo = cBase + cEstibas + cExc + cHE;
+        // Recuperar Costos de Adicionales
+        let extrasCosto = 0;
+        let extrasIngreso = 0;
+        let detallesAdicionales = [];
+        let adicContainer = document.getElementById(`lista_adicionales_${idTarjeta}`);
+        if (adicContainer) {
+            for (let row of adicContainer.children) {
+                let desc = row.querySelector('.adic-desc').value || 'Adicional';
+                let costo = parseFloat(row.querySelector('.adic-costo').value) || 0;
+                let pagaCliente = row.querySelector('.adic-paga').value;
+                
+                extrasCosto += costo;
+                if (pagaCliente === 'SI') {
+                    extrasIngreso += costo;
+                }
+                detallesAdicionales.push(`${desc}: $${costo} (Cliente Paga: ${pagaCliente})`);
+            }
+        }
+
+        let costoVehiculo = cBase + cEstibas + cExc + cHE + extrasCosto;
         let ingresosVehiculo = 0;
         let pesoTotalVehiculo = 0; 
         let idsArrConPrecio = [];
@@ -1650,8 +1877,10 @@
 
                 if (!p._calcNube) p._calcNube = { total: 0, pesoUsado: 0 };
                 
+                let yaTieneTarifaCalculada = (p._calcNube && p._calcNube.total > 0);
+                
                 let tarifaFijaObj = null;
-                if (window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
+                if (!yaTieneTarifaCalculada && window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
                     tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
                         let idFound = "";
                         for (let key in tf) {
@@ -1683,7 +1912,7 @@
                     classTotal += " tarifa-modificada";
                     if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
                 } 
-                else if (tarifaFijaObj) {
+                else if (tarifaFijaObj && !yaTieneTarifaCalculada) {
                     let montoFijo = 0;
                     for (let key in tarifaFijaObj) {
                         if (key.toUpperCase().includes("TARIFA")) {
@@ -1707,9 +1936,8 @@
                     if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
                 }
                 else {
-                    cobroReal = (p._calcNube && p._calcNube.total > 0) ? p._calcNube.total : 0;
+                    cobroReal = yaTieneTarifaCalculada ? p._calcNube.total : 0;
 
-                    // 🔥 NUEVA REGLA: TARIFA MÍNIMA SÓLO SI EL CÁLCULO FUE CERO (INTENTO 1) 🔥
                     if (intentosNum === 1 && !yaExiste) {
                         if (cobroReal === 0) {
                             if (servicioMonitor.includes("EXCLUSIVO")) {
@@ -1761,6 +1989,9 @@
         let tbody = document.getElementById(`tbody_${idTarjeta}`);
         if(tbody) tbody.innerHTML = htmlFilas;
 
+        // Sumar ingresos de los adicionales facturables
+        ingresosVehiculo += extrasIngreso;
+
         let util = ingresosVehiculo - costoVehiculo;
         let elIng = document.getElementById(`ing_${idTarjeta}`); if(elIng) elIng.innerText = `$${ingresosVehiculo.toFixed(2)}`;
         let elCos = document.getElementById(`cos_${idTarjeta}`); if(elCos) elCos.innerText = `$${costoVehiculo.toFixed(2)}`;
@@ -1782,6 +2013,9 @@
             cAyudantes: cEstibas,
             cExc: cExc,
             cHE: cHE,
+            cAdicionales: extrasCosto,
+            ingresosAdicionales: extrasIngreso,
+            detallesAdicionales: detallesAdicionales.join(' | '),
             placa: placa,
             listaIds: idsArrConPrecio.join(', '), 
             usuario: sesion?.nombre || 'SISTEMA',
@@ -1809,7 +2043,7 @@
         
         window.rutasAguardar.forEach(r => {
             totalIngresos += r.ingresos;
-            totalCostos += (r.cBase + r.cAyudantes + r.cExc + r.cHE);
+            totalCostos += (r.cBase + r.cAyudantes + r.cExc + r.cHE + (r.cAdicionales || 0));
         });
 
         let util = totalIngresos - totalCostos;
@@ -1873,14 +2107,14 @@
         if(!panelComp) return;
 
         let totalNuevosIngresos = window.rutasAguardar.reduce((sum, r) => sum + r.ingresos, 0);
-        let totalNuevosCostos = window.rutasAguardar.reduce((sum, r) => sum + r.cBase + r.cAyudantes + r.cExc + r.cHE, 0);
+        let totalNuevosCostos = window.rutasAguardar.reduce((sum, r) => sum + r.cBase + r.cAyudantes + r.cExc + r.cHE + (r.cAdicionales || 0), 0);
         let nuevaUtilidad = totalNuevosIngresos - totalNuevosCostos;
 
         let oldIng = 0, oldCos = 0;
         
         Object.values(cpsEnActualizacion).forEach(act => {
             oldIng += Number(act.rutaAntigua.ingresos) || 0;
-            oldCos += (Number(act.rutaAntigua.cBase)||0) + (Number(act.rutaAntigua.cAyudantes)||0) + (Number(act.rutaAntigua.cExc)||0) + (Number(act.rutaAntigua.cHE)||0);
+            oldCos += (Number(act.rutaAntigua.cBase)||0) + (Number(act.rutaAntigua.cAyudantes)||0) + (Number(act.rutaAntigua.cExc)||0) + (Number(act.rutaAntigua.cHE)||0) + (Number(act.rutaAntigua.cAdicionales)||0);
         });
         
         let oldUtil = oldIng - oldCos;

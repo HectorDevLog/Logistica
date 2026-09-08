@@ -202,9 +202,8 @@
         .veh-info-banner { background: rgba(0, 240, 255, 0.05); color: var(--neon-blue); padding: 10px 15px; border-radius: 8px; font-size: 0.85em; display: flex; align-items: center; gap: 8px; margin-top: 20px; width: 100%; box-sizing: border-box; border: 1px solid rgba(0,240,255,0.2); }
 
         /* 🔥 TABLA DE PEDIDOS Y COSTOS (FLEXBOX RESPONSIVO) 🔥 */
-        .bottom-row { display: flex; flex-wrap: wrap; gap: 2vw; align-items: stretch; margin-bottom: 40px; width: 100%; box-sizing: border-box;}
-        .bottom-row > div:nth-child(1) { flex: 1 1 300px; min-width: 0; } 
-        .bottom-row > div:nth-child(2) { flex: 3 1 500px; min-width: 0; } 
+        .bottom-row { display: flex; flex-direction: column; gap: 2vw; margin-bottom: 40px; width: 100%; box-sizing: border-box;}
+        .bottom-row > div { width: 100%; }
 
         .table-panel { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
         .table-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: rgba(0,0,0,0.1);}
@@ -277,6 +276,36 @@
             .nav-links { width: 100%; justify-content: center; }
             .top-action-bar { flex-direction: column; align-items: center;}
             .btn-main-action { width: 100%; }
+        }
+
+        /* ESTILOS ESPECÍFICOS PARA EL MODAL DE ADVERTENCIA */
+        .modal-icon-amber {
+            width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+            background: rgba(255, 183, 0, 0.1); color: var(--neon-amber); border: 1px solid var(--neon-amber); box-shadow: 0 0 15px rgba(255,183,0,0.2);
+        }
+        
+        .modal-scroll-box {
+            border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 25px; max-height: 180px; overflow-y: auto; text-align: left; font-family: monospace; font-size: 1.1em; line-height: 1.6;
+            background: rgba(0,0,0,0.3); color: var(--neon-amber); 
+        }
+
+        .btn-modal-close {
+            width:100%; background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color); padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 1.05em; transition: all 0.3s;
+        }
+        .btn-modal-close:hover { background: rgba(255,255,255,0.1); border-color: var(--neon-amber); color: var(--neon-amber); }
+
+        /* AJUSTES DE CONTRASTE EXCLUSIVOS PARA MODO CLARO */
+        body.light-theme .modal-icon-amber {
+            background: #fffbeb; color: #d97706; border-color: #fcd34d; box-shadow: none;
+        }
+        body.light-theme .modal-scroll-box {
+            background: #ffffff; color: #b45309; border-color: #d1d5db; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        body.light-theme .btn-modal-close {
+            background: #f8fafc; border-color: #cbd5e1; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        body.light-theme .btn-modal-close:hover {
+            background: #fffbeb; border-color: #d97706; color: #d97706;
         }
     </style>
 </head>
@@ -458,6 +487,9 @@
                 </h3>
                 
                 <div class="filter-group">
+                    <!-- 🔥 NUEVO BUSCADOR POR ID 🔥 -->
+                    <input type="text" id="filtroBusquedaId" class="filter-inline" placeholder="🔍 Buscar ID..." onkeyup="renderizarTabla()" style="width: 140px; font-weight: bold;">
+                    
                     <select id="filtroCliente" class="filter-inline" onchange="renderizarTabla()">
                         <option value="ALL">Todos los Clientes</option>
                     </select>
@@ -577,6 +609,34 @@
         </div>
         
         <button onclick="document.getElementById('modalIdsNoEncontrados').style.display='none'" style="width:100%; background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color); padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 1.05em;">Entendido</button>
+    </div>
+</div>
+
+<!-- MODAL TARIFAS FALLBACK (AJUSTE AUTOMÁTICO) -->
+<div id="modalTarifasFallback" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <!-- Icono de Advertencia Ámbar -->
+        <div class="modal-icon-amber">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+        
+        <h2 style="margin: 0 0 10px; font-size: 1.5em; color: var(--text-main);">Ajuste Automático</h2>
+        <p style="color:var(--text-muted); font-size:1.05em; margin-bottom: 15px;">
+            Se aplicó la tarifa por defecto (Normal: <strong style="color:var(--text-main);">$3.50</strong>, Exclusivo: <strong style="color:var(--text-main);">$40.00</strong>) a los siguientes pedidos sin cobertura calculable:
+        </p>
+        
+        <!-- Caja con scroll para los IDs -->
+        <div class="modal-scroll-box">
+            <span id="listaIdsFallback"></span>
+        </div>
+        
+        <button onclick="document.getElementById('modalTarifasFallback').style.display='none'" class="btn-modal-close">
+            Entendido
+        </button>
     </div>
 </div>
 
@@ -1206,6 +1266,7 @@
                 pedidosProcesadosGlobal = []; 
                 let busquedaMasiva = buscarPedidosMasivo(ids);
                 let idsPerdidos = [];
+                let idsFallback = []; // Guardará los pedidos a los que se les forzó la tarifa
 
                 busquedaMasiva.forEach(item => {
                     if (item.encontrado) {
@@ -1234,13 +1295,21 @@
                         let cobro = 0;
                         if (!yaExiste || modoEdicionActivo) cobro = calc.total > 0 ? calc.total : 0; 
                         
+                        // 🔥 APLICACIÓN DE TARIFAS POR DEFECTO 🔥
+                        let esFallback = false;
+                        if (cobro === 0 && (!yaExiste || modoEdicionActivo)) {
+                            if (servicioMonitor === 'NORMAL') { cobro = 3.50; esFallback = true; idsFallback.push(item.id); }
+                            else if (servicioMonitor === 'EXCLUSIVO') { cobro = 40.00; esFallback = true; idsFallback.push(item.id); }
+                        }
+                        
                         pedidosProcesadosGlobal.push({
                             id: item.id, cliente: clienteStr, servicio: servicioMonitor, 
                             origen: locOrigen, destino: locDestino, trayecto: tipoTrayectoStr, 
                             intentos: intentosNum, bultos: bultosNum, peso: calc.pesoUsado, 
                             tfaPeso: calc.tfaPeso || 0, tfaPedido: calc.tfaPedido || 0, 
                             tfaRango: calc.tfaRango || 0, tfaMedida: calc.tfaMedida || 0, 
-                            cobro: cobro, yaExiste: (yaExiste && !modoEdicionActivo), noEncontrado: false
+                            cobro: cobro, yaExiste: (yaExiste && !modoEdicionActivo), noEncontrado: false,
+                            esFallback: esFallback // Marcamos para que suba en la tabla
                         });
                     } else {
                         pedidosProcesadosGlobal.push({ id: item.id, noEncontrado: true });
@@ -1250,6 +1319,13 @@
                 
                 actualizarFiltrosUI(); 
                 renderizarTabla();     
+
+                // 🔥 NOTIFICACIÓN DE TARIFAS FORZADAS (NUEVO MODAL) 🔥
+                if (idsFallback.length > 0) {
+                    // Ponemos los IDs separados por coma y espacio, y abrimos el modal
+                    document.getElementById('listaIdsFallback').innerText = idsFallback.join(", ");
+                    document.getElementById('modalTarifasFallback').style.display = 'flex';
+                }
 
                 if (idsPerdidos.length > 0) {
                     let ul = document.getElementById('listaIdsPerdidos');
@@ -1274,7 +1350,7 @@
                     document.getElementById('btnPdfTop').disabled = false; 
                 }
             }
-        }, 50); 
+        }, 50);
     }
 
     function actualizarFiltrosUI() {
@@ -1297,6 +1373,9 @@
         let fCli = document.getElementById('filtroCliente').value;
         let fServ = document.getElementById('filtroServicio').value;
         let fTar = document.getElementById('filtroTarifa').value;
+        
+        // 🔥 CAPTURAR EL VALOR DEL BUSCADOR 🔥
+        let fBusqueda = document.getElementById('filtroBusquedaId').value.trim().toUpperCase();
 
         let tbody = document.querySelector('#tblPedidos tbody');
         let htmlRows = ''; 
@@ -1304,14 +1383,26 @@
         let conteoVisible = 0;
         let dataClientes = {}; 
 
+        // ORDENAR: Pedidos en $0 o con tarifa forzada (Fallback) van al principio
+        pedidosProcesadosGlobal.sort((a, b) => {
+            let aPrioridad = (a.cobro === 0 || a.esFallback) ? 1 : 0;
+            let bPrioridad = (b.cobro === 0 || b.esFallback) ? 1 : 0;
+            return bPrioridad - aPrioridad;
+        });
+
         pedidosProcesadosGlobal.forEach(p => {
             let mostrar = true;
+            
             if(!p.noEncontrado) {
                 if(fCli !== 'ALL' && p.cliente !== fCli) mostrar = false;
                 if(fServ !== 'ALL' && p.servicio !== fServ) mostrar = false;
                 if(fTar === 'ZERO' && p.cobro > 0) mostrar = false;
+                // 🔥 FILTRAR POR ID (si contiene los números digitados) 🔥
+                if(fBusqueda !== '' && !p.id.includes(fBusqueda)) mostrar = false;
             } else {
                 if(fCli !== 'ALL' || fServ !== 'ALL' || fTar === 'ZERO') mostrar = false;
+                // 🔥 FILTRAR POR ID INCLUSO SI NO FUE ENCONTRADO 🔥
+                if(fBusqueda !== '' && !p.id.includes(fBusqueda)) mostrar = false;
             }
 
             if(mostrar) {
@@ -1321,6 +1412,7 @@
 
                     dataClientes[p.cliente] = (dataClientes[p.cliente] || 0) + 1;
                     
+                    // 🔥 SE AÑADE EL INPUT PARA EDICIÓN INLINE Y SE QUITA EL BOTÓN DE EDITAR 🔥
                     htmlRows += `
                         <tr>
                             <td><strong style="color:var(--text-main);">${p.id}</strong>${p.yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
@@ -1332,10 +1424,17 @@
                             <td class="col-tarifa">${p.trayecto}</td>
                             <td>${p.bultos}</td>
                             <td>${p.peso.toFixed(2)}</td>
-                            <td class="col-total" style="${p.yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right; font-weight:bold; color:var(--neon-green);">$${p.cobro.toFixed(2)}</td>
+                            
+                            <td class="col-total" style="${p.yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right;">
+                                $<input type="number" step="0.01" min="0" value="${p.cobro.toFixed(2)}" 
+                                    onchange="actualizarPrecioInline('${p.id}', this.value)" 
+                                    style="width: 70px; background: var(--input-bg); border: 1px dashed var(--neon-blue); color: var(--neon-green); font-weight: bold; text-align: right; outline: none; padding: 4px; border-radius: 4px; font-family: inherit; font-size: 1.1em;"
+                                    ${p.yaExiste ? 'disabled' : ''}>
+                                ${p.esFallback ? '<br><span style="font-size: 0.7em; color: var(--neon-amber);">Tarifa Default</span>' : ''}
+                            </td>
+                            
                             <td>
                                 <div class="action-cell">
-                                    <button onclick="editarCobro('${p.id}')" class="btn-icon btn-edit" title="Editar Precio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
                                     <button onclick="eliminarPedido('${p.id}')" class="btn-icon btn-delete" title="Eliminar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                                 </div>
                             </td>
@@ -1440,6 +1539,62 @@
             headersCrudos.forEach((hCrudo, i) => { obj[hCrudo] = fila[i]; });
             return obj;
         });
+    }
+
+    // 🔥 ACCIÓN: ELIMINAR PEDIDO DE LA TABLA Y DEL TEXTAREA
+    function eliminarPedido(id) {
+        if (!confirm(`¿Estás seguro de quitar el pedido ${id} de la proyección?`)) return;
+
+        // 1. Lo quitamos del array global
+        pedidosProcesadosGlobal = pedidosProcesadosGlobal.filter(p => p.id !== id);
+
+        // 2. Lo quitamos también del textarea para que si vuelve a calcular no reaparezca
+        let rawIds = obtenerIdsLimpios();
+        let nuevosIds = rawIds.filter(rawId => rawId !== id);
+        document.getElementById('txtPedidos').value = nuevosIds.join('\n');
+
+        // 3. Actualizamos la interfaz
+        validarEstadoBoton();
+        actualizarFiltrosUI();
+        renderizarTabla();
+    }
+
+    // 🔥 ACCIÓN: EDITAR PRECIO MANUALMENTE
+    function editarCobro(id) {
+        let pedidoIndex = pedidosProcesadosGlobal.findIndex(p => p.id === id);
+        if (pedidoIndex === -1) return;
+
+        let cobroActual = pedidosProcesadosGlobal[pedidoIndex].cobro.toFixed(2);
+        let nuevoValorStr = prompt(`Ingrese el nuevo precio para el pedido ${id}:`, cobroActual);
+
+        if (nuevoValorStr !== null) {
+            // Reemplazamos coma por punto por si el usuario escribe "3,50"
+            let nuevoMonto = parseFloat(nuevoValorStr.replace(',', '.')); 
+            
+            if (!isNaN(nuevoMonto) && nuevoMonto >= 0) {
+                pedidosProcesadosGlobal[pedidoIndex].cobro = nuevoMonto;
+                // Re-calculamos totales y actualizamos la tabla
+                renderizarTabla(); 
+            } else {
+                alert("Monto inválido. Ingrese un número válido mayor o igual a 0.");
+            }
+        }
+    }
+
+    // 🔥 FUNCIÓN PARA EDICIÓN EN LÍNEA DIRECTO EN LA CELDA 🔥
+    function actualizarPrecioInline(id, val) {
+        let index = pedidosProcesadosGlobal.findIndex(p => p.id === id);
+        if (index > -1) {
+            let nuevoMonto = parseFloat(String(val).replace(',', '.'));
+            if (!isNaN(nuevoMonto) && nuevoMonto >= 0) {
+                pedidosProcesadosGlobal[index].cobro = nuevoMonto;
+                pedidosProcesadosGlobal[index].esFallback = false; // Quita la etiqueta si el usuario lo modifica
+                renderizarTabla(); 
+            } else {
+                alert("Monto inválido. Ingrese un valor numérico válido.");
+                renderizarTabla(); // Recarga la tabla para volver al valor anterior si hubo error
+            }
+        }
     }
 </script>
 </body>
