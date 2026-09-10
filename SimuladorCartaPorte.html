@@ -264,10 +264,60 @@
         }
         #toastExito.show { transform: translateX(0); }
 
+        /* 🔥 ZONA DE REVISIÓN + RESUMEN POR CARTA PORTE 🔥 */
+        .zona-revision {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+            gap: 20px; margin-bottom: 20px; align-items: start;
+        }
+        @media (max-width: 1200px) { .zona-revision { grid-template-columns: minmax(0, 1fr); } }
+
+        .card-head-flex { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 6px; }
+        .card-head-flex h3 { margin:0; border:none; padding:0; }
+
+        .chip-count {
+            background: rgba(255,183,0,0.12); color: var(--neon-amber); border: 1px solid rgba(255,183,0,0.35);
+            padding: 3px 10px; border-radius: 20px; font-size: 0.75em; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap;
+        }
+        .chip-count.blue { background: rgba(0,240,255,0.12); color: var(--neon-blue); border-color: rgba(0,240,255,0.35); }
+
+        .btn-mini {
+            padding: 6px 12px; font-size: 0.78em; font-weight: 700; border-radius: 8px; cursor: pointer;
+            background: transparent; color: var(--text-muted); border: 1px solid var(--border-color);
+            display: inline-flex; align-items: center; gap: 6px; transition: all .25s; white-space: nowrap;
+        }
+        .btn-mini:hover { color: var(--neon-green); border-color: var(--neon-green); background: rgba(0,255,157,0.08); }
+        .btn-mini.blue:hover { color: var(--neon-blue); border-color: var(--neon-blue); background: rgba(0,240,255,0.08); }
+
+        /* Tabla resumen por carta porte */
+        #tblResumenCP { font-size: 0.8em; }
+        #tblResumenCP th { padding: 10px 5px; white-space: nowrap; font-size: 0.9em; letter-spacing: 0; }
+        #tblResumenCP td { padding: 9px 5px; white-space: nowrap; }
+        #tblResumenCP tbody tr { cursor: pointer; transition: background .2s; }
+        #tblResumenCP tbody tr:hover { background: rgba(0,240,255,0.06); }
+        #tblResumenCP tfoot td {
+            position: sticky; bottom: 0; background: var(--table-header); font-weight: 800;
+            color: var(--text-main); border-top: 2px solid var(--border-color); padding: 11px 6px;
+        }
+        .num-pos { color: var(--neon-green); font-weight: 700; }
+        .num-neg { color: var(--neon-red); font-weight: 700; }
+        .num-cos { color: var(--neon-red); }
+        .num-ing { color: var(--neon-blue); font-weight: 600; }
+        .cell-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .bar-margen { height: 4px; border-radius: 3px; background: var(--border-color); overflow: hidden; margin-top: 4px; min-width: 45px; }
+        .bar-margen span { display: block; height: 100%; border-radius: 3px; }
+
+        .empty-mini { text-align:center; color: var(--text-muted); padding: 30px 15px; font-size: 0.9em; line-height: 1.5; }
+
+        .row-alerta-neg { box-shadow: inset 3px 0 0 var(--neon-red); }
+        .row-alerta-pos { box-shadow: inset 3px 0 0 var(--neon-green); }
+
         @media (max-width: 768px) {
             .navbar { flex-direction: column; padding: 15px; text-align: center;}
             .user-info { justify-content: center; width: 100%;}
             .nav-links { justify-content: center; width: 100%; }
+            .zona-revision { gap: 15px; }
         }
     </style>
     
@@ -379,7 +429,6 @@
 
                 <div id="subPanelItsa" class="row-flex" style="margin-top:10px;">
                     <div style="flex:1"><label>Estibas/Ayudantes:</label><input type="number" id="estibasItsa" value="0" min="0"></div>
-                    <div style="flex:1"><label>Horas Extras:</label><input type="number" id="heItsa" value="0" min="0" step="0.5"></div>
                 </div>
 
                 <div id="subPanelOtros" style="display:none; margin-top:10px;">
@@ -425,6 +474,73 @@
             <div class="stat-box box-cos"><h4>Costo Operativo Total</h4><span id="vCos">$0.00</span></div>
             <div id="boxR" class="stat-box box-ren"><h4>Rentabilidad Neta</h4><span id="vRent">$0.00</span></div>
             <div class="stat-box" style="--accent: var(--neon-purple);"><h4>Vehículos Extraídos</h4><span id="vVeh">0</span></div>
+        </div>
+
+        <!-- 🔥 ZONA DE REVISIÓN + RESUMEN POR CARTA PORTE 🔥 -->
+        <div class="zona-revision" id="zonaRevision" style="display:none;">
+
+            <div class="card" id="panelPedidosExclusivos" style="border-left: 4px solid var(--neon-amber); display:none;">
+                <div class="card-head-flex">
+                    <h3 style="color:var(--neon-amber);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Revisión de Pedidos
+                    </h3>
+                    <span class="chip-count" id="chipRevision">0 pedidos</span>
+                </div>
+                <p style="font-size:0.85em; color:var(--text-muted); margin:0 0 12px 0;">Exclusivos y pedidos de alto valor de SG (&gt; $100). Verifica y ajusta la tarifa final antes de guardar.</p>
+                <div class="table-wrapper" style="max-height: 300px;">
+                    <table id="tblExclusivosSummary">
+                        <thead style="background:var(--table-header); position:sticky; top:0;">
+                            <tr>
+                                <th>Carta Porte</th>
+                                <th>ID Pedido</th>
+                                <th>Cliente</th>
+                                <th>Tipo de Servicio</th>
+                                <th>Destino</th>
+                                <th style="text-align:right;">Tarifa Final</th>
+                                <th style="text-align:center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" id="panelResumenCP" style="border-left: 4px solid var(--neon-blue);">
+                <div class="card-head-flex">
+                    <h3 style="color:var(--neon-blue);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        Resumen por Carta Porte
+                    </h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="chip-count blue" id="chipResumen">0 CP</span>
+                        <button type="button" class="btn-mini" onclick="exportarResumenCP()" title="Descargar el resumen en Excel">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Excel
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size:0.85em; color:var(--text-muted); margin:0 0 12px 0;">Consolidado de ingresos y costos de cada carta porte. Se actualiza al instante con cada cambio.</p>
+                <div class="table-wrapper" style="max-height: 300px;">
+                    <table id="tblResumenCP">
+                        <thead style="background:var(--table-header); position:sticky; top:0;">
+                            <tr>
+                                <th>Carta Porte</th>
+                                <th style="text-align:center;" title="Total de pedidos">Ped.</th>
+                                <th class="cell-num">Ingresos</th>
+                                <th class="cell-num" title="Costo del vehículo (base / exclusivo)">Costos</th>
+                                <th class="cell-num" title="Costo de estibas y ayudantes">Estibas</th>
+                                <th class="cell-num" title="Adicionales de ruta">Adic.</th>
+                                <th class="cell-num">Utilidad</th>
+                                <th class="cell-num">Margen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot></tfoot>
+                    </table>
+                </div>
+            </div>
+
         </div>
 
         <div class="card" id="panelFiltrosGlobales" style="display:none; padding: 15px 20px; margin-bottom: 20px;">
@@ -586,6 +702,12 @@
 </div>
 
 <script>
+    function parseDinero(valorExcel) {
+        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
+        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
     function reconstruirDesdeHeadersYFilas(payload) {
         if (!payload || !payload.headers || !payload.rows) return [];
         const headersCrudos = payload.headers.map(h => String(h).trim());
@@ -679,9 +801,8 @@
     window.rutasAguardar = [];
     window.tarifasModificadas = {}; 
     window.tarifasFijadasDB = []; 
-    
-    // Variables para adicionales
     window.estadoAdicionales = {};
+    window.estadoEstibas = {};
 
     function setPillStatus(id, state, text) {
         let pill = document.getElementById('pill' + id);
@@ -691,21 +812,6 @@
             pill.className = 'status-pill ' + state;
             dot.className = 'status-dot ' + state;
             txt.innerText = text;
-        }
-    }
-
-    function resaltarError(id) {
-        let el = document.getElementById(id);
-        if(el) {
-            el.focus();
-            let oldBorder = el.style.borderColor || '';
-            let oldShadow = el.style.boxShadow || '';
-            el.style.borderColor = "var(--neon-red)";
-            el.style.boxShadow = "0 0 0 3px rgba(255,51,51,0.2)";
-            setTimeout(() => {
-                el.style.borderColor = oldBorder;
-                el.style.boxShadow = oldShadow;
-            }, 3000);
         }
     }
 
@@ -767,18 +873,19 @@
         });
     }
 
-    function dialogPrompt(titulo, mensaje, placeholder = "", isUpdate = false) {
+    function dialogPrompt(titulo, mensaje, placeholder = "", isUpdate = false, valorInicial = "") {
         return new Promise((resolve) => {
             const modal = document.getElementById('modalPromptGeneral');
             const input = document.getElementById('inputPrompt');
             const titleEl = document.getElementById('tituloPrompt');
             const icon = document.getElementById('iconPrompt');
             const btnOk = document.getElementById('btnOkPrompt');
-            
+
             titleEl.innerText = titulo;
             document.getElementById('msgPrompt').innerHTML = mensaje;
             input.placeholder = placeholder;
-            input.value = ''; 
+            input.value = valorInicial === null || valorInicial === undefined ? '' : String(valorInicial);
+            setTimeout(() => { try { input.focus(); input.select(); } catch(e){} }, 60);
 
             if(isUpdate) {
                 icon.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>';
@@ -845,12 +952,6 @@
         return new Promise(resolve => tx.oncomplete = resolve);
     }
 
-    function parseDinero(valorExcel) {
-        if(!valorExcel || valorExcel === '-' || String(valorExcel).trim() === '$-') return 0;
-        let limpio = String(valorExcel).replace('$', '').replace(/\s/g, '').replace(',', '.');
-        return parseFloat(limpio) || 0;
-    }
-
     function formatearFechaUniversal(val) {
         if (!val) return "";
         let str = String(val).trim();
@@ -911,10 +1012,7 @@
             <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
             <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
                 <div class="toggle"></div>
-                <div class="names">
-                    <p class="light">Light</p>
-                    <p class="dark">Dark</p>
-                </div>
+                <div class="names"><p class="light">Light</p><p class="dark">Dark</p></div>
             </label>
             <span style="opacity:0.3; margin: 0 5px;">|</span>
             <span>📍 ${sesion.ciudad}</span>
@@ -953,9 +1051,9 @@
         }).catch(e => console.log(e)));
 
         if (!necesitaTarifas) {
-            dTarifas = cacheTarifas.dTarifas; window.tfaPesoDB = cacheTarifas.tfaPesoDB; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB;
-            window.tfaRangoDB = cacheTarifas.tfaRangoDB; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB; trayectoDB = cacheTarifas.trayectoDB;
-            rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca;
+            dTarifas = cacheTarifas.dTarifas || []; window.tfaPesoDB = cacheTarifas.tfaPesoDB || []; window.tfaPedidoDB = cacheTarifas.tfaPedidoDB || [];
+            window.tfaRangoDB = cacheTarifas.tfaRangoDB || []; window.tfaMedidaDB = cacheTarifas.tfaMedidaDB || []; trayectoDB = cacheTarifas.trayectoDB || [];
+            rutasPorDiaYPlaca = cacheTarifas.rutasPorDiaYPlaca || {};
             window.tarifaExclusivosDB = cacheTarifas.tarifaExclusivosDB || [];
             
             pedidosHistoricos = {};
@@ -978,7 +1076,6 @@
                 window.tfaMedidaDB = allData.medida || []; 
                 trayectoDB = allData.trayecto || [];
                 window.tarifaExclusivosDB = allData.tarifaExclusivos || [];
-                
                 window.tarifasFijadasDB = allData.tarifasFijadas || []; 
 
                 pedidosHistoricos = {};
@@ -1097,36 +1194,109 @@
     }
 
     function cambiarVistaGlobal() {
-        const tipo = document.getElementById('tipoServicioGlobal').value;
+        const elTipo = document.getElementById('tipoServicioGlobal');
+        const tipo = elTipo ? elTipo.value : 'NORMAL';
         const isManual = (tipo === 'EXCLUSIVO' || tipo === 'POR RUTA' || tipo === 'POR PUNTO');
         
-        document.getElementById('subPanelItsa').style.display = isManual ? 'none' : 'flex';
-        document.getElementById('subPanelOtros').style.display = isManual ? 'block' : 'none';
+        let sItsa = document.getElementById('subPanelItsa');
+        let sOtros = document.getElementById('subPanelOtros');
+        let dIngRep = document.getElementById('divIngresoRepartir');
+        let dCosMan = document.getElementById('divCostoManual');
+        let dPtsMan = document.getElementById('divPuntosManual');
         
-        document.getElementById('divIngresoRepartir').style.display = (tipo === 'NORMAL') ? 'none' : 'block';
+        if (sItsa) sItsa.style.display = isManual ? 'none' : 'flex';
+        if (sOtros) sOtros.style.display = isManual ? 'block' : 'none';
+        if (dIngRep) dIngRep.style.display = (tipo === 'NORMAL') ? 'none' : 'block';
 
         if(isManual) {
-            document.getElementById('divCostoManual').style.display = (tipo === 'POR PUNTO') ? 'none' : 'flex';
-            document.getElementById('divPuntosManual').style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
+            if (dCosMan) dCosMan.style.display = (tipo === 'POR PUNTO') ? 'none' : 'flex';
+            if (dPtsMan) dPtsMan.style.display = (tipo === 'POR PUNTO') ? 'block' : 'none';
         }
     }
 
-    function editarTarifaManual(idPedido, tarifaActual) {
-        let nuevoValor = prompt(`EDITAR TARIFA MANUAL\n\nID Pedido: ${idPedido}\n\nIngrese el nuevo valor numérico (Use punto para decimales):`, tarifaActual);
-        if (nuevoValor === null) return; 
-        
-        let parsed = parseFloat(nuevoValor.replace(',', '.'));
+    // 🔥 EDICIÓN DE TARIFA: modal + aplicación inmediata en pantalla 🔥
+    async function editarTarifaManual(idPedido) {
+        let id = String(idPedido).trim();
+        let tarifaActual = obtenerTarifaEnPantalla(id);
+
+        let nuevoValor = await dialogPrompt(
+            "Editar Tarifa Manual",
+            `Pedido <b style="color:var(--neon-blue);">${id}</b><br><span style="font-size:0.9em;">Tarifa actual: <b>$${tarifaActual.toFixed(2)}</b>. Ingrese el nuevo valor (use punto para decimales).</span>`,
+            "Ej. 45.50",
+            true,
+            tarifaActual.toFixed(2)
+        );
+
+        if (nuevoValor === null) return;
+        let limpio = String(nuevoValor).replace(/[^0-9.,-]/g, '').replace(',', '.');
+        let parsed = parseFloat(limpio);
+
         if (isNaN(parsed) || parsed < 0) {
-            alert("❌ Valor inválido. Asegúrese de ingresar un número mayor o igual a 0.");
+            dialogAlert("❌ Valor inválido. Ingrese un número mayor o igual a 0.", "error");
             return;
         }
-        
-        window.tarifasModificadas[idPedido] = parsed;
-        ejecutarCalculo(); 
+
+        aplicarTarifaManual(id, parsed);
     }
 
-    async function desvincularPedido(id) {
-        if(!confirm(`⚠️ ¿Desvincular el pedido ${id} de su Carta Porte anterior?\n\nEsto lo eliminará de la ruta pasada y permitirá que se cobre normalmente en esta nueva ruta.`)) return;
+    // Lee la tarifa que se está mostrando ahora mismo para ese pedido
+    function obtenerTarifaEnPantalla(idPedido) {
+        if (window.tarifasModificadas && window.tarifasModificadas[idPedido] !== undefined) {
+            return parseFloat(window.tarifasModificadas[idPedido]) || 0;
+        }
+        let fila = document.querySelector(`tr[data-idpedido="${CSS.escape(idPedido)}"] .monto-final-td`);
+        if (fila) return parseFloat(String(fila.innerText).replace('$', '').replace(',', '.')) || 0;
+        return 0;
+    }
+
+    // 🔥 Escribe el nuevo valor en TODAS las vistas y recalcula 🔥
+    function aplicarTarifaManual(idPedido, monto) {
+        window.tarifasModificadas[idPedido] = monto;
+        let textoMonto = `$${monto.toFixed(2)}`;
+        let sel = `[data-idpedido="${CSS.escape(String(idPedido))}"]`;
+
+        // 1) Filas de las tarjetas por vehículo
+        document.querySelectorAll(`tr${sel}`).forEach(tr => {
+            let span = tr.querySelector('.monto-final-td');
+            if (!span) return;
+            if (tr.querySelector('.col-tachada')) return; // pedido ya cobrado en otra ruta
+            span.innerText = textoMonto;
+            tr.setAttribute('data-tarifa', monto);
+            let celda = span.closest('td');
+            if (celda && !celda.classList.contains('tarifa-modificada')) celda.classList.add('tarifa-modificada');
+        });
+
+        // 2) Filas del panel de revisión
+        document.querySelectorAll(`#tblExclusivosSummary tbody tr${sel}`).forEach(tr => {
+            let cel = tr.querySelector('.rev-monto');
+            if (cel) {
+                cel.innerText = textoMonto;
+                cel.classList.add('tarifa-modificada');
+                cel.style.borderRadius = '6px';
+            }
+        });
+
+        // 3) Recalcular únicamente las tarjetas donde aparece ese pedido
+        let reg = window.registroTarjetas || {};
+        let tarjetasAfectadas = new Set();
+        document.querySelectorAll(`tr${sel}`).forEach(tr => {
+            let tb = tr.closest('tbody');
+            if (tb && tb.id && tb.id.startsWith('tbody_')) tarjetasAfectadas.add(tb.id.replace('tbody_', ''));
+        });
+
+        if (tarjetasAfectadas.size === 0) { renderResumenCP(); return; }
+
+        tarjetasAfectadas.forEach(idTarjeta => {
+            let r = reg[idTarjeta];
+            if (!r) return;
+            try { recalcularTarjetaLocal(idTarjeta, r.cpKey, r.placa, r.yaSalioHoy, r.isItsa, false); }
+            catch(e) { console.warn('No se pudo recalcular ' + idTarjeta, e); }
+        });
+    }
+
+    async function desvincularPedido(id, idTarjeta, cpKey, placa, yaSalioHoy, isItsa) {
+        let ok = await dialogConfirm(`¿Desvincular el pedido <b>${id}</b> de su Carta Porte anterior?<br><br>Se eliminará de la ruta pasada y podrá cobrarse normalmente en esta nueva ruta.`, true);
+        if (!ok) return;
 
         let btnC = document.getElementById('btnCalc');
         let ori = btnC.innerHTML;
@@ -1154,7 +1324,7 @@
                 }
 
                 dialogAlert(`✅ Pedido ${id} desvinculado de la CP anterior (${data.old_cp}). Recalculando...`, "success");
-                ejecutarCalculo();
+                recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, false);
             } else {
                 dialogAlert("❌ No se pudo desvincular: " + data.message, "error");
             }
@@ -1284,8 +1454,17 @@
             `;
         }
 
-        let modo = document.querySelector('input[name="modoCP"]:checked').value;
-        let cpsRaw = modo === 'individual' ? document.getElementById('txtCPIndividual').value : document.getElementById('txtCPMasivo').value;
+        let modoEl = document.querySelector('input[name="modoCP"]:checked');
+        let modo = modoEl ? modoEl.value : 'individual';
+        
+        let cpsRaw = '';
+        if (modo === 'individual') {
+            let el = document.getElementById('txtCPIndividual');
+            if (el) cpsRaw = el.value;
+        } else {
+            let el = document.getElementById('txtCPMasivo');
+            if (el) cpsRaw = el.value;
+        }
         
         let rawItems = cpsRaw.split(/[\n,\t]+/);
         let cps = [];
@@ -1355,7 +1534,7 @@
         Object.keys(agrupado).forEach(cp => {
             let placa = String(agrupado[cp][0]['VEHICULO'] || agrupado[cp][0]['Vehiculo'] || agrupado[cp][0]['vehiculo'] || agrupado[cp][0]['PLACA'] || agrupado[cp][0]['Placa'] || 'SIN_PLACA').toUpperCase().trim();
             
-            let provMatch = dTarifas.find(t => {
+            let provMatch = (dTarifas || []).find(t => {
                 let tP = String(t.PLACA || t.PLACAS || t.Placa || t.vehiculo || t[' PLACA'] || '').toUpperCase().trim();
                 return tP === placa;
             });
@@ -1371,8 +1550,11 @@
         });
         resumenHtml += "</ul>";
         
-        document.getElementById('resumenVehiculos').innerHTML = resumenHtml;
-        document.getElementById('resumenVehiculos').style.display = 'block';
+        let elResV = document.getElementById('resumenVehiculos');
+        if (elResV) {
+            elResV.innerHTML = resumenHtml;
+            elResV.style.display = 'block';
+        }
         
         let panelConfig = document.getElementById('panelConfiguracion');
         if (panelConfig) panelConfig.style.display = 'block';
@@ -1386,25 +1568,15 @@
     window.checkEstibasDefault = function(idTarjeta, isItsa, baseNormal) {
         let estInput = document.getElementById(`estibas_${idTarjeta}`);
         let pEstibaInput = document.getElementById(`precio_estiba_${idTarjeta}`);
-        let costoInput = document.getElementById(`costo_${idTarjeta}`);
 
-        if(estInput && pEstibaInput && costoInput) {
+        if(estInput && pEstibaInput) {
             let est = parseFloat(estInput.value) || 0;
             let currentPriceEstiba = parseFloat(pEstibaInput.value) || 0;
-            let cVehiculo = parseFloat(costoInput.value) || 0;
             
-            // Si agregaron estibas y no hay precio de estiba, poner el default
             if(est > 0 && currentPriceEstiba === 0) {
-                pEstibaInput.value = isItsa ? 30 : 20; 
+                pEstibaInput.value = 20; 
             } else if (est === 0) {
                 pEstibaInput.value = 0;
-            }
-
-            // Si agregaron estibas y el vehículo estaba en su precio base, bajar el veh a 20.
-            if(est > 0 && (cVehiculo === 0 || cVehiculo === baseNormal)) {
-                costoInput.value = 20;
-            } else if (est === 0 && cVehiculo === 20) {
-                costoInput.value = baseNormal;
             }
         }
     };
@@ -1420,31 +1592,35 @@
         div.style.padding = '8px 12px';
         div.style.borderRadius = '8px';
         div.style.border = '1px solid var(--border-color)';
+        div.style.flexWrap = 'wrap';
         
         let vDesc = adicObj ? adicObj.desc : 'Custodia';
         let vCosto = adicObj ? adicObj.costo : '0';
         let vPaga = adicObj ? adicObj.paga : 'NO';
+        
+        let cpKeySafe = cpKey.replace(/'/g, "\\'");
+        let placaSafe = placa.replace(/'/g, "\\'");
 
         div.innerHTML = `
-            <select class="adic-desc" style="flex:2; padding:6px; margin:0; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-main);" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+            <select class="adic-desc" style="flex: 1 1 100px; padding: 6px; background:transparent;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)">
                 <option value="Custodia" ${vDesc==='Custodia'?'selected':''}>Custodia</option>
-                <option value="Grua" ${vDesc==='Grua'?'selected':''}>Grúa</option>
+                <option value="Grúa" ${vDesc==='Grúa'?'selected':''}>Grúa</option>
                 <option value="Peaje" ${vDesc==='Peaje'?'selected':''}>Peaje</option>
-                <option value="Viaticos" ${vDesc==='Viaticos'?'selected':''}>Viáticos</option>
+                <option value="Viáticos" ${vDesc==='Viáticos'?'selected':''}>Viáticos</option>
                 <option value="Otros" ${vDesc==='Otros'?'selected':''}>Otros</option>
             </select>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <label style="margin:0; font-size:0.8em; white-space:nowrap;">Costo ($):</label>
-                <input type="number" class="adic-costo" value="${vCosto}" min="0" step="0.01" style="padding:6px; width:80px; margin:0;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+            <div style="display:flex; align-items:center; gap:5px; flex: 1 1 130px;">
+                <span style="color:var(--text-muted); font-size:0.9em; white-space:nowrap;">Costo ($)</span>
+                <input type="number" class="adic-costo" value="${vCosto}" min="0" step="0.01" style="padding: 6px; width: 100%; min-width: 60px; background:transparent;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)">
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <label style="margin:0; font-size:0.8em; white-space:nowrap;">¿Cliente Paga?</label>
-                <select class="adic-paga" style="padding:6px; margin:0; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-main); color:var(--text-main);" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
-                    <option value="NO" ${vPaga === 'NO' ? 'selected' : ''}>No</option>
-                    <option value="SI" ${vPaga === 'SI' ? 'selected' : ''}>Sí</option>
+            <div style="display:flex; align-items:center; gap:5px; flex: 1 1 110px;">
+                <span style="color:var(--text-muted); font-size:0.8em; white-space:nowrap;">¿Paga Cli?</span>
+                <select class="adic-paga" style="padding: 6px; width: 100%; background:transparent;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)">
+                    <option value="NO" ${!pagaCliente?'selected':''}>No</option>
+                    <option value="SI" ${pagaCliente?'selected':''}>Sí</option>
                 </select>
             </div>
-            <button type="button" style="background:transparent; border:none; color:var(--neon-red); cursor:pointer; font-size:1.2em; padding:0; margin:0 5px;" onclick="this.parentElement.remove(); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" title="Eliminar">✖</button>
+            <button type="button" style="background:transparent; border:none; color:var(--neon-red); cursor:pointer; font-size:1.2em; padding:0; margin:0 5px;" onclick="let p=this.parentElement; p.parentElement.removeChild(p); recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)" title="Eliminar">✖</button>
         `;
         container.appendChild(div);
         if(!adicObj) {
@@ -1452,23 +1628,25 @@
         }
     };
 
-
     // 🔥 EJECUTAR CÁLCULO BLINDADO 🔥
     function ejecutarCalculo() {
-        let fecha = document.getElementById('fechaDespacho').value;
+        let elFec = document.getElementById('fechaDespacho');
+        let fecha = elFec ? elFec.value : '';
         if(!fecha) return dialogAlert("⚠️ Seleccione la fecha de despacho.", "warning");
         
         let contenedor = document.getElementById('contenedorTarjetas');
         if (!contenedor) {
             contenedor = document.querySelector('main'); 
-            contenedor.id = 'contenedorTarjetas';
-            contenedor.style.display = 'flex';
-            contenedor.style.flexDirection = 'column';
-            contenedor.style.gap = '20px';
+            if(contenedor) {
+                contenedor.id = 'contenedorTarjetas';
+                contenedor.style.display = 'flex';
+                contenedor.style.flexDirection = 'column';
+                contenedor.style.gap = '20px';
+            }
         }
 
-        // Respaldar adicionales existentes antes de re-renderizar
         window.estadoAdicionales = {};
+        window.estadoEstibas = {}; 
         Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
             let idTarjeta = `tarjeta_${index}`;
             let adicContainer = document.getElementById(`lista_adicionales_${idTarjeta}`);
@@ -1483,28 +1661,46 @@
                 }
                 window.estadoAdicionales[idTarjeta] = currentAdics;
             }
+            let estInp = document.getElementById(`estibas_${idTarjeta}`);
+            let pEstInp = document.getElementById(`precio_estiba_${idTarjeta}`);
+            let pagaInp = document.getElementById(`paga_estiba_${idTarjeta}`);
+            if (estInp) {
+                window.estadoEstibas[idTarjeta] = {
+                    est: estInp.value,
+                    precio: pEstInp.value,
+                    paga: pagaInp ? pagaInp.value : 'NO'
+                };
+            }
         });
         
-        let tipoGlobal = document.getElementById('tipoServicioGlobal').value;
-        let estItsaG = document.getElementById('estibasItsa').value || 0;
-        let heItsaG = document.getElementById('heItsa').value || 0;
+        let elTipoG = document.getElementById('tipoServicioGlobal');
+        let tipoGlobal = elTipoG ? elTipoG.value : 'NORMAL';
         
-        let cFijoManualG = parseFloat(document.getElementById('costoManual').value) || 0;
-        let estManualG = document.getElementById('estibasManual').value || 0;
-
+        let elCosMan = document.getElementById('costoManual');
+        let cFijoManualG = elCosMan ? (parseFloat(elCosMan.value) || 0) : 0;
+        
         let btn = document.getElementById('btnCalc');
-        let txtOri = btn.innerHTML;
-        btn.innerHTML = `<span class="loader-spinner" style="border-top-color:currentColor; margin-right:8px;"></span> CALCULANDO...`;
-        btn.disabled = true;
+        let txtOri = "";
+        if (btn) {
+            txtOri = btn.innerHTML;
+            btn.innerHTML = `<span class="loader-spinner" style="border-top-color:currentColor; margin-right:8px;"></span> CALCULANDO...`;
+            btn.disabled = true;
+        }
 
         setTimeout(() => {
             try {
                 window.rutasAguardar = [];
+                window.registroTarjetas = {};
                 let vehiculosProcesadosHoy = {};
-                let todasLasTarjetasHTML = ''; 
+                let todasLasTarjetasHTML = '';
+
+                let htmlExclusivos = '';
+                let contadorExclusivos = 0;
 
                 Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
                     let pedidos = window.agrupacionVehiculos[cpKey];
+                    if(!pedidos || pedidos.length === 0) return;
+                    
                     let placaRaw = String(pedidos[0]['VEHICULO'] || pedidos[0]['Vehiculo'] || pedidos[0]['vehiculo'] || pedidos[0]['PLACA'] || pedidos[0]['Placa'] || 'SIN_PLACA');
                     let placa = placaRaw.toUpperCase().replace(/[-\s]/g, ''); 
 
@@ -1516,11 +1712,10 @@
                     
                     let tipoVehiculo = String(pedidos[0]['TIPO_VEHICULO'] || pedidos[0]['Tipo_Vehiculo'] || pedidos[0]['TipoVehiculo'] || '').toUpperCase().trim();
                     if (!tipoVehiculo) {
-                        let provMatch = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placa);
+                        let provMatch = (dTarifas || []).find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placa);
                         tipoVehiculo = provMatch ? (provMatch['TIPO VEHICULO'] || provMatch.TIPO_VEHICULO || provMatch.Tipo_Vehiculo || provMatch.TIPO || 'VEHÍCULO') : 'VEHÍCULO';
                     }
 
-                    // Determinar el costo base del vehículo según el diccionario
                     let baseVehiculoReal = PRECIOS_TIPO_VEHICULO[tipoVehiculo] || 90;
                     if (window.tarifaExclusivosDB && window.tarifaExclusivosDB.length > 0) {
                         let trVehiculo = window.tarifaExclusivosDB.find(t => String(t['Tipo Vehiculo'] || t['TIPO VEHICULO'] || t.TIPO_VEHICULO || '').toUpperCase().trim() === tipoVehiculo);
@@ -1534,7 +1729,7 @@
                     let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
                     
                     let esActualizacionData = cpsEnActualizacion[cpKey];
-                    if (esActualizacionData && placa === esActualizacionData.rutaAntigua.placa) {
+                    if (esActualizacionData && esActualizacionData.rutaAntigua && placa === esActualizacionData.rutaAntigua.placa) {
                         if (Number(esActualizacionData.rutaAntigua.cBase) > 0) yaSalioHoy = false; 
                     }
                     vehiculosProcesadosHoy[`${fecha}|${placa}`] = true;
@@ -1547,27 +1742,214 @@
                     let selExcMan = tipoGlobal === 'EXCLUSIVO' ? 'selected' : '';
                     let selPunto = tipoGlobal === 'POR PUNTO' ? 'selected' : '';
 
+                    let estPrev = window.estadoEstibas[idTarjeta];
+                    let valEstibas = estPrev ? estPrev.est : 0;
+                    let valPrecioEst = estPrev ? estPrev.precio : (valEstibas > 0 ? 20 : 0);
+                    let valPagaEst = estPrev ? estPrev.paga : 'NO';
+                    
+                    let selPagaNO = valPagaEst === 'NO' ? 'selected' : '';
+                    let selPagaSI = valPagaEst === 'SI' ? 'selected' : '';
+
+                    let cpKeySafe = cpKey.replace(/'/g, "\\'");
+                    let placaSafe = placa.replace(/'/g, "\\'");
+
+                    // Registro para poder recalcular cualquier tarjeta desde cualquier panel
+                    window.registroTarjetas[idTarjeta] = { cpKey: cpKey, placa: placa, yaSalioHoy: yaSalioHoy, isItsa: isItsa };
+
                     let controlesHtml = isItsa ? `
                         <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)">
                             <option value="NORMAL" ${selNormal}>Normal</option>
                             <option value="EXCLUSIVO HORARIO LABORAL" ${selLab}>Exc. Laboral</option>
                             <option value="EXCLUSIVO FUERA HORARIO" ${selFuer}>Exc. Fuera Horario</option>
                         </select></div>
-                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
-                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estItsaG}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
-                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="0" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
-                        <div style="width:90px;"><label style="font-size:0.8em; margin:0 0 5px;">H. Extras:</label><input type="number" id="he_${idTarjeta}" value="${heItsaG}" min="0" step="0.5" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
+                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${valEstibas}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="${valPrecioEst}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">¿Cli. Paga Estiba?</label><select id="paga_estiba_${idTarjeta}" style="padding:6px;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"><option value="NO" ${selPagaNO}>No</option><option value="SI" ${selPagaSI}>Sí</option></select></div>
                     ` : `
                         <div style="flex:1; min-width:150px;"><label style="font-size:0.8em; margin:0 0 5px;">Tipo de Servicio:</label>
-                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)">
+                        <select id="tipo_${idTarjeta}" style="padding:6px; font-size:0.9em;" onchange="this.dataset.modificado='true'; this.dataset.changed='true'; recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)">
                             <option value="EXCLUSIVO" ${selExcMan}>Exclusivo Manual</option>
                             <option value="POR PUNTO" ${selPunto}>Por Punto</option>
                         </select></div>
-                        <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
-                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${estManualG}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
-                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="0" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:120px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Veh. ($):</label><input type="number" id="costo_${idTarjeta}" value="${costoInicialVehiculo}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)" onblur="if(this.value===''||this.value==='0'){ let e=parseFloat(document.getElementById('estibas_${idTarjeta}').value)||0; this.value= e>0 ? '20' : '${baseVehiculoReal}'; recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false);}"></div>
+                        <div style="width:85px;"><label style="font-size:0.8em; margin:0 0 5px;">Cant. Estibas:</label><input type="number" id="estibas_${idTarjeta}" value="${valEstibas}" min="0" style="padding:6px;" oninput="checkEstibasDefault('${idTarjeta}', ${isItsa}, ${baseVehiculoReal}); recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:110px;"><label style="font-size:0.8em; margin:0 0 5px;">Costo Est. ($):</label><input type="number" id="precio_estiba_${idTarjeta}" value="${valPrecioEst}" min="0" style="padding:6px;" oninput="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"></div>
+                        <div style="width:100px;"><label style="font-size:0.8em; margin:0 0 5px;">¿Cli. Paga Estiba?</label><select id="paga_estiba_${idTarjeta}" style="padding:6px;" onchange="recalcularTarjetaLocal('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa}, false)"><option value="NO" ${selPagaNO}>No</option><option value="SI" ${selPagaSI}>Sí</option></select></div>
                     `;
+
+                    let htmlFilas = '';
+                    let pesoAcumuladoRuta = 0;
+                    
+                    let elIngRep = document.getElementById('ingresoRepartir');
+                    let ingresoA_Repartir = elIngRep ? parseFloat(elIngRep.value) : 0;
+                    if(isNaN(ingresoA_Repartir)) ingresoA_Repartir = 0;
+
+                    if(tipoGlobal === 'NORMAL' && ingresoA_Repartir > 0) {
+                        pedidos.forEach(p => {
+                            try {
+                                let locDest = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                                let trMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDest);
+                                let objM = {
+                                    Cliente: String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase(),
+                                    Tipo_Servicio: String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase(),
+                                    Trayecto: trMatch ? String(trMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-',
+                                    Origen: String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase(),
+                                    Destino: locDest,
+                                    peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
+                                    cantidad_bultos: parseInt(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || 1) || 1
+                                };
+                                let clN = null;
+                                if(typeof calcularTarifasAutomaticas === 'function') clN = calcularTarifasAutomaticas(objM);
+                                pesoAcumuladoRuta += (clN && clN.pesoUsado) ? clN.pesoUsado : 0;
+                            } catch(e) {}
+                        });
+                    }
+
+                    pedidos.forEach(p => {
+                        try {
+                            let id = String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido'] || 'SIN_ID').trim();
+                            let clienteStr = String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase();
+                            let locDestino = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
+                            let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
+                            let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0) || 0;
+                            let intentosNum = incidencias > 0 ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
+                            
+                            let esActualizacionLocalData = cpsEnActualizacion[cpKey];
+                            let esDeRutaVieja = esActualizacionLocalData && (esActualizacionLocalData.viejosIds || []).includes(id);
+                            let yaExiste = !!pedidosHistoricos[id] && !esDeRutaVieja;
+                            let esNuevoActualizacion = esActualizacionLocalData && (esActualizacionLocalData.nuevosIds || []).includes(id);
+
+                            p['VEHICULO'] = placa; p['PLACA'] = placa;
+                            let origen = String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase();
+                            let bultos = String(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || '1');
+                            
+                            let trayectoMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
+                            p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
+
+                            let objMotor = {
+                                Cliente: clienteStr, Tipo_Servicio: servicioMonitor, Trayecto: p['TipoTrayecto'], Origen: origen, Destino: locDestino,
+                                peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
+                                cantidad_bultos: parseInt(bultos) || 1
+                            };
+
+                            try { 
+                                if(typeof calcularTarifasAutomaticas === 'function') {
+                                    p._calcNube = calcularTarifasAutomaticas(objMotor); 
+                                } else {
+                                    p._calcNube = { total: 0, pesoUsado: objMotor.peso_total_kg };
+                                }
+                            } catch(errMotor) { p._calcNube = { total: 0, pesoUsado: objMotor.peso_total_kg }; }
+
+                            if (!p._calcNube) p._calcNube = { total: 0, pesoUsado: 0 };
+                            let yaTieneTarifaCalculada = (p._calcNube && p._calcNube.total > 0);
+                            
+                            let tarifaFijaObj = null;
+                            if (!yaTieneTarifaCalculada && window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
+                                tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
+                                    let idFound = "";
+                                    for (let key in tf) {
+                                        if (key.toUpperCase().includes("PEDIDO") || key.toUpperCase() === "ID") { idFound = String(tf[key]).trim(); break; }
+                                    }
+                                    return idFound === id;
+                                });
+                            }
+
+                            let cobroReal = 0; 
+                            let classTotal = "col-total"; 
+                            let htmlStatus = "";
+                            let styleFila = esNuevoActualizacion ? "background-color: rgba(0,255,157,0.1);" : "";
+                            if(document.body.classList.contains('light-theme') && esNuevoActualizacion) styleFila = "background-color: #ecfdf5;";
+
+                            if (yaExiste) {
+                                cobroReal = 0; classTotal += " col-tachada"; htmlStatus = `<div class="badge-cobrado" style="display:block; font-size:0.7em;">YA EN SISTEMA</div>`;
+                            } 
+                            else if (window.tarifasModificadas && window.tarifasModificadas[id] !== undefined) {
+                                cobroReal = parseFloat(window.tarifasModificadas[id]) || 0; classTotal += " tarifa-modificada";
+                                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                            } 
+                            else if (tarifaFijaObj && !yaTieneTarifaCalculada) {
+                                let montoFijo = 0;
+                                for (let key in tarifaFijaObj) {
+                                    if (key.toUpperCase().includes("TARIFA")) { montoFijo = parseFloat(String(tarifaFijaObj[key]).replace(',', '.')) || 0; break; }
+                                }
+                                cobroReal = montoFijo; classTotal += " tarifa-modificada"; 
+                                htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em;">TARIFA FIJADA</div>`;
+                            } 
+                            else if (esDeRutaVieja || (esNuevoActualizacion && preciosHistoricos[id] !== undefined)) {
+                                cobroReal = parseFloat(preciosHistoricos[id]) || 0;
+                                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                            } 
+                            else if (ingresoA_Repartir > 0 && tipoGlobal === 'NORMAL') {
+                                if (pesoAcumuladoRuta > 0) {
+                                    let porcentaje = (p._calcNube.pesoUsado || 0) / pesoAcumuladoRuta;
+                                    cobroReal = ingresoA_Repartir * porcentaje;
+                                }
+                                if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                            }
+                            else {
+                                cobroReal = yaTieneTarifaCalculada ? p._calcNube.total : 0;
+                                if (intentosNum === 1 && !yaExiste && cobroReal === 0) {
+                                    cobroReal = servicioMonitor.includes("EXCLUSIVO") ? 40.00 : 2.50;
+                                    if (!classTotal.includes("tarifa-modificada")) classTotal += " tarifa-modificada";
+                                    htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em; margin-top:4px;">MIN. AUTOMÁTICO</div>`;
+                                } else if (intentosNum > 1 && !esNuevoActualizacion) {
+                                    htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
+                                }
+                            }
+
+                            let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
+                            let idSafe = id.replace(/'/g, "\\'");
+                            let cpKeySafeLoop = cpKey.replace(/'/g, "\\'");
+                            let placaSafeLoop = placa.replace(/'/g, "\\'");
+                            let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${idSafe}', '${idTarjeta}', '${cpKeySafeLoop}', '${placaSafeLoop}', ${yaSalioHoy}, ${isItsa})" title="Desvincular de ruta anterior" style="color:var(--neon-amber);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
+
+                            htmlFilas += `
+                                <tr style="${styleFila}" data-idpedido="${id}" data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
+                                    <td style="white-space:nowrap;"><strong style="color:var(--text-main);">${id}</strong>${yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
+                                    <td style="font-size:0.85em;">${clienteStr}</td>
+                                    <td style="text-align:center; white-space:nowrap;"><b>${intentosNum}</b><br>${htmlStatus}</td>
+                                    <td style="white-space:nowrap;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
+                                    <td style="font-size:0.85em; max-width:120px;">${origen}</td>
+                                    <td style="max-width:120px;"><span class="badge-loc" style="background:rgba(0,240,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); border-radius:4px; padding:2px 6px; display:inline-block; line-height:1.2;">${locDestino}</span></td>
+                                    <td style="font-size:0.85em; max-width:100px;">${p.TipoTrayecto}</td>
+                                    <td style="text-align:center; white-space:nowrap;">${bultos}</td>
+                                    <td style="text-align:center; white-space:nowrap;">${(p._calcNube.pesoUsado || 0).toFixed(2)}</td>
+                                    <td style="color:var(--text-muted); white-space:nowrap;">$${(p._calcNube.total || 0).toFixed(2)}</td>
+                                    <td class="${classTotal}" style="${yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right; white-space:nowrap;">
+                                        <div style="display:flex; justify-content:flex-end; align-items:center; gap:5px;">
+                                            <span class="monto-final-td" style="margin-right:4px;">$${cobroReal.toFixed(2)}</span>
+                                            <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${idSafe}')" title="Editar Tarifa">✏️</button>
+                                            ${btnDesvincular}
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+
+                            // 🔥 PREPARAR FILAS PARA EL PANEL DE REVISIÓN (EXCLUSIVOS Y SG > $100) 🔥
+                            if (servicioMonitor.includes("EXCLUSIVO") || (clienteStr.includes("SG") && cobroReal > 100)) {
+                                contadorExclusivos++;
+                                let motivo = servicioMonitor.includes("EXCLUSIVO") ? "Servicio exclusivo" : "SG mayor a $100";
+                                htmlExclusivos += `
+                                    <tr style="background: rgba(255,183,0,0.05);" data-idpedido="${id}" title="${motivo}">
+                                        <td style="white-space:nowrap;"><b>${cpKey}</b></td>
+                                        <td style="white-space:nowrap;"><strong style="color:var(--text-main);">${id}</strong></td>
+                                        <td style="font-size:0.9em;">${clienteStr}</td>
+                                        <td style="white-space:nowrap;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
+                                        <td><span class="badge-loc">${locDestino}</span></td>
+                                        <td style="text-align:right; white-space:nowrap;">
+                                            <span class="rev-monto col-total" style="padding:4px 8px; border-radius:6px; display:inline-block;">$${cobroReal.toFixed(2)}</span>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="btn-mini blue" onclick="editarTarifaManual('${idSafe}')" style="margin:0 auto;">✏️ Editar</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+
+                        } catch(errPedido) {}
+                    });
 
                     todasLasTarjetasHTML += `
                         <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--border-color); margin-bottom:20px; background:var(--bg-panel);">
@@ -1604,13 +1986,13 @@
                                             <th style="padding:12px 6px; border-bottom:1px solid var(--border-color); text-align:right;">Tarifa Final</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tbody_${idTarjeta}"></tbody>
+                                    <tbody id="tbody_${idTarjeta}">${htmlFilas}</tbody>
                                 </table>
                             </div>
                             <div style="background:rgba(0,0,0,0.2); padding:10px 20px; border-bottom:1px solid var(--border-color);">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                                     <span style="font-weight:600; color:var(--text-muted); font-size:0.85em;">➕ Adicionales de Ruta</span>
-                                    <button type="button" class="btn-main btn-outline" style="width:auto; margin:0; padding:4px 10px; font-size:0.75em; height:auto;" onclick="agregarAdicional('${idTarjeta}', '${cpKey}', '${placa}', ${yaSalioHoy}, ${isItsa})">+ Agregar Adicional</button>
+                                    <button type="button" class="btn-main btn-outline" style="width:auto; margin:0; padding:4px 10px; font-size:0.75em; height:auto;" onclick="agregarAdicional('${idTarjeta}', '${cpKeySafe}', '${placaSafe}', ${yaSalioHoy}, ${isItsa})">+ Agregar Adicional</button>
                                 </div>
                                 <div id="lista_adicionales_${idTarjeta}" style="display:flex; flex-direction:column; gap:8px;"></div>
                             </div>
@@ -1618,7 +2000,27 @@
                     `;
                 });
 
-                contenedor.innerHTML = todasLasTarjetasHTML;
+                if(contenedor) contenedor.innerHTML = todasLasTarjetasHTML;
+
+                let panelExc = document.getElementById('panelPedidosExclusivos');
+                let tbodyExc = document.querySelector('#tblExclusivosSummary tbody');
+                let zona = document.getElementById('zonaRevision');
+                let chipRev = document.getElementById('chipRevision');
+
+                if (panelExc && tbodyExc) {
+                    if (contadorExclusivos > 0) {
+                        tbodyExc.innerHTML = htmlExclusivos;
+                        panelExc.style.display = 'block';
+                        if (chipRev) chipRev.innerText = `${contadorExclusivos} ${contadorExclusivos === 1 ? 'pedido' : 'pedidos'}`;
+                    } else {
+                        panelExc.style.display = 'none';
+                    }
+                }
+                // La zona siempre se muestra: aunque no haya exclusivos, el resumen por CP sí aplica
+                if (zona) {
+                    zona.style.display = 'grid';
+                    zona.style.gridTemplateColumns = contadorExclusivos > 0 ? '' : 'minmax(0, 1fr)';
+                }
 
                 Object.keys(window.agrupacionVehiculos).forEach((cpKey, index) => {
                     let idTarjeta = `tarjeta_${index}`;
@@ -1628,40 +2030,45 @@
                     let isItsa = provOriginal.includes("ENTREGAR") || provOriginal.includes("ITSACOURIER");
                     let yaSalioHoy = rutasPorDiaYPlaca[`${fecha}|${placa}`] === true || vehiculosProcesadosHoy[`${fecha}|${placa}`] === true;
 
-                    // Restaurar adicionales guardados antes de recalcular
                     if (window.estadoAdicionales[idTarjeta]) {
                         window.estadoAdicionales[idTarjeta].forEach(adic => {
                             agregarAdicional(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, adic);
                         });
                     }
-
                     recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, true);
                 });
                 
             } catch(e) {
                 console.error("Error al calcular", e);
-                dialogAlert("Ocurrió un error calculando las tarifas. Revisa la consola.", "error");
+                dialogAlert(`❌ Ocurrió un error calculando las tarifas.<br><br><b style="color:var(--neon-red); font-size:0.8em;">Detalle del sistema:</b><br><span style="font-size:0.8em; color:var(--text-muted);">${e.message}</span>`, "error");
             } finally {
-                btn.innerHTML = txtOri;
-                btn.disabled = false;
-                document.getElementById('btnSave').disabled = false;
-                document.getElementById('panelFiltrosGlobales').style.display = 'block';
+                if(btn) {
+                    btn.innerHTML = txtOri;
+                    btn.disabled = false;
+                }
+                let bSave = document.getElementById('btnSave');
+                if(bSave) bSave.disabled = false;
+                
+                let pFiltros = document.getElementById('panelFiltrosGlobales');
+                if(pFiltros) pFiltros.style.display = 'block';
             }
         }, 50);
     }
 
+    // 🔥 RECALCULAR TARJETA INDIVIDUAL BLINDADO 🔥
     function recalcularTarjetaLocal(idTarjeta, cpKey, placa, yaSalioHoy, isItsa, isInit = false) {
         let placaLimpia = String(placa).toUpperCase().replace(/[-\s]/g, '');
         
-        let opt = dTarifas.find(t => {
+        let opt = (dTarifas || []).find(t => {
             let tP = String(t.PLACA || t.PLACAS || t.Placa || t[' PLACA'] || '').toUpperCase().replace(/[-\s]/g, '');
             return tP === placaLimpia;
         }) || {};
+        
         let pedidos = window.agrupacionVehiculos[cpKey] || [];
         let elTipo = document.getElementById(`tipo_${idTarjeta}`);
         let tipo = elTipo ? elTipo.value : '';
         
-        let cBase = 0, cEstibas = 0, cExc = 0, cHE = 0;
+        let cBase = 0, cEstibas = 0, cExc = 0; 
         
         let esActualizacionData = cpsEnActualizacion[cpKey];
         let esRutaManualRestaurada = false;
@@ -1673,11 +2080,14 @@
         let costoInput = document.getElementById(`costo_${idTarjeta}`);
         let estInput = document.getElementById(`estibas_${idTarjeta}`);
         let precioEstibaInput = document.getElementById(`precio_estiba_${idTarjeta}`);
-        let heInput = document.getElementById(`he_${idTarjeta}`);
+        let pagaEstibaInput = document.getElementById(`paga_estiba_${idTarjeta}`);
 
-        let tipoVehiculo = String(pedidos[0]['TIPO_VEHICULO'] || pedidos[0]['Tipo_Vehiculo'] || pedidos[0]['TipoVehiculo'] || '').toUpperCase().trim();
+        let tipoVehiculo = '';
+        if (pedidos.length > 0) {
+            tipoVehiculo = String(pedidos[0]['TIPO_VEHICULO'] || pedidos[0]['Tipo_Vehiculo'] || pedidos[0]['TipoVehiculo'] || '').toUpperCase().trim();
+        }
         if (!tipoVehiculo) {
-            let provMatch = dTarifas.find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placaLimpia);
+            let provMatch = (dTarifas || []).find(t => String(t.PLACA || t.PLACAS || '').toUpperCase().replace(/[-\s]/g, '') === placaLimpia);
             tipoVehiculo = provMatch ? (provMatch['TIPO VEHICULO'] || provMatch.TIPO_VEHICULO || provMatch.Tipo_Vehiculo || provMatch.TIPO || 'VEHÍCULO') : 'VEHÍCULO';
         }
 
@@ -1701,7 +2111,6 @@
                 cBase = parsearCosto(rutaAntigua.cBase || rutaAntigua.cbase);
                 cEstibas = parsearCosto(rutaAntigua.cAyudantes || rutaAntigua.cayudantes);
                 cExc = parsearCosto(rutaAntigua.cExc || rutaAntigua.cexc);
-                cHE = parsearCosto(rutaAntigua.cHE || rutaAntigua.che);
                 
                 let cTotalFijo = cBase > 0 ? cBase : cExc;
                 if (cTotalFijo === 0) cTotalFijo = fallbackFinal;
@@ -1717,22 +2126,16 @@
                 }
                 if (estInput) estInput.value = cantPrevias;
                 if (precioEstibaInput) precioEstibaInput.value = precioPrevio;
-
-                if (heInput && isItsa) heInput.value = cHE / (parseDinero(opt['HORAS EXTRAS']) || 6.25);
             }
         }
 
         if (!esRutaManualRestaurada || !isInit) {
             let est = estInput ? (parseFloat(estInput.value) || 0) : 0;
             let pEstiba = precioEstibaInput ? (parseFloat(precioEstibaInput.value) || 0) : 0;
-            let he = heInput ? (parseFloat(heInput.value) || 0) : 0;
             
             cEstibas = est * pEstiba; 
 
             if (isItsa) {
-                let heTarifa = parseDinero(opt['HORAS EXTRAS']) || 6.25;
-                cHE = he * heTarifa;
-                
                 if (isInit || (elTipo && elTipo.dataset.changed === 'true')) {
                     if (tipo === 'NORMAL') cBase = parseDinero(opt['Precio Base Dia']) || fallbackFinal;
                     else if (tipo === 'EXCLUSIVO HORARIO LABORAL') cExc = parseDinero(opt['EXCLUSIVO HORARIO LABORAL']) || fallbackFinal;
@@ -1742,10 +2145,11 @@
                     if (costoInput) costoInput.value = baseTotal;
                     if (elTipo) elTipo.dataset.changed = 'false';
                 } else {
-                    let costoVal = parseFloat(costoInput.value);
+                    let costoVal = 0;
+                    if(costoInput) costoVal = parseFloat(costoInput.value);
                     if (isNaN(costoVal)) costoVal = 0;
                     
-                    let fallback = est > 0 ? 20 : fallbackFinal;
+                    let fallback = fallbackFinal;
                     let costoEfectivo = (costoVal === 0 && !isInit) ? fallback : costoVal;
                     if (isInit && costoVal === 0) { costoEfectivo = fallback; if(costoInput) costoInput.value = fallback; }
                     
@@ -1753,16 +2157,19 @@
                     else cExc = costoEfectivo;
                 }
             } else {
-                let costoVal = parseFloat(costoInput.value);
+                let costoVal = 0;
+                if(costoInput) costoVal = parseFloat(costoInput.value);
                 if (isNaN(costoVal)) costoVal = 0;
                 
-                let fallback = est > 0 ? 20 : fallbackFinal;
+                let fallback = fallbackFinal;
                 let costoEfectivo = (costoVal === 0 && !isInit) ? fallback : costoVal;
 
                 if (tipo === 'POR PUNTO') {
-                    let ptsBase = parseFloat(document.getElementById('cantPuntosBase')?.value) || 0;
-                    let precBase = parseFloat(document.getElementById('precioPuntosBase')?.value) || 0;
-                    let precAd = parseFloat(document.getElementById('precioPuntoAdicional')?.value) || 0;
+                    let ptsBase = 0, precBase = 0, precAd = 0;
+                    let elPtsBase = document.getElementById('cantPuntosBase'); if(elPtsBase) ptsBase = parseFloat(elPtsBase.value) || 0;
+                    let elPrecBase = document.getElementById('precioPuntosBase'); if(elPrecBase) precBase = parseFloat(elPrecBase.value) || 0;
+                    let elPrecAd = document.getElementById('precioPuntoAdicional'); if(elPrecAd) precAd = parseFloat(elPrecAd.value) || 0;
+                    
                     let ptsTotales = pedidos.length;
                     cExc = ptsTotales <= ptsBase ? precBase : precBase + ((ptsTotales - ptsBase) * precAd);
                     if (cExc === 0 && isInit) {
@@ -1779,16 +2186,19 @@
             }
         }
 
-        // Recuperar Costos de Adicionales
         let extrasCosto = 0;
         let extrasIngreso = 0;
         let detallesAdicionales = [];
         let adicContainer = document.getElementById(`lista_adicionales_${idTarjeta}`);
         if (adicContainer) {
             for (let row of adicContainer.children) {
-                let desc = row.querySelector('.adic-desc').value || 'Adicional';
-                let costo = parseFloat(row.querySelector('.adic-costo').value) || 0;
-                let pagaCliente = row.querySelector('.adic-paga').value;
+                let dEl = row.querySelector('.adic-desc');
+                let cEl = row.querySelector('.adic-costo');
+                let pEl = row.querySelector('.adic-paga');
+
+                let desc = dEl ? dEl.value : 'Adicional';
+                let costo = cEl ? (parseFloat(cEl.value) || 0) : 0;
+                let pagaCliente = pEl ? pEl.value : 'NO';
                 
                 extrasCosto += costo;
                 if (pagaCliente === 'SI') {
@@ -1798,198 +2208,40 @@
             }
         }
 
-        let costoVehiculo = cBase + cEstibas + cExc + cHE + extrasCosto;
+        // Sumar al ingreso si el cliente paga la estiba
+        let pagaEstiba = pagaEstibaInput ? pagaEstibaInput.value : 'NO';
+        if (pagaEstiba === 'SI') {
+            extrasIngreso += cEstibas;
+        }
+
+        let costoVehiculo = cBase + cEstibas + cExc + extrasCosto; 
         let ingresosVehiculo = 0;
         let pesoTotalVehiculo = 0; 
         let idsArrConPrecio = [];
-        let htmlFilas = '';
-
-        let pesoAcumuladoRuta = 0;
-        let ingresoA_Repartir = parseFloat(document.getElementById('ingresoRepartir')?.value) || 0;
-        let tipoGlobal = document.getElementById('tipoServicioGlobal')?.value || 'NORMAL';
-
-        // Pre-cálculo de peso acumulado con protección contra nulos
-        if(tipoGlobal === 'NORMAL' && ingresoA_Repartir > 0) {
-            pedidos.forEach(p => {
-                try {
-                    let locDest = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-                    let trMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDest);
-                    let trBase = trMatch ? String(trMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
-                    
-                    let objM = {
-                        Cliente: String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase(),
-                        Tipo_Servicio: String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase(),
-                        Trayecto: trBase,
-                        Origen: String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase(),
-                        Destino: locDest,
-                        peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
-                        cantidad_bultos: parseInt(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || 1) || 1
-                    };
-                    let clN = calcularTarifasAutomaticas(objM);
-                    pesoAcumuladoRuta += (clN && clN.pesoUsado) ? clN.pesoUsado : 0;
-                } catch(e) {
-                    console.warn("Aviso en pre-calculo de peso:", e);
-                }
-            });
-        }
-
-        // Iteración de pedidos protegida
-        pedidos.forEach(p => {
-            try {
-                let id = String(p['PEDIDOID'] || p['idpedido'] || p['2idpedido'] || 'SIN_ID').trim();
-                let clienteStr = String(p.Cliente || p.CLIENTE || 'SIN CLIENTE').trim().toUpperCase();
-                let locDestino = String(p['CP'] || p['Localidad'] || '').trim().toUpperCase();
-                let servicioMonitor = String(p.Servicio || p.Tipo_Servicio || '-').toUpperCase();
-                let incidencias = parseInt(p['QTY_INCIDENCIAS'] || p['NroIntentos'] || 0) || 0;
-                let intentosNum = incidencias > 0 ? incidencias + 1 : (parseInt(p['NroIntentos'] || p['Intentos'] || p['intentos']) || 1);
-                
-                let esActualizacionLocalData = cpsEnActualizacion[cpKey];
-                let esDeRutaVieja = esActualizacionLocalData && (esActualizacionLocalData.viejosIds || []).includes(id);
-                let yaExiste = !!pedidosHistoricos[id] && !esDeRutaVieja;
-                let esNuevoActualizacion = esActualizacionLocalData && (esActualizacionLocalData.nuevosIds || []).includes(id);
-
-                p['VEHICULO'] = placa;
-                p['PLACA'] = placa;
-                
-                let origen = String(p.Origen || p.ORIGEN || p.Ciudad || '-').trim().toUpperCase();
-                let bultos = String(p.Bultos || p.BULTOS || p.Cajas || p.cantidad_bultos || '1');
-                
-                let trayectoMatch = (trayectoDB || []).find(t => String(t['Parroquia'] || t['PARROQUIA'] || '').trim().toUpperCase() === locDestino);
-                p['TipoTrayecto'] = trayectoMatch ? String(trayectoMatch['TIPO DE TRAYECTO']).trim().toUpperCase() : '-';
-
-                let objMotor = {
-                    Cliente: clienteStr,
-                    Tipo_Servicio: servicioMonitor,
-                    Trayecto: p['TipoTrayecto'],
-                    Origen: origen,
-                    Destino: locDestino,
-                    peso_total_kg: parseFloat(p.PESO_TOTAL_KG || p.peso_total_kg || p.PesoKg || p.Peso || p.PESO || 0) || 0,
-                    cantidad_bultos: parseInt(bultos) || 1
-                };
-
-                // Cálculo blindado contra errores en motorTarifas.js
-                try {
-                    p._calcNube = calcularTarifasAutomaticas(objMotor); 
-                } catch(errMotor) {
-                    console.error(`Error procesando tarifa para ID ${id}:`, errMotor);
-                    p._calcNube = { total: 0, pesoUsado: objMotor.peso_total_kg };
-                }
-
-                if (!p._calcNube) p._calcNube = { total: 0, pesoUsado: 0 };
-                
-                let yaTieneTarifaCalculada = (p._calcNube && p._calcNube.total > 0);
-                
-                let tarifaFijaObj = null;
-                if (!yaTieneTarifaCalculada && window.tarifasFijadasDB && window.tarifasFijadasDB.length > 0) {
-                    tarifaFijaObj = window.tarifasFijadasDB.find(tf => {
-                        let idFound = "";
-                        for (let key in tf) {
-                            if (key.toUpperCase().includes("PEDIDO") || key.toUpperCase() === "ID") {
-                                idFound = String(tf[key]).trim();
-                                break;
-                            }
-                        }
-                        return idFound === id;
-                    });
-                }
-
-                let cobroReal = 0; 
-                let classTotal = "col-total"; 
-                let htmlStatus = "";
-                let styleFila = esNuevoActualizacion ? "background-color: rgba(0,255,157,0.1);" : "";
-                
-                if(document.body.classList.contains('light-theme') && esNuevoActualizacion) {
-                    styleFila = "background-color: #ecfdf5;";
-                }
-
-                if (yaExiste) {
-                    cobroReal = 0; 
-                    classTotal += " col-tachada";
-                    htmlStatus = `<div class="badge-cobrado" style="display:block; font-size:0.7em;">YA EN SISTEMA</div>`;
-                } 
-                else if (window.tarifasModificadas && window.tarifasModificadas[id] !== undefined) {
-                    cobroReal = parseFloat(window.tarifasModificadas[id]) || 0; 
-                    classTotal += " tarifa-modificada";
-                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-                } 
-                else if (tarifaFijaObj && !yaTieneTarifaCalculada) {
-                    let montoFijo = 0;
-                    for (let key in tarifaFijaObj) {
-                        if (key.toUpperCase().includes("TARIFA")) {
-                            montoFijo = parseFloat(String(tarifaFijaObj[key]).replace(',', '.')) || 0;
-                            break;
-                        }
-                    }
-                    cobroReal = montoFijo;
-                    classTotal += " tarifa-modificada"; 
-                    htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em;">TARIFA FIJADA</div>`;
-                } 
-                else if (esDeRutaVieja || (esNuevoActualizacion && preciosHistoricos[id] !== undefined)) {
-                    cobroReal = parseFloat(preciosHistoricos[id]) || 0;
-                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-                } 
-                else if (ingresoA_Repartir > 0 && tipoGlobal === 'NORMAL') {
-                    if (pesoAcumuladoRuta > 0) {
-                        let porcentaje = (p._calcNube.pesoUsado || 0) / pesoAcumuladoRuta;
-                        cobroReal = ingresoA_Repartir * porcentaje;
-                    }
-                    if(intentosNum > 1 && !esNuevoActualizacion) htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-                }
-                else {
-                    cobroReal = yaTieneTarifaCalculada ? p._calcNube.total : 0;
-
-                    if (intentosNum === 1 && !yaExiste) {
-                        if (cobroReal === 0) {
-                            if (servicioMonitor.includes("EXCLUSIVO")) {
-                                cobroReal = 40.00;
-                            } else {
-                                cobroReal = 2.50;
-                            }
-                            if (!classTotal.includes("tarifa-modificada")) classTotal += " tarifa-modificada";
-                            htmlStatus = `<div class="badge-cobrado" style="display:block; background:rgba(0,240,255,0.1); color:var(--neon-blue); border-color:var(--neon-blue); font-size:0.7em; margin-top:4px;">MIN. AUTOMÁTICO</div>`;
-                        }
-                    } else if (intentosNum > 1 && !esNuevoActualizacion) {
-                        htmlStatus = `<div class="badge-redespacho" style="font-size:0.7em;">INT. ${intentosNum}</div>`;
-                    }
-                }
-
-                ingresosVehiculo += cobroReal;
-                pesoTotalVehiculo += (p._calcNube.pesoUsado || 0); 
-                idsArrConPrecio.push(`${id} - ($${cobroReal.toFixed(2)})`);
-
-                let classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
-                let btnDesvincular = yaExiste ? `<button type="button" class="btn-edit-tfa" onclick="desvincularPedido('${id}')" title="Desvincular de ruta anterior" style="color:var(--neon-amber);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg></button>` : '';
-
-                htmlFilas += `
-                    <tr style="${styleFila}" data-cliente="${clienteStr}" data-servicio="${servicioMonitor}" data-tarifa="${cobroReal}">
-                        <td style="white-space:nowrap;"><strong style="color:var(--text-main);">${id}</strong>${yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
-                        <td style="font-size:0.85em;">${clienteStr}</td>
-                        <td style="text-align:center; white-space:nowrap;"><b>${intentosNum}</b><br>${htmlStatus}</td>
-                        <td style="white-space:nowrap;"><span class="badge-srv ${classServicio}">${servicioMonitor}</span></td>
-                        <td style="font-size:0.85em; max-width:120px;">${origen}</td>
-                        <td style="max-width:120px;"><span class="badge-loc" style="background:rgba(0,240,255,0.1); border-color:var(--neon-blue); color:var(--neon-blue); border-radius:4px; padding:2px 6px; display:inline-block; line-height:1.2;">${locDestino}</span></td>
-                        <td style="font-size:0.85em; max-width:100px;">${p.TipoTrayecto}</td>
-                        <td style="text-align:center; white-space:nowrap;">${bultos}</td>
-                        <td style="text-align:center; white-space:nowrap;">${(p._calcNube.pesoUsado || 0).toFixed(2)}</td>
-                        <td style="color:var(--text-muted); white-space:nowrap;">$${(p._calcNube.total || 0).toFixed(2)}</td>
-                        <td class="${classTotal}" style="${yaExiste ? 'text-decoration:line-through; opacity:0.5;' : ''}; text-align:right; white-space:nowrap;">
-                            <div style="display:flex; justify-content:flex-end; align-items:center; gap:5px;">
-                                <span style="margin-right:4px;">$${cobroReal.toFixed(2)}</span>
-                                <button type="button" class="btn-edit-tfa" onclick="editarTarifaManual('${id}', ${cobroReal})" title="Editar Tarifa">✏️</button>
-                                ${btnDesvincular}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            } catch(errPedido) {
-                console.error("Error omitido en fila individual:", errPedido);
-            }
-        });
 
         let tbody = document.getElementById(`tbody_${idTarjeta}`);
-        if(tbody) tbody.innerHTML = htmlFilas;
+        if (tbody) {
+            for (let i = 0; i < tbody.rows.length; i++) {
+                let row = tbody.rows[i];
+                if (row && row.style.display !== 'none') {
+                    // 🔥 BÚSQUEDA BLINDADA DEL PRECIO 🔥
+                    let spanMonto = row.querySelector('.monto-final-td');
+                    let estaTachado = row.querySelector('.col-tachada');
+                    
+                    if (spanMonto && !estaTachado) {
+                        ingresosVehiculo += parseFloat(spanMonto.innerText.replace('$', '').replace(',', '.')) || 0;
+                    }
+                    
+                    let tdId = row.cells[0];
+                    if (tdId) {
+                        let idText = tdId.innerText.replace('YA EN SISTEMA', '').trim();
+                        let monto = spanMonto ? (parseFloat(spanMonto.innerText.replace('$', '').replace(',', '.')) || 0) : 0;
+                        idsArrConPrecio.push(`${idText} - ($${monto.toFixed(2)})`);
+                    }
+                }
+            }
+        }
 
-        // Sumar ingresos de los adicionales facturables
         ingresosVehiculo += extrasIngreso;
 
         let util = ingresosVehiculo - costoVehiculo;
@@ -2004,15 +2256,16 @@
             }
         }
 
+        let elFec = document.getElementById('fechaDespacho');
         let objRuta = {
-            fecha: document.getElementById('fechaDespacho')?.value || '',
+            fecha: elFec ? elFec.value : '',
             ciudad: (sesion?.ciudad || '').trim().toUpperCase(),
             pedidos: pedidos.length,
             ingresos: ingresosVehiculo,
             cBase: cBase,
             cAyudantes: cEstibas,
             cExc: cExc,
-            cHE: cHE,
+            cHE: 0, 
             cAdicionales: extrasCosto,
             ingresosAdicionales: extrasIngreso,
             detallesAdicionales: detallesAdicionales.join(' | '),
@@ -2037,7 +2290,7 @@
         let esActualizacionGlobal = Object.keys(cpsEnActualizacion || {}).length > 0;
         if (esActualizacionGlobal) dibujarComparativoGeneral();
     }
-
+    
     function actualizarGlobales() {
         let totalIngresos = 0, totalCostos = 0;
         
@@ -2082,6 +2335,150 @@
         
         let btnS = document.getElementById('btnSave');
         if(btnS) btnS.disabled = window.rutasAguardar.length === 0;
+
+        renderResumenCP();
+    }
+
+    // 🔥 RESUMEN POR CARTA PORTE (se refresca en cada recálculo) 🔥
+    function renderResumenCP() {
+        let tbody = document.querySelector('#tblResumenCP tbody');
+        let tfoot = document.querySelector('#tblResumenCP tfoot');
+        let chip = document.getElementById('chipResumen');
+        if (!tbody || !tfoot) return;
+
+        let rutas = window.rutasAguardar || [];
+        if (chip) chip.innerText = `${rutas.length} ${rutas.length === 1 ? 'CP' : 'CP'}`;
+
+        if (rutas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="empty-mini">Aún no hay cartas porte calculadas.<br>Extraiga los vehículos y presione <b>Calcular Costos</b>.</td></tr>`;
+            tfoot.innerHTML = '';
+            return;
+        }
+
+        let tIng = 0, tCos = 0, tEst = 0, tAdi = 0, tPed = 0;
+        let filas = '';
+
+        // Orden: primero las cartas porte con pérdida, para que salten a la vista
+        let ordenadas = [...rutas].sort((a, b) => {
+            let ua = calcUtilidadRuta(a), ub = calcUtilidadRuta(b);
+            return ua - ub;
+        });
+
+        ordenadas.forEach(r => {
+            let ingresos   = Number(r.ingresos) || 0;
+            let costoBase  = (Number(r.cBase) || 0) + (Number(r.cExc) || 0) + (Number(r.cHE) || 0);
+            let estibas    = Number(r.cAyudantes) || 0;
+            let adicional  = Number(r.cAdicionales) || 0;
+            let costoTotal = costoBase + estibas + adicional;
+            let utilidad   = ingresos - costoTotal;
+            let margen     = ingresos > 0 ? (utilidad / ingresos) * 100 : 0;
+            let pedidos    = Number(r.pedidos) || 0;
+
+            tIng += ingresos; tCos += costoBase; tEst += estibas; tAdi += adicional; tPed += pedidos;
+
+            let colorMargen = utilidad < 0 ? 'var(--neon-red)' : (margen < 15 ? 'var(--neon-amber)' : 'var(--neon-green)');
+            let anchoBarra = Math.min(100, Math.max(0, margen));
+
+            filas += `
+                <tr class="${utilidad < 0 ? 'row-alerta-neg' : 'row-alerta-pos'}" onclick="irATarjetaCP('${String(r.cartaPorte).replace(/'/g, "\\'")}')" title="Ir a la carta porte ${r.cartaPorte}">
+                    <td><b style="color:var(--text-main);">${r.cartaPorte}</b><br><span class="badge-prov" style="font-size:0.7em; padding:1px 5px;">${r.placa || '-'}</span></td>
+                    <td style="text-align:center; font-weight:700; color:var(--text-main);">${pedidos}</td>
+                    <td class="cell-num num-ing">$${ingresos.toFixed(2)}</td>
+                    <td class="cell-num num-cos">$${costoBase.toFixed(2)}</td>
+                    <td class="cell-num num-cos">$${estibas.toFixed(2)}</td>
+                    <td class="cell-num num-cos">$${adicional.toFixed(2)}</td>
+                    <td class="cell-num ${utilidad < 0 ? 'num-neg' : 'num-pos'}">$${utilidad.toFixed(2)}</td>
+                    <td class="cell-num" style="color:${colorMargen}; font-weight:700;">
+                        ${margen.toFixed(1)}%
+                        <div class="bar-margen"><span style="width:${anchoBarra}%; background:${colorMargen};"></span></div>
+                    </td>
+                </tr>`;
+        });
+
+        let costoTotalGeneral = tCos + tEst + tAdi;
+        let utilTotal = tIng - costoTotalGeneral;
+        let margenTotal = tIng > 0 ? (utilTotal / tIng) * 100 : 0;
+
+        tbody.innerHTML = filas;
+        tfoot.innerHTML = `
+            <tr>
+                <td>TOTAL (${rutas.length})</td>
+                <td style="text-align:center;">${tPed}</td>
+                <td class="cell-num num-ing">$${tIng.toFixed(2)}</td>
+                <td class="cell-num num-cos">$${tCos.toFixed(2)}</td>
+                <td class="cell-num num-cos">$${tEst.toFixed(2)}</td>
+                <td class="cell-num num-cos">$${tAdi.toFixed(2)}</td>
+                <td class="cell-num ${utilTotal < 0 ? 'num-neg' : 'num-pos'}">$${utilTotal.toFixed(2)}</td>
+                <td class="cell-num" style="color:${utilTotal < 0 ? 'var(--neon-red)' : 'var(--neon-green)'};">${margenTotal.toFixed(1)}%</td>
+            </tr>`;
+    }
+
+    function calcUtilidadRuta(r) {
+        return (Number(r.ingresos) || 0) - ((Number(r.cBase)||0) + (Number(r.cExc)||0) + (Number(r.cHE)||0) + (Number(r.cAyudantes)||0) + (Number(r.cAdicionales)||0));
+    }
+
+    // Al hacer clic en una fila del resumen, baja hasta la tarjeta de esa carta porte
+    function irATarjetaCP(cpKey) {
+        let reg = window.registroTarjetas || {};
+        let idTarjeta = Object.keys(reg).find(k => reg[k].cpKey === cpKey);
+        if (!idTarjeta) return;
+        let tbody = document.getElementById(`tbody_${idTarjeta}`);
+        let tarjeta = tbody ? tbody.closest('.card') : null;
+        if (!tarjeta) return;
+        tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        tarjeta.style.transition = 'box-shadow .4s';
+        tarjeta.style.boxShadow = '0 0 0 2px var(--neon-blue)';
+        setTimeout(() => { tarjeta.style.boxShadow = ''; }, 1600);
+    }
+
+    // Exporta el resumen a Excel con las mismas columnas del control manual
+    function exportarResumenCP() {
+        let rutas = window.rutasAguardar || [];
+        if (rutas.length === 0) return dialogAlert("No hay cartas porte calculadas para exportar.", "warning");
+        if (typeof XLSX === 'undefined') return dialogAlert("La librería de Excel no está disponible en este momento.", "error");
+
+        let elFec = document.getElementById('fechaDespacho');
+        let fecha = elFec && elFec.value ? elFec.value : new Date().toISOString().slice(0, 10);
+
+        let datos = rutas.map(r => {
+            let ingresos  = Number(r.ingresos) || 0;
+            let costoBase = (Number(r.cBase)||0) + (Number(r.cExc)||0) + (Number(r.cHE)||0);
+            let estibas   = Number(r.cAyudantes) || 0;
+            let adicional = Number(r.cAdicionales) || 0;
+            let utilidad  = ingresos - (costoBase + estibas + adicional);
+            return {
+                "carta porte": r.cartaPorte,
+                "placa": r.placa || '',
+                "total pedidos": Number(r.pedidos) || 0,
+                "ingresos": +ingresos.toFixed(2),
+                "costos": +costoBase.toFixed(2),
+                "costo estibas": +estibas.toFixed(2),
+                "adicionales": +adicional.toFixed(2),
+                "costo total": +(costoBase + estibas + adicional).toFixed(2),
+                "utilidad": +utilidad.toFixed(2),
+                "margen %": ingresos > 0 ? +((utilidad / ingresos) * 100).toFixed(1) : 0
+            };
+        });
+
+        try {
+            let hoja = XLSX.utils.json_to_sheet(datos);
+            hoja['!cols'] = [{wch:14},{wch:12},{wch:13},{wch:12},{wch:12},{wch:14},{wch:13},{wch:12},{wch:12},{wch:10}];
+            let libro = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(libro, hoja, "Resumen CP");
+            XLSX.writeFile(libro, `Resumen_CartaPorte_${fecha}.xlsx`);
+            mostrarToast(`Resumen exportado (${datos.length} cartas porte).`);
+        } catch(e) {
+            dialogAlert("No se pudo generar el archivo de Excel.", "error");
+        }
+    }
+
+    function mostrarToast(mensaje) {
+        let toast = document.getElementById('toastExito');
+        let txt = document.getElementById('toastExitoText');
+        if (!toast || !txt) return;
+        txt.innerHTML = mensaje;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
     }
 
     function filtrarTablaCartas() {
@@ -2098,7 +2495,7 @@
             if (fT === "CERO") pT = (vT === 0);
             if (fT === "MAYOR") pT = (vT > 0);
             
-            fila.style.display = (pC && pS && pT) ? '' : 'none';
+            if (vC && vS) fila.style.display = (pC && pS && pT) ? '' : 'none';
         });
     }
 
@@ -2232,8 +2629,13 @@
             let panelComp = document.getElementById('contenedorComparativo');
             if (panelComp) panelComp.style.display = 'none';
 
-            ['vIng', 'vCos', 'vRent'].forEach(id => document.getElementById(id).innerText = '$0.00');
-            document.getElementById('vVeh').innerText = '0';
+            ['vIng', 'vCos', 'vRent'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) el.innerText = '$0.00';
+            });
+            let elVeh = document.getElementById('vVeh');
+            if(elVeh) elVeh.innerText = '0';
+
             let boxR = document.getElementById('boxR'); if (boxR) boxR.style.setProperty('--accent', 'var(--text-muted)');
             
             window.rutasAguardar.forEach(ruta => {
@@ -2248,20 +2650,23 @@
             window.tarifasModificadas = {}; 
             cpsEnActualizacion = {}; 
             
-            document.getElementById('btnCalc').innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                CALCULAR COSTOS Y RUTAS
-            `;
+            let btnC = document.getElementById('btnCalc');
+            if(btnC) {
+                btnC.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    CALCULAR COSTOS Y RUTAS
+                `;
+            }
 
-            document.getElementById('resumenVehiculos').style.display = 'none';
-            document.getElementById('panelConfiguracion').style.display = 'none';
-            document.getElementById('txtCPIndividual').value = '';
-            document.getElementById('txtCPMasivo').value = '';
-            document.getElementById('ingresoRepartir').value = '0';
+            let resVeh = document.getElementById('resumenVehiculos'); if(resVeh) resVeh.style.display = 'none';
+            let panConf = document.getElementById('panelConfiguracion'); if(panConf) panConf.style.display = 'none';
+            let txtCpI = document.getElementById('txtCPIndividual'); if(txtCpI) txtCpI.value = '';
+            let txtCpM = document.getElementById('txtCPMasivo'); if(txtCpM) txtCpM.value = '';
+            let ingR = document.getElementById('ingresoRepartir'); if(ingR) ingR.value = '0';
             
-            document.getElementById('filtroTablaCliente').innerHTML = '<option value="TODOS">Todos</option>';
-            document.getElementById('filtroTablaServicio').innerHTML = '<option value="TODOS">Todos</option>';
-            document.getElementById('filtroTablaTarifa').value = "TODAS";
+            let fC = document.getElementById('filtroTablaCliente'); if(fC) fC.innerHTML = '<option value="TODOS">Todos</option>';
+            let fS = document.getElementById('filtroTablaServicio'); if(fS) fS.innerHTML = '<option value="TODOS">Todos</option>';
+            let fT = document.getElementById('filtroTablaTarifa'); if(fT) fT.value = "TODAS";
             
         } catch (e) { 
             dialogAlert("❌ Error de conexión al guardar.", "error"); 
@@ -2298,13 +2703,14 @@
 
         rutaEnEdicion = JSON.parse(JSON.stringify(rutaEncontrada)); 
         
-        document.getElementById('lblEditCP').innerText = rutaEnEdicion.cartaPorte;
-        document.getElementById('editPlaca').value = rutaEnEdicion.placa || '';
-        document.getElementById('editBase').value = parsearCosto(rutaEnEdicion.cBase || rutaEnEdicion.cbase);
-        document.getElementById('editEstibas').value = parsearCosto(rutaEnEdicion.cAyudantes || rutaEnEdicion.cayudantes);
-        document.getElementById('editExc').value = parsearCosto(rutaEnEdicion.cExc || rutaEnEdicion.cexc);
+        let lCp = document.getElementById('lblEditCP'); if(lCp) lCp.innerText = rutaEnEdicion.cartaPorte;
+        let ePlaca = document.getElementById('editPlaca'); if(ePlaca) ePlaca.value = rutaEnEdicion.placa || '';
+        let eBase = document.getElementById('editBase'); if(eBase) eBase.value = parsearCosto(rutaEnEdicion.cBase || rutaEnEdicion.cbase);
+        let eEst = document.getElementById('editEstibas'); if(eEst) eEst.value = parsearCosto(rutaEnEdicion.cAyudantes || rutaEnEdicion.cayudantes);
+        let eExc = document.getElementById('editExc'); if(eExc) eExc.value = parsearCosto(rutaEnEdicion.cExc || rutaEnEdicion.cexc);
 
         let tbody = document.querySelector('#tblEditorPedidos tbody');
+        if(!tbody) return;
         tbody.innerHTML = '';
         
         let pedidos = String(rutaEnEdicion.listaIds).split(',').filter(Boolean);
@@ -2314,7 +2720,6 @@
             let valorText = partes[1] ? partes[1].replace(/[^0-9.-]+/g, "") : "0"; 
             let valorNum = parseFloat(valorText) || 0;
 
-            // --- Búsqueda Inteligente de datos en el Monitor ---
             let monitorData = dMonitor.find(m => String(m['PEDIDOID'] || m['idpedido'] || m['2idpedido']).trim() === id);
 
             let clienteStr = "-", intentosNum = "-", servicioMonitor = "-", origen = "-", locDestino = "-";
@@ -2342,9 +2747,11 @@
                     cantidad_bultos: parseInt(bultos) || 1
                 };
 
-                let calcNube = calcularTarifasAutomaticas(objMotor); 
-                peso = calcNube.pesoUsado.toFixed(2);
-                tarifaNube = calcNube.total.toFixed(2);
+                let calcNube = null;
+                if(typeof calcularTarifasAutomaticas === 'function') calcNube = calcularTarifasAutomaticas(objMotor); 
+                
+                peso = (calcNube && calcNube.pesoUsado) ? calcNube.pesoUsado.toFixed(2) : "0.00";
+                tarifaNube = (calcNube && calcNube.total) ? calcNube.total.toFixed(2) : "0.00";
 
                 classServicio = servicioMonitor.includes("EXCLUSIVO") ? "srv-exclusivo" : (servicioMonitor.includes("NORMAL") ? "srv-normal" : "srv-default");
             }
@@ -2380,21 +2787,30 @@
         document.getElementById('editExc').oninput = recalcularTotalesEditor;
 
         recalcularTotalesEditor();
-        document.getElementById('modalEditorCP').style.display = 'flex';
+        let mEdit = document.getElementById('modalEditorCP');
+        if(mEdit) mEdit.style.display = 'flex';
     }
 
     function eliminarPedidoEditor(index) {
-        document.getElementById(`editRow_${index}`).style.display = 'none';
-        document.getElementById(`valEdit_${index}`).value = 'ELIMINADO'; 
+        let eRow = document.getElementById(`editRow_${index}`);
+        if(eRow) eRow.style.display = 'none';
+        
+        let vEdit = document.getElementById(`valEdit_${index}`);
+        if(vEdit) vEdit.value = 'ELIMINADO'; 
+        
         recalcularTotalesEditor();
     }
 
     function recalcularTotalesEditor() {
         if (!rutaEnEdicion) return;
 
-        let b = parseFloat(document.getElementById('editBase').value) || 0;
-        let e = parseFloat(document.getElementById('editEstibas').value) || 0;
-        let x = parseFloat(document.getElementById('editExc').value) || 0;
+        let elBase = document.getElementById('editBase');
+        let elEst = document.getElementById('editEstibas');
+        let elExc = document.getElementById('editExc');
+        
+        let b = elBase ? (parseFloat(elBase.value) || 0) : 0;
+        let e = elEst ? (parseFloat(elEst.value) || 0) : 0;
+        let x = elExc ? (parseFloat(elExc.value) || 0) : 0;
         let heLimpias = parsearCosto(rutaEnEdicion.cHE || rutaEnEdicion.che);
         let totalCostos = b + e + x + heLimpias;
 
@@ -2408,8 +2824,8 @@
             }
         });
 
-        document.getElementById('lblEditCostos').innerText = `$${totalCostos.toFixed(2)}`;
-        document.getElementById('lblEditIngresos').innerText = `$${totalIngresos.toFixed(2)}`;
+        let lCos = document.getElementById('lblEditCostos'); if(lCos) lCos.innerText = `$${totalCostos.toFixed(2)}`;
+        let lIng = document.getElementById('lblEditIngresos'); if(lIng) lIng.innerText = `$${totalIngresos.toFixed(2)}`;
     }
 
     async function guardarEdicionCP() {
@@ -2435,10 +2851,16 @@
             }
         });
 
-        rutaEnEdicion.placa = document.getElementById('editPlaca').value.trim().toUpperCase();
-        rutaEnEdicion.cBase = parseFloat(document.getElementById('editBase').value) || 0;
-        rutaEnEdicion.cAyudantes = parseFloat(document.getElementById('editEstibas').value) || 0;
-        rutaEnEdicion.cExc = parseFloat(document.getElementById('editExc').value) || 0;
+        let ePlaca = document.getElementById('editPlaca');
+        let eBase = document.getElementById('editBase');
+        let eEst = document.getElementById('editEstibas');
+        let eExc = document.getElementById('editExc');
+        
+        if(ePlaca) rutaEnEdicion.placa = ePlaca.value.trim().toUpperCase();
+        if(eBase) rutaEnEdicion.cBase = parseFloat(eBase.value) || 0;
+        if(eEst) rutaEnEdicion.cAyudantes = parseFloat(eEst.value) || 0;
+        if(eExc) rutaEnEdicion.cExc = parseFloat(eExc.value) || 0;
+        
         rutaEnEdicion.listaIds = nuevaListaIds.join(', ');
         rutaEnEdicion.pedidos = nuevaListaIds.length;
         rutaEnEdicion.ingresos = totalIngresos;
@@ -2456,7 +2878,8 @@
             });
             let dataResp = await res.json();
             
-            document.getElementById('modalEditorCP').style.display = 'none';
+            let modE = document.getElementById('modalEditorCP');
+            if(modE) modE.style.display = 'none';
             dialogAlert(`La Carta Porte <b>${rutaEnEdicion.cartaPorte}</b> se ha actualizado correctamente en la base de datos.`, "success");
             
             setTimeout(() => { location.reload(); }, 2000);

@@ -1,5 +1,5 @@
 // =========================================================================
-// MOTOR MATEMÁTICO DE TARIFAS v4.2 - FLEXNET (Anti-Espacios Invisibles)
+// MOTOR MATEMÁTICO DE TARIFAS v4.3 - FLEXNET (Especial Zippak)
 // =========================================================================
 
 function calcularTarifasAutomaticas(p) {
@@ -18,8 +18,8 @@ function calcularTarifasAutomaticas(p) {
     let peso = parseFloat(p['peso_total_kg']) || parseFloat(p['PesoKg']) || parseFloat(p['Peso']) || 0;
     let bultos = parseInt(p['cantidad_bultos'] || p['Cantidad_Bultos'] || p['Bultos'] || 1);
 
-    // 🔥 REGLA: Si el peso supera los 500kg, se vuelve EXCLUSIVO obligatoriamente
-    if (peso > 500) {
+    // 🔥 REGLA: Si el peso supera los 500kg, se vuelve EXCLUSIVO obligatoriamente (EXCEPTO ZIPPAK)
+    if (peso > 500 && cliente !== 'ZIPPAK') {
         servicioBusqueda = 'EXCLUSIVO';
     }
 
@@ -30,11 +30,26 @@ function calcularTarifasAutomaticas(p) {
         return parseFloat(String(val).replace('$', '').replace(/\s/g, '').replace(',', '.')) || 0;
     };
 
-    // 🛠️ HELPER ANTI-ESPACIOS INVISIBLES: Busca el valor de una columna sin importar espacios extra
+    // 🛠️ HELPER ANTI-ESPACIOS INVISIBLES
     const extraerDatoColumna = (filaExcel, nombreBuscado) => {
         let keyEncontrada = Object.keys(filaExcel).find(k => String(k).trim().toUpperCase() === nombreBuscado.toUpperCase());
         return keyEncontrada ? String(filaExcel[keyEncontrada]).trim().toUpperCase() : '';
     };
+
+    // =========================================================================
+    // 📦 LÓGICA ESPECIAL: ZIPPAK (Bloques de 690kg = $112.50)
+    // =========================================================================
+    if (cliente === 'ZIPPAK') {
+        // Se calcula en bloques: 1 a 690kg = 1 bloque. 691 a 1380 = 2 bloques, etc.
+        let bloques = Math.ceil(peso / 690);
+        if (bloques < 1) bloques = 1; // Si el peso es 0, al menos cobra 1 bloque base
+        
+        let tarifaZippak = bloques * 112.50;
+        
+        res.tfaRango = tarifaZippak;
+        res.total = tarifaZippak;
+        return res; // Retorna inmediatamente sin pasar por las otras lógicas
+    }
 
     // =========================================================================
     // 🚛 LÓGICA 0: EXCLUSIVOS (Por peso >500kg o explícitos en monitor)
@@ -177,9 +192,9 @@ function calcularTarifasAutomaticas(p) {
 
             let tarifaBaseRango = leerNum(matchRango[colRango]);
 
+            // Regla de 3 para MIRGOR si pasa de 150kg
             if (peso > 150 && cliente === 'MIRGOR') {
                 let tarifaMaxima = leerNum(matchRango["(hasta 150 kg)"]);
-                // Regla de 3: (Peso * Precio de 150kg) / 150
                 res.tfaRango = (peso * tarifaMaxima) / 150;
             } else {
                 res.tfaRango = tarifaBaseRango;

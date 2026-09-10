@@ -182,8 +182,9 @@
 
         /* 🔥 CONFIGURACIÓN Y VEHÍCULOS (FLEXBOX RESPONSIVO) 🔥 */
         .config-row { display: flex; flex-wrap: wrap; gap: 2vw; align-items: stretch; width: 100%; box-sizing: border-box;}
-        .config-row > div:nth-child(1) { flex: 1 1 300px; min-width: 0; } 
-        .config-row > div:nth-child(2) { flex: 2 1 450px; min-width: 0; } 
+        .config-row > div:nth-child(1) { flex: 1 1 250px; min-width: 0; } 
+        .config-row > div:nth-child(2) { flex: 2 1 400px; min-width: 0; } 
+        .config-row > div:nth-child(3) { flex: 1 1 250px; min-width: 0; }
         
         .form-label { display: flex; align-items: center; gap: 6px; font-weight: 600; margin: 15px 0 8px; font-size: 0.95em; color: var(--text-main); }
         .input-box { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1em; color: var(--text-main); transition: all 0.3s; background: var(--input-bg); }
@@ -414,12 +415,13 @@
     </div>
 
     <div class="config-row">
+        <!-- PANEL 1: PEDIDOS -->
         <div class="panel">
             <h3 class="panel-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 1. Ingresar Pedidos
             </h3>
-            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:15px;">Agrega los pedidos que deseas cotizar para la fecha seleccionada.</p>
+            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:15px;">Agrega los pedidos que deseas cotizar.</p>
             
             <div style="display:flex; gap:10px; align-items:center; margin-bottom: 20px; flex-wrap: wrap;">
                 <label style="margin:0; width: auto; color: var(--text-muted); white-space: nowrap;">📅 Fecha a proyectar:</label>
@@ -432,12 +434,13 @@
             </div>
         </div>
 
+        <!-- PANEL 2: VEHÍCULOS (EL QUE SE HABÍA BORRADO) -->
         <div class="panel">
             <h3 class="panel-title">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                 2. Seleccionar Vehículos
             </h3>
-            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:20px;">Elige los tipos y cantidades de vehículos para cumplir con los pedidos.</p>
+            <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:20px;">Elige los tipos y cantidades de vehículos.</p>
             
             <div id="listaVehiculosGlobal" class="vehiculos-grid">
                 <div style="padding: 20px; text-align: center; color: var(--text-muted); width: 100%;">Cargando catálogo...</div>
@@ -445,8 +448,66 @@
 
             <div class="veh-info-banner">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                El sistema aplicará el costo fijo de esta flota a la rentabilidad total del día.
+                Costo fijo de la flota aplicado a la rentabilidad.
             </div>
+        </div>
+
+        <!-- PANEL 3: ADICIONALES -->
+        <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h3 class="panel-title" style="margin:0;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    3. Adicionales de Ruta
+                </h3>
+                <button onclick="agregarAdicional()" style="background:var(--neon-purple); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85em; transition:0.3s; box-shadow: 0 0 10px rgba(138,43,226,0.3);">+ Agregar</button>
+            </div>
+            
+            <div id="contenedorAdicionales" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 20px;"></div>
+
+            <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
+
+            <div>
+                <label class="form-label" style="margin-top:0;">Estibas / Maniobras</label>
+                <div style="display:flex; gap:10px; margin-bottom: 8px; flex-wrap:wrap;">
+                    <input type="number" id="txtCantEstibas" class="input-box" placeholder="Cantidad" value="0" min="0" oninput="renderizarTabla()" style="flex: 1 1 80px;">
+                    <div style="display:flex; align-items:center; gap:5px; flex: 1 1 130px;">
+                        <span style="color:var(--text-muted); font-size:0.9em; white-space:nowrap;">Costo c/u $</span>
+                        <!-- 🔥 AQUI SE PUSO EL VALUE="20" POR DEFECTO 🔥 -->
+                        <input type="number" id="txtCostoEstiba" class="input-box" placeholder="20.00" value="20" min="0" step="0.01" oninput="renderizarTabla()" style="width:100%; min-width: 60px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px; flex: 1 1 110px;">
+                        <span style="color:var(--text-muted); font-size:0.85em; white-space:nowrap;">¿Cliente Paga?</span>
+                        <select id="chkEstibasCliente" class="input-box" onchange="renderizarTabla()" style="width:100%; padding:8px;">
+                            <option value="NO">No</option>
+                            <option value="SI">Sí</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔥 NUEVO PANEL DE REVISIÓN DE EXCLUSIVOS Y SG 🔥 -->
+    <div class="card" id="panelPedidosRevision" style="display:none; margin-bottom: 20px; border-left: 4px solid var(--neon-amber);">
+        <h3 style="color:var(--neon-amber); margin-bottom:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Revisión de Pedidos (Exclusivos y SG > $100)
+        </h3>
+        <p style="font-size:0.9em; color:var(--text-muted); margin-bottom:15px; margin-top:0;">Ajusta la tarifa final de los pedidos exclusivos o de alto valor de SG detectados en la simulación.</p>
+        <div class="table-wrapper" style="max-height: 250px;">
+            <table id="tblRevisionSummary">
+                <thead style="background:var(--table-header); position:sticky; top:0;">
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Cliente</th>
+                        <th>Servicio</th>
+                        <th>Destino</th>
+                        <th style="text-align:right;">Tarifa Final</th>
+                        <th style="text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
@@ -723,35 +784,45 @@
     }
 
     window.onload = async function() {
-        document.getElementById('infoUsuario').innerHTML = `
-            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
-            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
-                <div class="toggle"></div>
-                <div class="names">
-                    <p class="light">Light</p>
-                    <p class="dark">Dark</p>
-                </div>
-            </label>
-            <span style="opacity:0.3; margin: 0 5px;">|</span>
-            <span>📍 ${sesion.ciudad}</span>
-            <span>👤 <b>${sesion.nombre}</b></span>
-            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-        `;
+        let elInfoUsuario = document.getElementById('infoUsuario');
+        if (elInfoUsuario) {
+            elInfoUsuario.innerHTML = `
+                <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
+                <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
+                    <div class="toggle"></div>
+                    <div class="names"><p class="light">Light</p><p class="dark">Dark</p></div>
+                </label>
+                <span style="opacity:0.3; margin: 0 5px;">|</span>
+                <span>📍 ${sesion.ciudad}</span>
+                <span>👤 <b>${sesion.nombre}</b></span>
+                <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
+            `;
+        }
         
-        document.getElementById('fechaDespacho').value = new Date().toISOString().split('T')[0];
+        let elFecha = document.getElementById('fechaDespacho');
+        if (elFecha) {
+            elFecha.value = new Date().toISOString().split('T')[0];
+            elFecha.addEventListener('change', function() {
+                let pFecha = document.getElementById('pdfFechaSeleccionada');
+                if(pFecha) pFecha.innerText = this.value;
+            });
+            let pFecha = document.getElementById('pdfFechaSeleccionada');
+            if(pFecha) pFecha.innerText = elFecha.value;
+        }
 
-        document.getElementById('pdfUsuario').innerText = sesion.nombre;
-        document.getElementById('pdfFechaImpresion').innerText = new Date().toLocaleString('es-EC');
-        document.getElementById('pdfFechaSeleccionada').innerText = document.getElementById('fechaDespacho').value;
+        let pUser = document.getElementById('pdfUsuario');
+        if(pUser) pUser.innerText = sesion.nombre;
+        let pImpresion = document.getElementById('pdfFechaImpresion');
+        if(pImpresion) pImpresion.innerText = new Date().toLocaleString('es-EC');
 
-        document.getElementById('fechaDespacho').addEventListener('change', function() {
-            document.getElementById('pdfFechaSeleccionada').innerText = this.value;
-        });
-
-        document.getElementById('txtPedidos').addEventListener('input', function() {
-            let ids = obtenerIdsLimpios();
-            document.getElementById('lblCantIds').innerText = ids.length + " IDs Únicos";
-        });
+        let elTxtPedidos = document.getElementById('txtPedidos');
+        if (elTxtPedidos) {
+            elTxtPedidos.addEventListener('input', function() {
+                let ids = obtenerIdsLimpios();
+                let lbl = document.getElementById('lblCantIds');
+                if(lbl) lbl.innerText = ids.length + " IDs Únicos";
+            });
+        }
 
         Chart.defaults.color = document.body.classList.contains('light-theme') ? '#64748b' : '#94a3b8';
 
@@ -759,7 +830,8 @@
     };
 
     function dibujarGraficos(ingresos, costos, dataFlota, dataClientes) {
-        document.getElementById('panelGraficos').style.display = 'block';
+        let pGraf = document.getElementById('panelGraficos');
+        if(pGraf) pGraf.style.display = 'block';
 
         if(myChartRentabilidad) myChartRentabilidad.destroy();
         if(myChartCostos) myChartCostos.destroy();
@@ -773,85 +845,51 @@
         const colorRojo = '#ff3333';
         const colorBorder = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
-        const ctxRent = document.getElementById('chartRentabilidad').getContext('2d');
-        myChartRentabilidad = new Chart(ctxRent, {
-            type: 'bar',
-            data: {
-                labels: ['Ingresos', 'Costos de Flota'],
-                datasets: [{
-                    label: 'Monto ($)',
-                    data: [ingresos, costos],
-                    backgroundColor: [colorVerde, colorRojo], 
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                plugins: {
-                    title: { display: true, text: 'Comparativa de Rentabilidad', font: { size: 14 } },
-                    legend: { display: false }
+        let canvasRent = document.getElementById('chartRentabilidad');
+        if(canvasRent) {
+            myChartRentabilidad = new Chart(canvasRent.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Costos de Flota'],
+                    datasets: [{ label: 'Monto ($)', data: [ingresos, costos], backgroundColor: [colorVerde, colorRojo], borderRadius: 4 }]
                 },
-                scales: { 
-                    y: { beginAtZero: true, grid: { color: colorBorder } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
+                options: { plugins: { title: { display: true, text: 'Comparativa de Rentabilidad', font: { size: 14 } }, legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: colorBorder } }, x: { grid: { display: false } } } }
+            });
+        }
 
-        let labelsCostos = [];
-        let valuesCostos = [];
-        dataFlota.forEach(item => {
-            labelsCostos.push(item.tipo);
-            valuesCostos.push(item.costo);
-        });
+        let labelsCostos = []; let valuesCostos = [];
+        dataFlota.forEach(item => { labelsCostos.push(item.tipo); valuesCostos.push(item.costo); });
 
-        const ctxCostos = document.getElementById('chartCostos').getContext('2d');
-        myChartCostos = new Chart(ctxCostos, {
-            type: 'doughnut',
-            data: {
-                labels: labelsCostos,
-                datasets: [{
-                    data: valuesCostos,
-                    backgroundColor: ['#00f0ff', '#8a2be2', '#ffb700', '#00ff9d', '#ff3333', '#94a3b8'],
-                    borderWidth: 1,
-                    borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a'
-                }]
-            },
-            options: {
-                plugins: {
-                    title: { display: true, text: 'Inversión por Tipo de Vehículo', font: { size: 14 } },
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+        let canvasCostos = document.getElementById('chartCostos');
+        if(canvasCostos) {
+            myChartCostos = new Chart(canvasCostos.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labelsCostos,
+                    datasets: [{ data: valuesCostos, backgroundColor: ['#00f0ff', '#8a2be2', '#ffb700', '#00ff9d', '#ff3333', '#94a3b8'], borderWidth: 1, borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a' }]
                 },
-                cutout: '65%'
-            }
-        });
+                options: { plugins: { title: { display: true, text: 'Inversión por Tipo de Vehículo', font: { size: 14 } }, legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }, cutout: '65%' }
+            });
+        }
 
-        let labelsClientes = Object.keys(dataClientes);
-        let valuesClientes = Object.values(dataClientes);
+        let labelsClientes = Object.keys(dataClientes); let valuesClientes = Object.values(dataClientes);
 
-        const ctxClientes = document.getElementById('chartClientes').getContext('2d');
-        myChartClientes = new Chart(ctxClientes, {
-            type: 'doughnut',
-            data: {
-                labels: labelsClientes,
-                datasets: [{
-                    data: valuesClientes,
-                    backgroundColor: ['#3b82f6', '#ec4899', '#f43f5e', '#8b5cf6', '#14b8a6', '#f59e0b'],
-                    borderWidth: 1,
-                    borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a'
-                }]
-            },
-            options: {
-                plugins: {
-                    title: { display: true, text: 'Composición de Pedidos por Cliente', font: { size: 14 } },
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+        let canvasClientes = document.getElementById('chartClientes');
+        if(canvasClientes) {
+            myChartClientes = new Chart(canvasClientes.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labelsClientes,
+                    datasets: [{ data: valuesClientes, backgroundColor: ['#3b82f6', '#ec4899', '#f43f5e', '#8b5cf6', '#14b8a6', '#f59e0b'], borderWidth: 1, borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0f172a' }]
                 },
-                cutout: '65%'
-            }
-        });
+                options: { plugins: { title: { display: true, text: 'Composición de Pedidos por Cliente', font: { size: 14 } }, legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }, cutout: '65%' }
+            });
+        }
     }
 
     function generarPDF() {
         let btnPdf = document.getElementById('btnPdfTop');
+        if(!btnPdf) return;
         let oldHtml = btnPdf.innerHTML;
         btnPdf.innerHTML = `<span class="loader-spinner"></span> Generando...`;
         btnPdf.disabled = true;
@@ -860,7 +898,8 @@
         wrappers.forEach(w => w.style.overflow = 'visible');
 
         document.body.classList.add('generando-pdf');
-        document.getElementById('pdfFechaImpresion').innerText = new Date().toLocaleString('es-EC');
+        let pFecImp = document.getElementById('pdfFechaImpresion');
+        if(pFecImp) pFecImp.innerText = new Date().toLocaleString('es-EC');
         
         Chart.defaults.color = '#000000';
         let dataFlota = [];
@@ -875,17 +914,13 @@
         dibujarGraficos(totalesActuales.ingresosProyectados, totalesActuales.costoFlota, dataFlota, dataClientes);
 
         const elemento = document.getElementById('zonaImprimible');
+        if(!elemento) return;
         
         const opciones = {
             margin:       [15, 10, 15, 10], 
             filename:     `Dashboard_Rentabilidad_${document.getElementById('fechaDespacho').value}.pdf`,
             image:        { type: 'jpeg', quality: 1.0 },
-            html2canvas:  { 
-                scale: 2, 
-                useCORS: true, 
-                letterRendering: true,
-                scrollY: 0 
-            },
+            html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }, 
             pagebreak:    { mode: ['css', 'legacy'] } 
         };
@@ -898,7 +933,6 @@
             
             Chart.defaults.color = document.body.classList.contains('light-theme') ? '#64748b' : '#94a3b8';
             dibujarGraficos(totalesActuales.ingresosProyectados, totalesActuales.costoFlota, dataFlota, dataClientes);
-            
         }).catch((err) => {
             console.error(err);
             document.body.classList.remove('generando-pdf');
@@ -916,9 +950,12 @@
     }
 
     async function inicializarDatos() {
-        document.getElementById('indicadorStatus').innerText = "⏳ Verificando Caché...";
-        document.getElementById('indicadorStatus').style.color = "var(--neon-amber)";
-        document.getElementById('indicadorStatus').style.background = "rgba(255,183,0,0.1)";
+        let indStatus = document.getElementById('indicadorStatus');
+        if(indStatus) {
+            indStatus.innerText = "⏳ Verificando Caché...";
+            indStatus.style.color = "var(--neon-amber)";
+            indStatus.style.background = "rgba(255,183,0,0.1)";
+        }
 
         try {
             const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
@@ -951,16 +988,20 @@
                 
                 dMonitor = dMonitorCacheObj.data;
 
-                document.getElementById('indicadorStatus').innerText = `✅ Sistema Conectado`;
-                document.getElementById('indicadorStatus').style.color = "var(--neon-green)";
-                document.getElementById('indicadorStatus').style.background = "rgba(0,255,157,0.1)";
+                if(indStatus) {
+                    indStatus.innerText = `✅ Sistema Conectado`;
+                    indStatus.style.color = "var(--neon-green)";
+                    indStatus.style.background = "rgba(0,255,157,0.1)";
+                }
                 cargarOpcionesSelectFlota();
                 return;
             }
 
-            document.getElementById('indicadorStatus').innerText = "☁️ Descargando Nube...";
-            document.getElementById('indicadorStatus').style.color = "var(--neon-blue)";
-            document.getElementById('indicadorStatus').style.background = "rgba(0,240,255,0.1)";
+            if(indStatus) {
+                indStatus.innerText = "☁️ Descargando Nube...";
+                indStatus.style.color = "var(--neon-blue)";
+                indStatus.style.background = "rgba(0,240,255,0.1)";
+            }
 
             const promesas = [];
 
@@ -1018,21 +1059,25 @@
 
             await Promise.all(promesas);
 
-            document.getElementById('indicadorStatus').innerText = `✅ Sistema Conectado`;
-            document.getElementById('indicadorStatus').style.color = "var(--neon-green)";
-            document.getElementById('indicadorStatus').style.background = "rgba(0,255,157,0.1)";
+            if(indStatus) {
+                indStatus.innerText = `✅ Sistema Conectado`;
+                indStatus.style.color = "var(--neon-green)";
+                indStatus.style.background = "rgba(0,255,157,0.1)";
+            }
             cargarOpcionesSelectFlota();
 
         } catch (error) {
             console.error("Detalle del error en descarga:", error);
-            document.getElementById('indicadorStatus').innerHTML = `❌ Error al descargar <span style="font-size:0.7em;">(${error.message})</span>`; 
-            document.getElementById('indicadorStatus').style.color = "var(--neon-red)";
-            document.getElementById('indicadorStatus').style.background = "rgba(255,51,51,0.1)";
+            if(document.getElementById('indicadorStatus')) {
+                document.getElementById('indicadorStatus').innerHTML = `❌ Error al descargar <span style="font-size:0.7em;">(${error.message})</span>`; 
+                document.getElementById('indicadorStatus').style.color = "var(--neon-red)";
+                document.getElementById('indicadorStatus').style.background = "rgba(255,51,51,0.1)";
+            }
         }
     }
 
     async function forzarDescarga() {
-        document.getElementById('indicadorStatus').innerText = "⏳ Actualizando...";
+        if(document.getElementById('indicadorStatus')) document.getElementById('indicadorStatus').innerText = "⏳ Actualizando...";
         sessionStorage.removeItem('cacheTarifarioFull');
         try {
             const db = await initDB();
@@ -1043,28 +1088,36 @@
     }
 
     function abrirModalEditarProy() {
-        document.getElementById('txtIdEditarProy').value = '';
-        document.getElementById('modalEditarProy').style.display = 'flex';
+        let txtId = document.getElementById('txtIdEditarProy');
+        if(txtId) txtId.value = '';
+        let mod = document.getElementById('modalEditarProy');
+        if(mod) mod.style.display = 'flex';
     }
 
     async function buscarProyeccionEdicion() {
-        let tipo = document.querySelector('input[name="tipoBusquedaProy"]:checked').value;
+        let rad = document.querySelector('input[name="tipoBusquedaProy"]:checked');
+        let tipo = rad ? rad.value : 'ID';
         let valor = tipo === 'ID' ? document.getElementById('txtIdEditarProy').value.trim() : document.getElementById('txtFechaEditarProy').value;
         
         if(!valor) return alert("Ingrese un valor para buscar.");
         
-        document.getElementById('modalEditarProy').style.display = 'none';
-        document.getElementById('loaderCamion').style.display = 'flex';
-        document.getElementById('lblLoaderMsg').innerText = "Buscando Proyección...";
+        let mod = document.getElementById('modalEditarProy');
+        if(mod) mod.style.display = 'none';
+        
+        let loader = document.getElementById('loaderCamion');
+        if(loader) loader.style.display = 'flex';
+        
+        let lblMsg = document.getElementById('lblLoaderMsg');
+        if(lblMsg) lblMsg.innerText = "Buscando Proyección...";
 
         try {
             let res = await fetch(`${SCRIPT_URL}?action=get_proyeccion_por_criterio&criterio=${tipo}&valor=${encodeURIComponent(valor)}`);
             let response = await res.json();
-            document.getElementById('loaderCamion').style.display = 'none';
+            if(loader) loader.style.display = 'none';
 
             if(response.status === 'success') {
                 if (response.data.length === 1) {
-                    document.getElementById('modalEditarProy').style.display = 'none';
+                    if(mod) mod.style.display = 'none';
                     cargarDatosEnInterfaz(response.data[0]);
                 } else if (response.data.length > 1) {
                     resultadosBusquedaTemporal = response.data;
@@ -1077,15 +1130,18 @@
                             <span style="font-size:0.85em; color:var(--text-muted);">Pedidos: ${p.totalPedidos} | Por: ${p.usuario}</span>
                         </div>`;
                     });
-                    document.getElementById('listaResultadosFecha').innerHTML = html;
-                    document.getElementById('listaResultadosFecha').style.display = 'block';
-                    document.getElementById('modalEditarProy').style.display = 'flex';
+                    let lstResultados = document.getElementById('listaResultadosFecha');
+                    if(lstResultados) {
+                        lstResultados.innerHTML = html;
+                        lstResultados.style.display = 'block';
+                    }
+                    if(mod) mod.style.display = 'flex';
                 }
             } else {
                 alert("❌ No se encontró ninguna proyección con esos datos.");
             }
         } catch(e) {
-            document.getElementById('loaderCamion').style.display = 'none';
+            if(loader) loader.style.display = 'none';
             alert("❌ Error de conexión al buscar.");
         }
     }
@@ -1093,40 +1149,77 @@
     let resultadosBusquedaTemporal = [];
 
     function seleccionarProyeccionDeLista(index) {
-        document.getElementById('modalEditarProy').style.display = 'none';
+        let mod = document.getElementById('modalEditarProy');
+        if(mod) mod.style.display = 'none';
         cargarDatosEnInterfaz(resultadosBusquedaTemporal[index]);
     }
 
     function toggleBusquedaProy() {
-        let tipo = document.querySelector('input[name="tipoBusquedaProy"]:checked').value;
-        document.getElementById('boxBusquedaId').style.display = tipo === 'ID' ? 'block' : 'none';
-        document.getElementById('boxBusquedaFecha').style.display = tipo === 'FECHA' ? 'block' : 'none';
-        document.getElementById('listaResultadosFecha').style.display = 'none'; 
+        let rad = document.querySelector('input[name="tipoBusquedaProy"]:checked');
+        let tipo = rad ? rad.value : 'ID';
+        let boxId = document.getElementById('boxBusquedaId');
+        let boxFec = document.getElementById('boxBusquedaFecha');
+        let lstRes = document.getElementById('listaResultadosFecha');
+        
+        if(boxId) boxId.style.display = tipo === 'ID' ? 'block' : 'none';
+        if(boxFec) boxFec.style.display = tipo === 'FECHA' ? 'block' : 'none';
+        if(lstRes) lstRes.style.display = 'none'; 
     }
 
     function cargarDatosEnInterfaz(data) {
         modoEdicionActivo = true;
         idProyeccionEditando = data.id_llave_interna;
 
-        document.getElementById('fechaDespacho').value = data.fecha;
-        document.getElementById('pdfFechaSeleccionada').innerText = data.fecha;
+        let txtFec = document.getElementById('fechaDespacho');
+        if(txtFec) txtFec.value = data.fecha;
+        
+        let pFec = document.getElementById('pdfFechaSeleccionada');
+        if(pFec) pFec.innerText = data.fecha;
+        
         let idsLimpio = String(data.listaIds).split(',').join('\n');
-        document.getElementById('txtPedidos').value = idsLimpio;
-        document.getElementById('lblCantIds').innerText = data.totalPedidos + " IDs Únicos";
+        let txtP = document.getElementById('txtPedidos');
+        if(txtP) txtP.value = idsLimpio;
+        
+        let lblC = document.getElementById('lblCantIds');
+        if(lblC) lblC.innerText = data.totalPedidos + " IDs Únicos";
 
+        // Resetear Flota y Extras
         document.querySelectorAll('.input-flota').forEach(i => i.value = '0');
+        let contAdicionales = document.getElementById('contenedorAdicionales');
+        if(contAdicionales) contAdicionales.innerHTML = ''; // Limpiar dinámicos
+        contadorAdicionales = 0;
+        
+        if(document.getElementById('txtCantEstibas')) document.getElementById('txtCantEstibas').value = 0;
+        if(document.getElementById('txtCostoEstiba')) document.getElementById('txtCostoEstiba').value = 20;
+        if(document.getElementById('chkEstibasCliente')) document.getElementById('chkEstibasCliente').value = "NO";
+
+        // Recuperar config desde la BD
         let flotaArray = String(data.detalleFlota).split('|').map(s => s.trim());
         flotaArray.forEach(item => {
-            let partes = item.split('x '); 
-            if(partes.length === 2) {
-                let cant = partes[0].trim();
-                let tipo = partes[1].trim();
-                let inputTarget = document.querySelector(`.input-flota[data-tipo="${tipo}"]`);
-                if(inputTarget) inputTarget.value = cant;
+            if (item.startsWith('ADIDYN:')) { 
+                let parts = item.split(':');
+                agregarAdicional(parts[1], parseFloat(parts[2]), parts[3] === 'true');
+            } else if (item.startsWith('ADI:')) { 
+                let parts = item.split(':');
+                agregarAdicional('Otros', parseFloat(parts[1]), parts[2] === 'true');
+            } else if (item.startsWith('EST:')) {
+                let parts = item.split(':');
+                if(document.getElementById('txtCantEstibas')) document.getElementById('txtCantEstibas').value = parts[1];
+                if(document.getElementById('txtCostoEstiba')) document.getElementById('txtCostoEstiba').value = parts[2];
+                if(document.getElementById('chkEstibasCliente')) document.getElementById('chkEstibasCliente').value = (parts[3] === 'true') ? "SI" : "NO";
+            } else {
+                let partes = item.split('x '); 
+                if(partes.length === 2) {
+                    let cant = partes[0].trim();
+                    let tipo = partes[1].trim();
+                    let inputTarget = document.querySelector(`.input-flota[data-tipo="${tipo}"]`);
+                    if(inputTarget) inputTarget.value = cant;
+                }
             }
         });
 
-        document.getElementById('txtBtnSave').innerText = `Actualizar Proy. #${idProyeccionEditando}`;
+        let txtSave = document.getElementById('txtBtnSave');
+        if(txtSave) txtSave.innerText = `Actualizar Proy. #${idProyeccionEditando}`;
 
         validarEstadoBoton();
         ejecutarProyeccion();
@@ -1134,6 +1227,8 @@
 
     function cargarOpcionesSelectFlota() {
         let div = document.getElementById('listaVehiculosGlobal');
+        if (!div) return; // 🔥 PREVENCIÓN DEL ERROR 'innerHTML of null' 🔥
+        
         div.innerHTML = '';
         if(!tarifarioGlobalDB || tarifarioGlobalDB.length === 0) return;
 
@@ -1173,7 +1268,9 @@
 
     function validarEstadoBoton() {
         let ids = obtenerIdsLimpios();
-        document.getElementById('lblCantIds').innerText = ids.length + " IDs Únicos";
+        let lblC = document.getElementById('lblCantIds');
+        if(lblC) lblC.innerText = ids.length + " IDs Únicos";
+        
         let tienePedidos = ids.length > 0;
         let tieneFlota = false;
         
@@ -1182,17 +1279,17 @@
         });
 
         let btnCalcTop = document.getElementById('btnCalcTop');
-        if (tienePedidos && tieneFlota) {
-            btnCalcTop.disabled = false;
-        } else {
-            btnCalcTop.disabled = true;
+        if (btnCalcTop) {
+            btnCalcTop.disabled = !(tienePedidos && tieneFlota);
         }
     }
 
     let pedidosProcesadosGlobal = []; 
 
     function obtenerIdsLimpios() {
-        let rawText = document.getElementById('txtPedidos').value;
+        let elTxt = document.getElementById('txtPedidos');
+        if(!elTxt) return [];
+        let rawText = elTxt.value;
         let rawItems = rawText.split(/[\n,\t]+/);
         let ids = [];
         rawItems.forEach(item => {
@@ -1254,9 +1351,12 @@
         if (costoFlotaTotal === 0) return alert("Añada al menos un vehículo.");
 
         let btn = document.getElementById('btnCalcTop');
-        let txtOri = btn.innerHTML; 
-        btn.innerHTML = `<span class="loader-spinner" style="margin-right:8px;"></span> Calculando...`;
-        btn.disabled = true;
+        let txtOri = "";
+        if(btn) {
+            txtOri = btn.innerHTML; 
+            btn.innerHTML = `<span class="loader-spinner" style="margin-right:8px;"></span> Calculando...`;
+            btn.disabled = true;
+        }
 
         let btnSaveTop = document.getElementById('btnSaveTop');
         if (btnSaveTop) btnSaveTop.disabled = true;
@@ -1266,7 +1366,7 @@
                 pedidosProcesadosGlobal = []; 
                 let busquedaMasiva = buscarPedidosMasivo(ids);
                 let idsPerdidos = [];
-                let idsFallback = []; // Guardará los pedidos a los que se les forzó la tarifa
+                let idsFallback = []; 
 
                 busquedaMasiva.forEach(item => {
                     if (item.encontrado) {
@@ -1295,7 +1395,6 @@
                         let cobro = 0;
                         if (!yaExiste || modoEdicionActivo) cobro = calc.total > 0 ? calc.total : 0; 
                         
-                        // 🔥 APLICACIÓN DE TARIFAS POR DEFECTO 🔥
                         let esFallback = false;
                         if (cobro === 0 && (!yaExiste || modoEdicionActivo)) {
                             if (servicioMonitor === 'NORMAL') { cobro = 3.50; esFallback = true; idsFallback.push(item.id); }
@@ -1309,7 +1408,7 @@
                             tfaPeso: calc.tfaPeso || 0, tfaPedido: calc.tfaPedido || 0, 
                             tfaRango: calc.tfaRango || 0, tfaMedida: calc.tfaMedida || 0, 
                             cobro: cobro, yaExiste: (yaExiste && !modoEdicionActivo), noEncontrado: false,
-                            esFallback: esFallback // Marcamos para que suba en la tabla
+                            esFallback: esFallback
                         });
                     } else {
                         pedidosProcesadosGlobal.push({ id: item.id, noEncontrado: true });
@@ -1320,20 +1419,21 @@
                 actualizarFiltrosUI(); 
                 renderizarTabla();     
 
-                // 🔥 NOTIFICACIÓN DE TARIFAS FORZADAS (NUEVO MODAL) 🔥
                 if (idsFallback.length > 0) {
-                    // Ponemos los IDs separados por coma y espacio, y abrimos el modal
-                    document.getElementById('listaIdsFallback').innerText = idsFallback.join(", ");
-                    document.getElementById('modalTarifasFallback').style.display = 'flex';
+                    let lstFb = document.getElementById('listaIdsFallback');
+                    if(lstFb) lstFb.innerText = idsFallback.join(", ");
+                    let modFb = document.getElementById('modalTarifasFallback');
+                    if(modFb) modFb.style.display = 'flex';
                 }
 
                 if (idsPerdidos.length > 0) {
                     let ul = document.getElementById('listaIdsPerdidos');
-                    ul.innerHTML = "";
-                    idsPerdidos.forEach(id => {
-                        ul.innerHTML += `<li>${id}</li>`;
-                    });
-                    document.getElementById('modalIdsNoEncontrados').style.display = 'flex';
+                    if(ul) {
+                        ul.innerHTML = "";
+                        idsPerdidos.forEach(id => { ul.innerHTML += `<li>${id}</li>`; });
+                    }
+                    let modN = document.getElementById('modalIdsNoEncontrados');
+                    if(modN) modN.style.display = 'flex';
                 }
             } catch(err) {
                 console.error("Error crítico durante el cálculo: ", err);
@@ -1347,7 +1447,8 @@
                 let tienePedidosOk = pedidosProcesadosGlobal.some(p => !p.noEncontrado);
                 if (btnSaveTop && tienePedidosOk) {
                     btnSaveTop.disabled = false;
-                    document.getElementById('btnPdfTop').disabled = false; 
+                    let btnPdf = document.getElementById('btnPdfTop');
+                    if(btnPdf) btnPdf.disabled = false; 
                 }
             }
         }, 50);
@@ -1361,29 +1462,102 @@
 
         let htmlCli = '<option value="ALL">Todos los Clientes</option>';
         Array.from(clientes).sort().forEach(c => htmlCli += `<option value="${c}">${c}</option>`);
-        document.getElementById('filtroCliente').innerHTML = htmlCli;
+        let fCli = document.getElementById('filtroCliente');
+        if(fCli) fCli.innerHTML = htmlCli;
 
         let htmlServ = '<option value="ALL">Todos los Servicios</option>';
         Array.from(servicios).sort().forEach(s => htmlServ += `<option value="${s}">${s}</option>`);
-        document.getElementById('filtroServicio').innerHTML = htmlServ;
-        document.getElementById('filtroTarifa').value = "ALL"; 
+        let fServ = document.getElementById('filtroServicio');
+        if(fServ) fServ.innerHTML = htmlServ;
+        
+        let fTar = document.getElementById('filtroTarifa');
+        if(fTar) fTar.value = "ALL"; 
+    }
+
+    // 🔥 LÓGICA DINÁMICA DE ADICIONALES 🔥
+    // 🔥 LÓGICA DINÁMICA DE ADICIONALES 🔥
+    let contadorAdicionales = 0;
+
+    function agregarAdicional(tipo = 'Custodia', costo = 0, pagaCliente = false) {
+        contadorAdicionales++;
+        let id = `adicional_${contadorAdicionales}`;
+        
+        let div = document.createElement('div');
+        div.id = id;
+        div.style.display = 'flex';
+        div.style.gap = '8px';
+        div.style.alignItems = 'center';
+        div.style.background = 'var(--input-bg)';
+        div.style.padding = '8px';
+        div.style.borderRadius = '8px';
+        div.style.border = '1px solid var(--border-color)';
+        div.style.flexWrap = 'wrap';
+        
+        let selectHtml = `
+            <select class="input-box tipo-adicional" style="flex: 1 1 100px; padding: 6px; background:transparent;" onchange="renderizarTabla()">
+                <option value="Custodia" ${tipo==='Custodia'?'selected':''}>Custodia</option>
+                <option value="Grúa" ${tipo==='Grúa'?'selected':''}>Grúa</option>
+                <option value="Peaje" ${tipo==='Peaje'?'selected':''}>Peaje</option>
+                <option value="Viáticos" ${tipo==='Viáticos'?'selected':''}>Viáticos</option>
+                <option value="Otros" ${tipo==='Otros'?'selected':''}>Otros</option>
+            </select>
+        `;
+        
+        // 🔥 AQUI SE CORRIGE EL TAMAÑO PARA QUE NO SE APLASTE EL INPUT 🔥
+        let costoHtml = `
+            <div style="display:flex; align-items:center; gap:5px; flex: 1 1 130px;">
+                <span style="color:var(--text-muted); font-size:0.9em; white-space:nowrap;">Costo ($)</span>
+                <input type="number" class="input-box costo-adicional" value="${costo}" min="0" step="0.01" style="padding: 6px; width: 100%; min-width: 60px; background:transparent;" oninput="renderizarTabla()">
+            </div>
+        `;
+        
+        let pagaHtml = `
+            <div style="display:flex; align-items:center; gap:5px; flex: 1 1 110px;">
+                <span style="color:var(--text-muted); font-size:0.8em; white-space:nowrap;">¿Paga Cliente?</span>
+                <select class="input-box paga-cliente" style="padding: 6px; width: 100%; background:transparent;" onchange="renderizarTabla()">
+                    <option value="NO" ${!pagaCliente?'selected':''}>No</option>
+                    <option value="SI" ${pagaCliente?'selected':''}>Sí</option>
+                </select>
+            </div>
+        `;
+        
+        let btnEliminar = `
+            <button onclick="eliminarAdicional('${id}')" style="background:transparent; color:var(--neon-red); border:none; cursor:pointer; font-size:1.2em; padding:0 5px;" title="Eliminar">✖</button>
+        `;
+        
+        div.innerHTML = selectHtml + costoHtml + pagaHtml + btnEliminar;
+        let cont = document.getElementById('contenedorAdicionales');
+        if (cont) cont.appendChild(div);
+        
+        renderizarTabla();
+    }
+
+    function eliminarAdicional(id) {
+        let el = document.getElementById(id);
+        if (el) el.remove();
+        renderizarTabla();
     }
 
     function renderizarTabla() {
-        let fCli = document.getElementById('filtroCliente').value;
-        let fServ = document.getElementById('filtroServicio').value;
-        let fTar = document.getElementById('filtroTarifa').value;
-        
-        // 🔥 CAPTURAR EL VALOR DEL BUSCADOR 🔥
-        let fBusqueda = document.getElementById('filtroBusquedaId').value.trim().toUpperCase();
+        let fCliEl = document.getElementById('filtroCliente');
+        let fServEl = document.getElementById('filtroServicio');
+        let fTarEl = document.getElementById('filtroTarifa');
+        let fBusqEl = document.getElementById('filtroBusquedaId');
+
+        let fCli = fCliEl ? fCliEl.value : 'ALL';
+        let fServ = fServEl ? fServEl.value : 'ALL';
+        let fTar = fTarEl ? fTarEl.value : 'ALL';
+        let fBusqueda = fBusqEl ? fBusqEl.value.trim().toUpperCase() : '';
 
         let tbody = document.querySelector('#tblPedidos tbody');
         let htmlRows = ''; 
         let ingresosVisibles = 0;
         let conteoVisible = 0;
         let dataClientes = {}; 
+        
+        let htmlRevision = '';
+        let contadorRevision = 0;
 
-        // ORDENAR: Pedidos en $0 o con tarifa forzada (Fallback) van al principio
         pedidosProcesadosGlobal.sort((a, b) => {
             let aPrioridad = (a.cobro === 0 || a.esFallback) ? 1 : 0;
             let bPrioridad = (b.cobro === 0 || b.esFallback) ? 1 : 0;
@@ -1392,16 +1566,13 @@
 
         pedidosProcesadosGlobal.forEach(p => {
             let mostrar = true;
-            
             if(!p.noEncontrado) {
                 if(fCli !== 'ALL' && p.cliente !== fCli) mostrar = false;
                 if(fServ !== 'ALL' && p.servicio !== fServ) mostrar = false;
                 if(fTar === 'ZERO' && p.cobro > 0) mostrar = false;
-                // 🔥 FILTRAR POR ID (si contiene los números digitados) 🔥
                 if(fBusqueda !== '' && !p.id.includes(fBusqueda)) mostrar = false;
             } else {
                 if(fCli !== 'ALL' || fServ !== 'ALL' || fTar === 'ZERO') mostrar = false;
-                // 🔥 FILTRAR POR ID INCLUSO SI NO FUE ENCONTRADO 🔥
                 if(fBusqueda !== '' && !p.id.includes(fBusqueda)) mostrar = false;
             }
 
@@ -1409,12 +1580,12 @@
                 if(!p.noEncontrado) {
                     ingresosVisibles += p.cobro;
                     conteoVisible++;
-
                     dataClientes[p.cliente] = (dataClientes[p.cliente] || 0) + 1;
                     
-                    // 🔥 SE AÑADE EL INPUT PARA EDICIÓN INLINE Y SE QUITA EL BOTÓN DE EDITAR 🔥
+                    let trClass = p.esFallback ? "background-color: rgba(255,183,0,0.05);" : "";
+                    
                     htmlRows += `
-                        <tr>
+                        <tr style="${trClass}">
                             <td><strong style="color:var(--text-main);">${p.id}</strong>${p.yaExiste ? '<br><span class="badge badge-ya">YA EN SISTEMA</span>' : ''}</td>
                             <td>${p.cliente}</td>
                             <td>${p.intentos === 1 ? 'No' : 'Sí'}</td>
@@ -1440,6 +1611,27 @@
                             </td>
                         </tr>
                     `;
+                    
+                    // 🔥 REGLA DE REVISIÓN: Si es Exclusivo o si es SG y vale más de $100 🔥
+                    if (p.servicio.includes("EXCLUSIVO") || (p.cliente.includes("SG") && p.cobro > 100)) {
+                        contadorRevision++;
+                        htmlRevision += `
+                            <tr style="background: rgba(255,183,0,0.05);">
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color);"><strong style="color:var(--text-main);">${p.id}</strong></td>
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color);">${p.cliente}</td>
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color);"><span class="badge-srv ${p.servicio.includes("EXCLUSIVO") ? 'srv-exclusivo' : 'srv-normal'}">${p.servicio}</span></td>
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color);"><span class="badge-loc">${p.destino}</span></td>
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color); text-align:right; font-weight:bold; color:var(--neon-green);">$${p.cobro.toFixed(2)}</td>
+                                <td style="padding:10px; border-bottom:1px solid var(--border-color); text-align:center;">
+                                    <input type="number" step="0.01" min="0" value="${p.cobro.toFixed(2)}" 
+                                        onchange="actualizarPrecioInline('${p.id}', this.value)" 
+                                        style="width:80px; padding:6px; text-align:right; font-weight:bold; color:var(--neon-green); border:1px solid var(--neon-blue); background:var(--input-bg); border-radius:6px; outline:none;"
+                                        ${p.yaExiste ? 'disabled' : ''}>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
                 } else {
                     htmlRows += `<tr>
                         <td colspan="10" style="color:var(--neon-red); text-align:left; padding-left:20px;">❌ ID no encontrado en monitor: <b>${p.id}</b></td>
@@ -1449,8 +1641,17 @@
             }
         });
 
-        tbody.innerHTML = htmlRows || `<tr><td colspan="11" style="text-align:center; padding:40px; color:var(--text-muted);">Ningún pedido coincide con los filtros aplicados.</td></tr>`;
-        document.getElementById('badgeTotalPedidos').innerText = `Total Pedidos: ${conteoVisible}`;
+        // Aplicar el Panel de Revisión si aplica
+        let panelRev = document.getElementById('panelPedidosRevision');
+        let tbodyRev = document.querySelector('#tblRevisionSummary tbody');
+        if (panelRev && tbodyRev) {
+            if (contadorRevision > 0) {
+                tbodyRev.innerHTML = htmlRevision;
+                panelRev.style.display = 'block';
+            } else {
+                panelRev.style.display = 'none';
+            }
+        }
 
         let costoFlotaTotal = 0;
         let resumenFlotaArr = [];
@@ -1478,39 +1679,96 @@
                 `;
             }
         });
+
+        // 🔥 LÓGICA DE ADICIONALES DINÁMICOS 🔥
+        let adicionalesDivs = document.querySelectorAll('#contenedorAdicionales > div');
+        adicionalesDivs.forEach(div => {
+            let tipo = div.querySelector('.tipo-adicional').value;
+            let costo = parseFloat(div.querySelector('.costo-adicional').value) || 0;
+            let pagaCli = div.querySelector('.paga-cliente').value === 'SI';
+            
+            if (costo > 0) {
+                costoFlotaTotal += costo;
+                if (pagaCli) ingresosVisibles += costo; 
+                
+                htmlCostos += `
+                    <tr>
+                        <td style="text-align:left; font-weight: 600; color:var(--text-main);">${tipo} ${pagaCli ? '<span class="badge badge-ya">PAGA CLIENTE</span>' : ''}</td>
+                        <td>1</td>
+                        <td>$${costo.toFixed(2)}</td>
+                        <td style="text-align:right; font-weight: 600; color:var(--text-main);">$${costo.toFixed(2)}</td>
+                    </tr>
+                `;
+                resumenFlotaArr.push(`ADIDYN:${tipo}:${costo}:${pagaCli}`);
+            }
+        });
+
+        // 🔥 ESTIBAS 🔥
+        let txtCantEstibas = document.getElementById('txtCantEstibas');
+        let txtCostoEstiba = document.getElementById('txtCostoEstiba');
+        let chkEstibas = document.getElementById('chkEstibasCliente');
+
+        let cantEstibas = txtCantEstibas ? (parseInt(txtCantEstibas.value) || 0) : 0;
+        let costoEstiba = txtCostoEstiba ? (parseFloat(txtCostoEstiba.value) || 0) : 0;
+        let chkEstibasCliente = chkEstibas ? (chkEstibas.value === 'SI') : false;
+
+        let subtotalEstibas = cantEstibas * costoEstiba;
+        if (subtotalEstibas > 0) {
+            costoFlotaTotal += subtotalEstibas;
+            if (chkEstibasCliente) ingresosVisibles += subtotalEstibas;
+            
+            htmlCostos += `
+                <tr>
+                    <td style="text-align:left; font-weight: 600; color:var(--text-main);">Carga/Descarga (Estibas) ${chkEstibasCliente ? '<span class="badge badge-ya">PAGA CLIENTE</span>' : ''}</td>
+                    <td>${cantEstibas}</td>
+                    <td>$${costoEstiba.toFixed(2)}</td>
+                    <td style="text-align:right; font-weight: 600; color:var(--text-main);">$${subtotalEstibas.toFixed(2)}</td>
+                </tr>
+            `;
+            resumenFlotaArr.push(`EST:${cantEstibas}:${costoEstiba}:${chkEstibasCliente}`);
+        }
+
+        if(tbody) tbody.innerHTML = htmlRows || `<tr><td colspan="11" style="text-align:center; padding:40px; color:var(--text-muted);">Ningún pedido coincide con los filtros aplicados.</td></tr>`;
         
-        document.getElementById('tbodyCostosVehiculos').innerHTML = htmlCostos || `<tr><td colspan="4" style="padding: 30px; font-style:italic;">No hay flota asignada.</td></tr>`;
-        document.getElementById('tfootTotalCosto').innerText = `$${costoFlotaTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let bdgTot = document.getElementById('badgeTotalPedidos');
+        if(bdgTot) bdgTot.innerText = `Total Pedidos: ${conteoVisible}`;
+
+        let tbCostosVeh = document.getElementById('tbodyCostosVehiculos');
+        if(tbCostosVeh) tbCostosVeh.innerHTML = htmlCostos || `<tr><td colspan="4" style="padding: 30px; font-style:italic;">No hay flota asignada.</td></tr>`;
+        
+        let tfootTot = document.getElementById('tfootTotalCosto');
+        if(tfootTot) tfootTot.innerText = `$${costoFlotaTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
         let utilidad = ingresosVisibles - costoFlotaTotal;
         let margen = ingresosVisibles > 0 ? (utilidad / ingresosVisibles) * 100 : 0;
         
-        document.getElementById('vIng').innerText = `$${ingresosVisibles.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('vCos').innerText = `$${costoFlotaTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('vRent').innerText = `$${utilidad.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('vMargen').innerText = `${margen.toFixed(2)}%`;
+        let vIng = document.getElementById('vIng'); if(vIng) vIng.innerText = `$${ingresosVisibles.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let vCos = document.getElementById('vCos'); if(vCos) vCos.innerText = `$${costoFlotaTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let vRent = document.getElementById('vRent'); if(vRent) vRent.innerText = `$${utilidad.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let vMargen = document.getElementById('vMargen'); if(vMargen) vMargen.innerText = `${margen.toFixed(2)}%`;
         
         let banner = document.getElementById('badgeRentable');
         if (conteoVisible === 0) {
             if(banner) banner.style.display = 'none';
-            document.getElementById('panelGraficos').style.display = 'none';
+            let pGraf = document.getElementById('panelGraficos');
+            if(pGraf) pGraf.style.display = 'none';
         } else {
             if(banner) {
                 banner.style.display = 'flex';
+                let tBanner = document.getElementById('txtBannerStatus');
                 if (utilidad < 0) { 
                     banner.className = 'status-banner status-perdida';
-                    document.getElementById('txtBannerStatus').innerHTML = `<b>¡Operación a pérdida!</b> Estás perdiendo $${Math.abs(utilidad).toLocaleString('en-US', {minimumFractionDigits: 2})}.`;
+                    if(tBanner) tBanner.innerHTML = `<b>¡Operación a pérdida!</b> Estás perdiendo $${Math.abs(utilidad).toLocaleString('en-US', {minimumFractionDigits: 2})}.`;
                 } else { 
                     banner.className = 'status-banner status-rentable';
-                    document.getElementById('txtBannerStatus').innerHTML = `<b>¡Tu operación es rentable!</b> Estás generando $${utilidad.toLocaleString('en-US', {minimumFractionDigits: 2})} de ganancia.`;
+                    if(tBanner) tBanner.innerHTML = `<b>¡Tu operación es rentable!</b> Estás generando $${utilidad.toLocaleString('en-US', {minimumFractionDigits: 2})} de ganancia.`;
                 }
             }
-            
             dibujarGraficos(ingresosVisibles, costoFlotaTotal, dataFlota, dataClientes);
         }
 
         totalesActuales = {
-            fecha: document.getElementById('fechaDespacho').value,
+            fecha: document.getElementById('fechaDespacho') ? document.getElementById('fechaDespacho').value : '',
             totalPedidos: conteoVisible,
             ingresosProyectados: ingresosVisibles,
             costoFlota: costoFlotaTotal,
@@ -1521,9 +1779,7 @@
         };
         
         let btnSaveTop = document.getElementById('btnSaveTop');
-        if (btnSaveTop) {
-            btnSaveTop.disabled = (conteoVisible === 0);
-        }
+        if (btnSaveTop) btnSaveTop.disabled = (conteoVisible === 0);
         let btnPdfTop = document.getElementById('btnPdfTop');
         if(btnPdfTop) btnPdfTop.disabled = (conteoVisible === 0);
     }
@@ -1541,58 +1797,29 @@
         });
     }
 
-    // 🔥 ACCIÓN: ELIMINAR PEDIDO DE LA TABLA Y DEL TEXTAREA
     function eliminarPedido(id) {
         if (!confirm(`¿Estás seguro de quitar el pedido ${id} de la proyección?`)) return;
-
-        // 1. Lo quitamos del array global
         pedidosProcesadosGlobal = pedidosProcesadosGlobal.filter(p => p.id !== id);
-
-        // 2. Lo quitamos también del textarea para que si vuelve a calcular no reaparezca
         let rawIds = obtenerIdsLimpios();
         let nuevosIds = rawIds.filter(rawId => rawId !== id);
-        document.getElementById('txtPedidos').value = nuevosIds.join('\n');
-
-        // 3. Actualizamos la interfaz
+        let tPed = document.getElementById('txtPedidos');
+        if(tPed) tPed.value = nuevosIds.join('\n');
         validarEstadoBoton();
         actualizarFiltrosUI();
         renderizarTabla();
     }
 
-    // 🔥 ACCIÓN: EDITAR PRECIO MANUALMENTE
-    function editarCobro(id) {
-        let pedidoIndex = pedidosProcesadosGlobal.findIndex(p => p.id === id);
-        if (pedidoIndex === -1) return;
-
-        let cobroActual = pedidosProcesadosGlobal[pedidoIndex].cobro.toFixed(2);
-        let nuevoValorStr = prompt(`Ingrese el nuevo precio para el pedido ${id}:`, cobroActual);
-
-        if (nuevoValorStr !== null) {
-            // Reemplazamos coma por punto por si el usuario escribe "3,50"
-            let nuevoMonto = parseFloat(nuevoValorStr.replace(',', '.')); 
-            
-            if (!isNaN(nuevoMonto) && nuevoMonto >= 0) {
-                pedidosProcesadosGlobal[pedidoIndex].cobro = nuevoMonto;
-                // Re-calculamos totales y actualizamos la tabla
-                renderizarTabla(); 
-            } else {
-                alert("Monto inválido. Ingrese un número válido mayor o igual a 0.");
-            }
-        }
-    }
-
-    // 🔥 FUNCIÓN PARA EDICIÓN EN LÍNEA DIRECTO EN LA CELDA 🔥
     function actualizarPrecioInline(id, val) {
         let index = pedidosProcesadosGlobal.findIndex(p => p.id === id);
         if (index > -1) {
             let nuevoMonto = parseFloat(String(val).replace(',', '.'));
             if (!isNaN(nuevoMonto) && nuevoMonto >= 0) {
                 pedidosProcesadosGlobal[index].cobro = nuevoMonto;
-                pedidosProcesadosGlobal[index].esFallback = false; // Quita la etiqueta si el usuario lo modifica
+                pedidosProcesadosGlobal[index].esFallback = false; 
                 renderizarTabla(); 
             } else {
                 alert("Monto inválido. Ingrese un valor numérico válido.");
-                renderizarTabla(); // Recarga la tabla para volver al valor anterior si hubo error
+                renderizarTabla(); 
             }
         }
     }

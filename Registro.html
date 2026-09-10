@@ -197,6 +197,73 @@
         
         .restricted-tag { color: var(--text-muted); font-size: 0.85em; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; opacity: 0.7;}
 
+        /* ============================================
+           🔑 PANEL DE PERMISOS POR MÓDULO
+           ============================================ */
+        .permisos-box {
+            border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;
+            background: rgba(0,0,0,0.15); margin-bottom: 20px; transition: box-shadow .4s, border-color .4s;
+        }
+        body.light-theme .permisos-box { background: #f8fafc; }
+        .permisos-box.resaltado { border-color: var(--neon-amber); box-shadow: 0 0 0 3px rgba(255,183,0,0.18); }
+
+        .permisos-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 4px; }
+        .permisos-head strong { font-size: 0.95em; color: var(--text-main); display:flex; align-items:center; gap:6px; }
+        .permisos-sub { font-size: 0.8em; color: var(--text-muted); margin: 2px 0 12px; line-height: 1.5; }
+
+        .presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 12px; }
+        .preset-btn {
+            padding: 5px 10px; font-size: 0.75em; font-weight: 700; border-radius: 20px; cursor: pointer;
+            background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); transition: all .2s;
+        }
+        .preset-btn:hover { color: var(--neon-blue); border-color: var(--neon-blue); background: rgba(0,240,255,0.08); }
+
+        .permisos-grid { display: grid; grid-template-columns: 1fr; gap: 7px; }
+
+        .permiso-item {
+            display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px;
+            border: 1px solid var(--border-color); background: var(--input-bg); cursor: pointer;
+            transition: all .2s; user-select: none;
+        }
+        .permiso-item:hover { border-color: var(--border-hover); }
+        .permiso-item input { width: auto; margin: 0; flex-shrink: 0; accent-color: var(--neon-green); cursor: pointer; }
+        .permiso-item .p-ico { font-size: 1.05em; flex-shrink: 0; width: 20px; text-align: center; }
+        .permiso-item .p-nom { font-weight: 600; color: var(--text-main); font-size: 0.88em; flex: 1; min-width: 0; }
+        .permiso-item .p-desc { display:block; font-weight: 400; color: var(--text-muted); font-size: 0.88em; margin-top: 2px; line-height: 1.35; }
+
+        .permiso-item.activo { border-color: rgba(0,255,157,0.45); background: rgba(0,255,157,0.06); }
+        body.light-theme .permiso-item.activo { background: #ecfdf5; border-color: #6ee7b7; }
+
+        .permiso-item.sensible.activo { border-color: rgba(255,183,0,0.5); background: rgba(255,183,0,0.07); }
+        body.light-theme .permiso-item.sensible.activo { background: #fffbeb; border-color: #fcd34d; }
+
+        .permiso-item.fijo { opacity: 0.75; cursor: not-allowed; }
+        .permisos-box.bloqueado .permiso-item { cursor: not-allowed; opacity: 0.6; }
+
+        .aviso-permisos {
+            font-size: 0.78em; padding: 9px 12px; border-radius: 8px; line-height: 1.5;
+            background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); color: var(--neon-blue); margin-top: 12px;
+        }
+        .aviso-permisos.warn { background: rgba(255,183,0,0.08); border-color: rgba(255,183,0,0.3); color: var(--neon-amber); }
+
+        /* Columna de accesos en la tabla */
+        .accesos-cell { display: flex; align-items: center; gap: 7px; }
+        .accesos-chip {
+            font-size: 0.78em; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+            background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid rgba(0,240,255,0.3);
+        }
+        .accesos-chip.total { background: rgba(138,43,226,0.1); color: var(--neon-purple); border-color: rgba(138,43,226,0.3); }
+        .accesos-chip.pocos { background: rgba(255,183,0,0.1); color: var(--neon-amber); border-color: rgba(255,183,0,0.3); }
+        .accesos-chip.defecto { background: transparent; color: var(--text-muted); border-color: var(--border-color); font-weight: 600; }
+        body.light-theme .accesos-chip.total { background: #f3e8ff; color: #7e22ce; border-color: #d8b4fe; }
+        body.light-theme .accesos-chip.pocos { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+
+        .btn-key { color: var(--neon-blue); }
+        .btn-key:hover { background: rgba(0,240,255,0.1); border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0,240,255,0.2); transform: scale(1.05); }
+
+        .loader-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         @media (max-width: 768px) {
             .navbar { flex-direction: column; padding: 15px; text-align: center;}
             .user-info { justify-content: center; width: 100%; margin-top: 10px;}
@@ -281,6 +348,27 @@
                         </div>
                     </div>
 
+                    <div class="permisos-box" id="cajaPermisos">
+                        <div class="permisos-head">
+                            <strong>🔑 Accesos a los módulos</strong>
+                            <span id="contadorPermisos" class="accesos-chip">0 módulos</span>
+                        </div>
+                        <p class="permisos-sub" id="subtituloPermisos">
+                            Marca a qué pantallas puede entrar esta persona. Lo que no marques desaparece de su menú y del Inicio, y tampoco podrá entrar escribiendo la dirección.
+                        </p>
+
+                        <div class="presets" id="presetsPermisos">
+                            <button type="button" class="preset-btn" onclick="aplicarPreset('todo')">Acceso total</button>
+                            <button type="button" class="preset-btn" onclick="aplicarPreset('admin')">Perfil Administrador</button>
+                            <button type="button" class="preset-btn" onclick="aplicarPreset('ruteador')">Perfil Ruteador</button>
+                            <button type="button" class="preset-btn" onclick="aplicarPreset('minimo')">Solo Inicio</button>
+                        </div>
+
+                        <div class="permisos-grid" id="gridPermisos"></div>
+
+                        <div class="aviso-permisos" id="avisoPermisos"></div>
+                    </div>
+
                     <div class="btn-group">
                         <button type="submit" id="btnGuardar" class="btn-save">Guardar Registro</button>
                         <button type="button" id="btnCancelar" class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
@@ -306,11 +394,12 @@
                                 <th>Credencial (Login)</th>
                                 <th>Rol Asignado</th>
                                 <th>Región Base</th>
-                                <th style="text-align:center; width: 120px;">Acciones</th>
+                                <th>Accesos</th>
+                                <th style="text-align:center; width: 150px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">⏳ Cargando directorio de usuarios...</td></tr>
+                            <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">⏳ Cargando directorio de usuarios...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -349,6 +438,121 @@
     const usrSesion = (sesion && sesion.usuario) ? String(sesion.usuario).toLowerCase().trim() : "";
     const esSuperAdmin = (nombreSesion.includes('hector') || usrSesion.includes('hector'));
 
+    // =====================================================
+    // 🔑 MOTOR DE PERMISOS (catálogo compartido en seguridad.js)
+    // =====================================================
+    const ACCESOS = window.FLEXNET_ACCESOS;
+    let permisosSeleccionados = [];   // claves marcadas ahora mismo en el formulario
+    let usuarioEnEdicionEsSupremo = false;
+
+    // Dibuja la lista de módulos con sus casillas
+    function construirGridPermisos() {
+        const grid = document.getElementById('gridPermisos');
+        if (!grid || !ACCESOS) return;
+
+        grid.innerHTML = ACCESOS.MODULOS.map(m => `
+            <label class="permiso-item ${m.fijo ? 'fijo' : ''} ${m.sensible ? 'sensible' : ''}" data-clave="${m.clave}">
+                <input type="checkbox" value="${m.clave}" ${m.fijo ? 'checked disabled' : ''}
+                       onchange="togglePermiso('${m.clave}', this.checked)">
+                <span class="p-ico">${m.icono}</span>
+                <span class="p-nom">${m.nombre}
+                    <span class="p-desc">${m.descripcion}</span>
+                </span>
+            </label>
+        `).join('');
+    }
+
+    function togglePermiso(clave, activo) {
+        if (activo) {
+            if (!permisosSeleccionados.includes(clave)) permisosSeleccionados.push(clave);
+        } else {
+            permisosSeleccionados = permisosSeleccionados.filter(c => c !== clave);
+        }
+        pintarPermisos();
+    }
+
+    // Refleja el arreglo en pantalla (casillas, colores, contador y aviso)
+    function pintarPermisos() {
+        if (!ACCESOS) return;
+
+        // "inicio" siempre va incluido: es la pantalla de aterrizaje
+        if (!permisosSeleccionados.includes('inicio')) permisosSeleccionados.push('inicio');
+
+        document.querySelectorAll('#gridPermisos .permiso-item').forEach(item => {
+            const clave = item.dataset.clave;
+            const check = item.querySelector('input');
+            const activo = permisosSeleccionados.includes(clave);
+            check.checked = activo;
+            item.classList.toggle('activo', activo);
+        });
+
+        const total = permisosSeleccionados.length;
+        const chip = document.getElementById('contadorPermisos');
+        chip.innerText = `${total} de ${ACCESOS.MODULOS.length} módulos`;
+        chip.className = 'accesos-chip' + (total === ACCESOS.MODULOS.length ? ' total' : (total <= 2 ? ' pocos' : ''));
+
+        const aviso = document.getElementById('avisoPermisos');
+        if (permisosSeleccionados.includes('accesos')) {
+            aviso.className = 'aviso-permisos warn';
+            aviso.innerHTML = '⚠️ <b>Atención:</b> con el módulo <b>Accesos</b> marcado, esta persona podrá crear usuarios y cambiar los permisos de los demás.';
+        } else {
+            aviso.className = 'aviso-permisos';
+            aviso.innerHTML = 'ℹ️ Los cambios se aplican la próxima vez que la persona abra cualquier pantalla del sistema. No necesita volver a iniciar sesión.';
+        }
+    }
+
+    function aplicarPreset(tipo) {
+        if (document.getElementById('cajaPermisos').classList.contains('bloqueado')) return;
+
+        if (tipo === 'todo') permisosSeleccionados = ACCESOS.TODAS_LAS_CLAVES.slice();
+        else if (tipo === 'admin') permisosSeleccionados = ACCESOS.DEFAULT_ADMIN.slice();
+        else if (tipo === 'ruteador') permisosSeleccionados = ACCESOS.DEFAULT_RUTEADOR.slice();
+        else permisosSeleccionados = ['inicio'];
+
+        pintarPermisos();
+    }
+
+    // Bloquea el panel cuando quien está conectado no puede repartir permisos
+    function configurarCandadoPermisos(esSupremoElEditado) {
+        const caja = document.getElementById('cajaPermisos');
+        const sub = document.getElementById('subtituloPermisos');
+        usuarioEnEdicionEsSupremo = !!esSupremoElEditado;
+
+        const puedeEditar = esSuperAdmin && !esSupremoElEditado;
+        caja.classList.toggle('bloqueado', !puedeEditar);
+
+        document.querySelectorAll('#gridPermisos input').forEach(i => {
+            const fijo = i.closest('.permiso-item').classList.contains('fijo');
+            i.disabled = !puedeEditar || fijo;
+        });
+        document.querySelectorAll('#presetsPermisos .preset-btn').forEach(b => b.disabled = !puedeEditar);
+
+        if (esSupremoElEditado) {
+            sub.innerHTML = '👑 <b>Administrador supremo:</b> siempre tiene acceso a todo el sistema. Sus permisos no se pueden recortar, para que nadie quede fuera del control de accesos.';
+        } else if (!esSuperAdmin) {
+            sub.innerHTML = '🔒 Solo el administrador supremo puede modificar los accesos. Aquí solo se muestran los permisos actuales de esta persona.';
+        } else {
+            sub.innerHTML = 'Marca a qué pantallas puede entrar esta persona. Lo que no marques desaparece de su menú y del Inicio, y tampoco podrá entrar escribiendo la dirección.';
+        }
+    }
+
+    // Resumen corto de permisos para mostrar en la tabla
+    function resumenAccesos(u) {
+        if (ACCESOS.esSupremo(u)) return { texto: '👑 Todo el sistema', clase: 'total', detalle: 'Administrador supremo' };
+
+        const configurado = String(u.permisos || '').trim() !== '';
+        const lista = ACCESOS.efectivos(u);
+        const nombres = lista.map(c => ACCESOS.nombreDe(c)).join(', ');
+
+        if (!configurado) {
+            return { texto: `Por rol (${lista.length})`, clase: 'defecto', detalle: 'Sin configurar. Hoy ve: ' + nombres };
+        }
+        if (lista.length === ACCESOS.TODAS_LAS_CLAVES.length) {
+            return { texto: 'Todo el sistema', clase: 'total', detalle: nombres };
+        }
+        return { texto: `${lista.length} módulos`, clase: lista.length <= 2 ? 'pocos' : '', detalle: nombres };
+    }
+
     window.onload = function() {
         document.getElementById('infoUsuario').innerHTML = `
             <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
@@ -364,8 +568,16 @@
             <span>👤 <b>${sesion.nombre}</b> ${esSuperAdmin ? '👑' : ''}</span>
             <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
         `;
+        construirGridPermisos();
+        cancelarEdicion();     // deja el formulario en modo "nuevo usuario" con el preset del rol
         cargarUsuarios();
     };
+
+    // Al cambiar el rol en un usuario NUEVO, se propone el perfil de ese rol
+    document.getElementById('rol').addEventListener('change', function () {
+        if (modoEdicion) return;
+        aplicarPreset(this.value === 'Administrador' ? 'admin' : 'ruteador');
+    });
 
     function cerrarSesion() {
         localStorage.removeItem('sesionActiva');
@@ -378,7 +590,7 @@
             listaUsuarios = await res.json();
             dibujarTabla();
         } catch (e) {
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="color:var(--neon-red); text-align:center; padding:40px;">❌ Error de conexión al cargar la base de datos.</td></tr>`;
+            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="6" style="color:var(--neon-red); text-align:center; padding:40px;">❌ Error de conexión al cargar la base de datos.</td></tr>`;
         }
     }
 
@@ -406,10 +618,23 @@
                 puedeEditar = true; // El administrador actual puede editar a cualquier Ruteador
             }
 
+            // Resumen de accesos de esta persona
+            const acc = resumenAccesos(u);
+            const celdaAccesos = `
+                <div class="accesos-cell" title="${acc.detalle}">
+                    <span class="accesos-chip ${acc.clase}">${acc.texto}</span>
+                </div>`;
+
             let botones = "";
             if (puedeEditar) {
+                const btnLlave = (esSuperAdmin && !ACCESOS.esSupremo(u)) ? `
+                        <button class="btn-icon btn-key" title="Editar accesos de ${u.nombre}" onclick="prepararEdicion('${u.usuario}', true)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                        </button>` : '';
+
                 botones = `
                     <div class="action-cell">
+                        ${btnLlave}
                         <button class="btn-icon btn-edit" title="Editar Usuario" onclick="prepararEdicion('${u.usuario}')">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
@@ -428,13 +653,14 @@
                     <td style="font-family:monospace; opacity:0.8; letter-spacing:0.5px;">${u.usuario}</td>
                     <td>${badgeRol}</td>
                     <td class="badge-city">${u.ciudad}</td>
+                    <td>${celdaAccesos}</td>
                     <td>${botones}</td>
                 </tr>
             `;
         });
     }
 
-    function prepararEdicion(username) {
+    function prepararEdicion(username, enfocarPermisos = false) {
         const user = listaUsuarios.find(u => u.usuario === username);
         if(!user) return;
 
@@ -461,8 +687,25 @@
         document.getElementById('rol').value = user.rol;
         document.getElementById('ciudad').value = user.ciudad;
 
+        // 🔑 Cargar los accesos actuales de esa persona
+        const yaConfigurado = String(user.permisos || '').trim() !== '';
+        permisosSeleccionados = yaConfigurado ? ACCESOS.parse(user.permisos) : ACCESOS.defaultPorRol(user);
+        configurarCandadoPermisos(ACCESOS.esSupremo(user));
+        if (ACCESOS.esSupremo(user)) permisosSeleccionados = ACCESOS.TODAS_LAS_CLAVES.slice();
+        pintarPermisos();
+
         document.getElementById('btnGuardar').innerHTML = "Guardar Cambios";
         document.getElementById('btnCancelar').style.display = "flex";
+
+        // Si entró por el botón de la llave, se lleva la vista al panel y se resalta
+        const caja = document.getElementById('cajaPermisos');
+        if (enfocarPermisos) {
+            caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            caja.classList.add('resaltado');
+            setTimeout(() => caja.classList.remove('resaltado'), 2200);
+        } else {
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     function cancelarEdicion() {
@@ -475,6 +718,12 @@
         document.getElementById('btnGuardar').innerHTML = "Guardar Registro";
         document.getElementById('btnCancelar').style.display = "none";
         document.getElementById('formRegistro').reset();
+
+        // 🔑 Un usuario nuevo arranca con el perfil sugerido de su rol
+        configurarCandadoPermisos(false);
+        const rolNuevo = document.getElementById('rol').value;
+        permisosSeleccionados = (rolNuevo === 'Administrador' ? ACCESOS.DEFAULT_ADMIN : ACCESOS.DEFAULT_RUTEADOR).slice();
+        pintarPermisos();
     }
 
     // AL HACER CLIC EN GUARDAR
@@ -528,6 +777,12 @@
         btn.innerHTML = `<span class="loader-spinner"></span> Procesando...`;
         btn.disabled = true;
 
+        // 🔑 Permisos: el supremo siempre conserva acceso total
+        let permisosFinal = ACCESOS.serializar(permisosSeleccionados);
+        if (usuarioEnEdicionEsSupremo || ACCESOS.esSupremo({ nombre: nombreVal, usuario: usuarioVal })) {
+            permisosFinal = '*';
+        }
+
         const dataUsuario = {
             action: modoEdicion ? 'edit_user' : '',
             usuarioOriginal: usuarioOriginal,
@@ -535,7 +790,8 @@
             usuario: usuarioVal,
             password: passwordVal,
             rol: document.getElementById('rol').value,
-            ciudad: document.getElementById('ciudad').value
+            ciudad: document.getElementById('ciudad').value,
+            permisos: permisosFinal
         };
 
         try {
@@ -558,6 +814,8 @@
                 if(esMiCuentaEd) {
                     sesion.nombre = nombreVal;
                     sesion.usuario = usuarioVal;
+                    sesion.rol = dataUsuario.rol;
+                    sesion.permisos = permisosFinal;
                     localStorage.setItem('sesionActiva', JSON.stringify(sesion));
                     document.getElementById('infoUsuario').innerHTML = `
                         <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
@@ -603,7 +861,7 @@
                 body: JSON.stringify({ action: 'delete_user', usuario: username })
             });
             
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--neon-red);"><span class="loader-spinner" style="margin-right:10px;"></span> 🗑️ Eliminando registro de la base de datos...</td></tr>`;
+            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--neon-red);"><span class="loader-spinner" style="margin-right:10px;"></span> 🗑️ Eliminando registro de la base de datos...</td></tr>`;
             
             setTimeout(() => { cargarUsuarios(); }, 1000);
         } catch (error) {
