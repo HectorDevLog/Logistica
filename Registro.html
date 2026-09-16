@@ -1,874 +1,460 @@
 <!DOCTYPE html>
+<!-- Sistema de Rentabilidad · Distribución
+     © 2026 Héctor Torres. Todos los derechos reservados. -->
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlexNet - Control de Accesos</title>
-    <script src="seguridad.js"></script>
-    <script src="config.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Héctor Torres">
+<meta name="copyright" content="© 2026 Héctor Torres. Todos los derechos reservados.">
+<title>Accesos · Rentabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .persona { display: flex; align-items: center; gap: var(--s-3); }
+  .persona .av {
+    width: 32px; height: 32px; border-radius: var(--r-full); display: grid; place-items: center;
+    background: var(--surface-sunken); color: var(--ink-soft); font-weight: 700; font-size: var(--t-xs);
+    border: 1px solid var(--line); flex-shrink: 0;
+  }
+  .persona.yo .av { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent-line); }
+  .persona .nom { font-weight: 620; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .persona .usr { font-size: var(--t-xs); color: var(--ink-muted); }
 
-        :root { 
-            /* VARIABLES TEMA OSCURO (Por defecto) */
-            --bg-main: #070b14;
-            --bg-panel: rgba(17, 24, 39, 0.6);
-            --bg-card: #171717;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255,255,255,0.05);
-            --border-hover: rgba(255,255,255,0.15);
-            --table-header: rgba(15, 23, 42, 0.9);
-            --table-row-hover: rgba(255,255,255,0.02);
-            --input-bg: rgba(0,0,0,0.3);
-            
-            --neon-blue: #00f0ff;
-            --neon-purple: #8a2be2;
-            --neon-green: #00ff9d;
-            --neon-amber: #ffb700;
-            --neon-red: #ff3333;
-        }
+  /* Resumen de accesos: los módulos que sí tiene, en seco */
+  .acc-lista { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .acc-pip {
+    width: 22px; height: 22px; border-radius: var(--r-sm); display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent-ink); border: 1px solid var(--accent-line);
+  }
+  .acc-pip svg { width: 12px; height: 12px; }
+  .acc-pip.off { background: var(--surface-sunken); color: var(--ink-muted); border-color: var(--line); opacity: .45; }
+  .acc-pip.sens { background: var(--warn-soft); color: var(--warn); border-color: var(--warn-line); }
 
-        /* VARIABLES TEMA CLARO */
-        body.light-theme {
-            --bg-main: #f1f5f9;
-            --bg-panel: rgba(255, 255, 255, 0.8);
-            --bg-card: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: rgba(0,0,0,0.1);
-            --border-hover: rgba(0,0,0,0.2);
-            --table-header: #f8fafc;
-            --table-row-hover: rgba(0,0,0,0.02);
-            --input-bg: #ffffff;
-            
-            --neon-blue: #0284c7; 
-            --neon-green: #059669; 
-            --neon-amber: #d97706; 
-            --neon-red: #dc2626; 
-            --neon-purple: #7e22ce;
-        }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main); 
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
-            margin: 0; padding: 0; font-size: 14px; color: var(--text-main); 
-            min-height: 100vh; overflow-x: hidden;
-            transition: background-color 0.4s ease, color 0.4s ease;
-        }
-        
-        /* NAVBAR NEON */
-        .navbar { 
-            background: var(--bg-panel); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px 4%; display: flex; align-items: center; justify-content: space-between; 
-            position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 15px;
-            transition: all 0.4s ease;
-        }
-        .navbar-brand { font-size: clamp(1.1em, 2vw, 1.3em); font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-        .navbar-brand svg { filter: drop-shadow(0 0 8px var(--text-muted)); color: var(--text-main); }
-        
-        .nav-menu-container { display: flex; align-items: center; overflow-x: auto; flex-grow: 1; margin: 0 10px; scrollbar-width: none; -ms-overflow-style: none; }
-        .nav-menu-container::-webkit-scrollbar { display: none; }
-        
-        .nav-links { display: flex; gap: 8px; flex-wrap: nowrap; margin: 0 auto;}
-        .nav-links a { 
-            color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.9em;
-            display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 8px; transition: all 0.3s; white-space: nowrap;
-        }
-        .nav-links a:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-        .nav-links a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.1); font-weight: 600; box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);}
-        body.light-theme .nav-links a.active { box-shadow: none; background: rgba(0, 0, 0, 0.05); color: var(--text-main); }
+  .permisos-zona { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); background: var(--surface-inset); }
+  .permisos-cab { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .permisos-grid { display: grid; gap: 7px; }
 
-        .user-info { display: flex; align-items: center; gap: 10px; font-size: clamp(0.8em, 1.2vw, 0.9em); font-weight: 500; flex-wrap: wrap; justify-content: flex-end;}
-        .btn-logout { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
-        .btn-logout:hover { background: rgba(255,51,51,0.1); color: var(--neon-red); border-color: var(--neon-red); box-shadow: 0 0 10px rgba(255,51,51,0.2);}
-
-        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
-        #theme-switch { display: none; }
-        .theme-label {
-            width: 70px; height: 28px; background-color: var(--border-color);
-            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2); flex-shrink: 0;
-        }
-        .theme-label .toggle {
-            position: absolute; width: 34px; height: 22px; background-color: #fff; left: 3px;
-            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
-            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
-        }
-        #theme-switch:checked + .theme-label .toggle { transform: translateX(30px); background-color: #1e293b; }
-        .theme-label .names {
-            font-size: 10px; font-weight: bolder; width: 100%; position: absolute;
-            display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main);
-        }
-        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
-        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
-        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
-        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
-        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
-
-        /* GRID PRINCIPAL RESPONSIVO ABSOLUTO */
-        .container { 
-            display: flex; flex-wrap: wrap; gap: 2vw; align-items: flex-start; width: 100%; box-sizing: border-box;
-            max-width: 1400px; margin: 2vw auto; padding: 0 3%; 
-        }
-        
-        .form-section { flex: 1 1 350px; min-width: 0; }
-        .table-section { flex: 2 1 600px; min-width: 0; }
-
-        /* TARJETAS */
-        .card { background: var(--bg-panel); padding: 25px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 1px solid var(--border-color); backdrop-filter: blur(10px); transition: border-color 0.3s; box-sizing: border-box;}
-        .card:hover { border-color: var(--border-hover); }
-        .card-header { margin: -25px -25px 20px -25px; padding: 20px 25px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); border-radius: 16px 16px 0 0; }
-        body.light-theme .card-header { background: rgba(0,0,0,0.05); }
-        .card-header h3 { margin: 0; color: var(--text-main); font-size: 1.15em; font-weight: 700; display: flex; align-items: center; gap: 8px; text-transform: uppercase;}
-
-        /* FORMULARIO */
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--text-muted); }
-        input, select { 
-            width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; 
-            box-sizing: border-box; font-family: inherit; font-size: 1em; transition: all 0.3s; 
-            background: var(--input-bg); color: var(--text-main);
-        }
-        input:hover, select:hover { border-color: var(--border-hover); }
-        input:focus, select:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 2px rgba(0,240,255,0.2); background-color: var(--input-bg); }
-        
-        .help-text { font-size: 0.8em; color: var(--text-muted); margin-top: 6px; display: block; font-weight: 500; opacity: 0.8;}
-        
-        .row-flex { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .row-flex .form-group { margin-bottom: 0; flex: 1; min-width: 120px;}
-
-        /* BOTONES */
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        button.btn-save { 
-            width: 100%; padding: 14px; background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue); 
-            border-radius: 8px; font-weight: 700; font-size: 1em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;
-        }
-        button.btn-save:hover:not(:disabled) { background: var(--neon-blue); color: #000; transform: translateY(-2px); box-shadow: 0 0 15px rgba(0,240,255,0.4); }
-        button.btn-save:disabled { background: rgba(255,255,255,0.05); border-color: transparent; color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
-        
-        button.btn-cancel { 
-            width: 100%; padding: 14px; background: transparent; color: var(--text-main); border: 1px solid var(--border-color); 
-            border-radius: 8px; font-weight: 700; font-size: 1em; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.3s;
-        }
-        button.btn-cancel:hover { background: rgba(255,255,255,0.05); border-color: var(--text-main); }
-
-        /* TABLA DE USUARIOS RESPONSIVA */
-        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; }
-        .table-wrapper::-webkit-scrollbar { height: 8px; width: 8px;}
-        .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.95em; text-align: left; white-space: nowrap;}
-        th { background: var(--table-header); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border-color); padding: 15px 15px; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px;}
-        td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; color: var(--text-muted); vertical-align: middle; }
-        tbody tr:hover { background-color: var(--table-row-hover); }
-        
-        /* Badges en la tabla */
-        .badge-rol { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; border: 1px solid transparent; }
-        .rol-admin { background: rgba(138,43,226,0.1); color: var(--neon-purple); border-color: rgba(138,43,226,0.3); }
-        .rol-rut { background: rgba(0,255,157,0.1); color: var(--neon-green); border-color: rgba(0,255,157,0.3); }
-        
-        body.light-theme .rol-admin { background: #f3e8ff; color: #7e22ce; border-color: #d8b4fe; }
-        body.light-theme .rol-rut { background: #ecfdf5; color: #059669; border-color: #6ee7b7; }
-        
-        .badge-city { font-weight: 600; color: var(--neon-blue); }
-        body.light-theme .badge-city { color: #0284c7; }
-
-        /* Botones de Acción en la Tabla */
-        .action-cell { display: flex; gap: 8px; justify-content: center; }
-        .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--input-bg); }
-        
-        .btn-edit { color: var(--neon-amber); }
-        .btn-edit:hover { background: rgba(255,183,0,0.1); border-color: var(--neon-amber); box-shadow: 0 0 10px rgba(255,183,0,0.2); transform: scale(1.05);}
-        
-        .btn-delete { color: var(--neon-red); }
-        .btn-delete:hover { background: rgba(255,51,51,0.1); border-color: var(--neon-red); box-shadow: 0 0 10px rgba(255,51,51,0.2); transform: scale(1.05);}
-        
-        .current-user-tag { 
-            color: var(--neon-green); font-size: 0.75em; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; 
-            background: rgba(0,255,157,0.1); padding: 3px 8px; border-radius: 6px; margin-left: 10px; text-transform: uppercase; 
-            border: 1px solid rgba(0,255,157,0.3); letter-spacing: 0.5px;
-        }
-        body.light-theme .current-user-tag { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
-        
-        .restricted-tag { color: var(--text-muted); font-size: 0.85em; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; opacity: 0.7;}
-
-        /* ============================================
-           🔑 PANEL DE PERMISOS POR MÓDULO
-           ============================================ */
-        .permisos-box {
-            border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;
-            background: rgba(0,0,0,0.15); margin-bottom: 20px; transition: box-shadow .4s, border-color .4s;
-        }
-        body.light-theme .permisos-box { background: #f8fafc; }
-        .permisos-box.resaltado { border-color: var(--neon-amber); box-shadow: 0 0 0 3px rgba(255,183,0,0.18); }
-
-        .permisos-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 4px; }
-        .permisos-head strong { font-size: 0.95em; color: var(--text-main); display:flex; align-items:center; gap:6px; }
-        .permisos-sub { font-size: 0.8em; color: var(--text-muted); margin: 2px 0 12px; line-height: 1.5; }
-
-        .presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 12px; }
-        .preset-btn {
-            padding: 5px 10px; font-size: 0.75em; font-weight: 700; border-radius: 20px; cursor: pointer;
-            background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); transition: all .2s;
-        }
-        .preset-btn:hover { color: var(--neon-blue); border-color: var(--neon-blue); background: rgba(0,240,255,0.08); }
-
-        .permisos-grid { display: grid; grid-template-columns: 1fr; gap: 7px; }
-
-        .permiso-item {
-            display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px;
-            border: 1px solid var(--border-color); background: var(--input-bg); cursor: pointer;
-            transition: all .2s; user-select: none;
-        }
-        .permiso-item:hover { border-color: var(--border-hover); }
-        .permiso-item input { width: auto; margin: 0; flex-shrink: 0; accent-color: var(--neon-green); cursor: pointer; }
-        .permiso-item .p-ico { font-size: 1.05em; flex-shrink: 0; width: 20px; text-align: center; }
-        .permiso-item .p-nom { font-weight: 600; color: var(--text-main); font-size: 0.88em; flex: 1; min-width: 0; }
-        .permiso-item .p-desc { display:block; font-weight: 400; color: var(--text-muted); font-size: 0.88em; margin-top: 2px; line-height: 1.35; }
-
-        .permiso-item.activo { border-color: rgba(0,255,157,0.45); background: rgba(0,255,157,0.06); }
-        body.light-theme .permiso-item.activo { background: #ecfdf5; border-color: #6ee7b7; }
-
-        .permiso-item.sensible.activo { border-color: rgba(255,183,0,0.5); background: rgba(255,183,0,0.07); }
-        body.light-theme .permiso-item.sensible.activo { background: #fffbeb; border-color: #fcd34d; }
-
-        .permiso-item.fijo { opacity: 0.75; cursor: not-allowed; }
-        .permisos-box.bloqueado .permiso-item { cursor: not-allowed; opacity: 0.6; }
-
-        .aviso-permisos {
-            font-size: 0.78em; padding: 9px 12px; border-radius: 8px; line-height: 1.5;
-            background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); color: var(--neon-blue); margin-top: 12px;
-        }
-        .aviso-permisos.warn { background: rgba(255,183,0,0.08); border-color: rgba(255,183,0,0.3); color: var(--neon-amber); }
-
-        /* Columna de accesos en la tabla */
-        .accesos-cell { display: flex; align-items: center; gap: 7px; }
-        .accesos-chip {
-            font-size: 0.78em; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
-            background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid rgba(0,240,255,0.3);
-        }
-        .accesos-chip.total { background: rgba(138,43,226,0.1); color: var(--neon-purple); border-color: rgba(138,43,226,0.3); }
-        .accesos-chip.pocos { background: rgba(255,183,0,0.1); color: var(--neon-amber); border-color: rgba(255,183,0,0.3); }
-        .accesos-chip.defecto { background: transparent; color: var(--text-muted); border-color: var(--border-color); font-weight: 600; }
-        body.light-theme .accesos-chip.total { background: #f3e8ff; color: #7e22ce; border-color: #d8b4fe; }
-        body.light-theme .accesos-chip.pocos { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
-
-        .btn-key { color: var(--neon-blue); }
-        .btn-key:hover { background: rgba(0,240,255,0.1); border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0,240,255,0.2); transform: scale(1.05); }
-
-        .loader-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color: currentColor; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 768px) {
-            .navbar { flex-direction: column; padding: 15px; text-align: center;}
-            .user-info { justify-content: center; width: 100%; margin-top: 10px;}
-            .nav-links { justify-content: center; width: 100%; }
-        }
-    </style>
+  .fila-acciones { display: flex; gap: 6px; justify-content: flex-end; }
+  @media (max-width: 760px) { .ocultar-chico { display: none; } }
+</style>
 </head>
-<body>
+<body data-modulo="accesos">
 
-    <nav class="navbar" id="navbar">
-        <div class="navbar-brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-            Control de Accesos
-        </div>
-        
-        <div class="nav-menu-container">
-            <div class="nav-links">
-                <a href="Inicio.html" id="linkInicio">🏠 Inicio</a>
-                <a href="ProyeccionGlobal.html" id="linkProyeccion">🔭 Proyección</a>
-                <a href="Simulador.html" id="linkSimIDs">📝 Sim. IDs</a>
-                <a href="SimuladorCartaPorte.html" id="linkSimCP">📄 Sim. CP</a>
-                <a href="AuditorMasivo.html" id="linkMasivo">⚡ Masivo</a>
-                <a href="AuditoriaRutas.html" id="linkAuditoria">🔍 Auditoría</a>
-                <a href="Rentabilidad.html" id="linkRentabilidad">📊 Rentabilidad</a>
-                <a href="RentabilidadVehiculos.html" id="linkVehiculos">🚛 Vehículos</a>
-                <a href="Reportes.html" id="linkReportes">📈 Dashboard</a>
-                <a href="Registro.html" id="linkRegistro" class="active">🛡️ Accesos</a>
-            </div>
-        </div>
-        
-        <div class="user-info" id="infoUsuario">
-            <!-- Renderizado por JS -->
-        </div>
-    </nav>
+<main class="page">
 
-    <div class="container">
-        
-        <div class="form-section">
-            <div class="card">
-                <div class="card-header">
-                    <h3 id="formTitulo">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                        Nuevo Usuario
-                    </h3>
-                </div>
-                
-                <form id="formRegistro">
-                    <div class="form-group">
-                        <label>Nombre Completo</label>
-                        <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
-                        <span class="help-text">Solo letras y espacios.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Usuario (Login)</label>
-                        <input type="text" id="usuario" placeholder="Ej. jperez" required>
-                        <span class="help-text">Solo letras, sin espacios.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="text" id="password" placeholder="Mínimo 6 caracteres" required>
-                        <span class="help-text">Solo letras y números.</span>
-                    </div>
-
-                    <div class="row-flex">
-                        <div class="form-group">
-                            <label>Rol Asignado</label>
-                            <select id="rol">
-                                <option value="Ruteador">Ruteador</option>
-                                <option value="Administrador">Administrador</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Región / Ciudad</label>
-                            <select id="ciudad">
-                                <option value="QUITO">Quito</option>
-                                <option value="GUAYAQUIL">Guayaquil</option>
-                                <option value="CUENCA">Cuenca</option>
-                                <option value="GENERAL">General</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="permisos-box" id="cajaPermisos">
-                        <div class="permisos-head">
-                            <strong>🔑 Accesos a los módulos</strong>
-                            <span id="contadorPermisos" class="accesos-chip">0 módulos</span>
-                        </div>
-                        <p class="permisos-sub" id="subtituloPermisos">
-                            Marca a qué pantallas puede entrar esta persona. Lo que no marques desaparece de su menú y del Inicio, y tampoco podrá entrar escribiendo la dirección.
-                        </p>
-
-                        <div class="presets" id="presetsPermisos">
-                            <button type="button" class="preset-btn" onclick="aplicarPreset('todo')">Acceso total</button>
-                            <button type="button" class="preset-btn" onclick="aplicarPreset('admin')">Perfil Administrador</button>
-                            <button type="button" class="preset-btn" onclick="aplicarPreset('ruteador')">Perfil Ruteador</button>
-                            <button type="button" class="preset-btn" onclick="aplicarPreset('minimo')">Solo Inicio</button>
-                        </div>
-
-                        <div class="permisos-grid" id="gridPermisos"></div>
-
-                        <div class="aviso-permisos" id="avisoPermisos"></div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="submit" id="btnGuardar" class="btn-save">Guardar Registro</button>
-                        <button type="button" id="btnCancelar" class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="table-section">
-            <div class="card" style="padding: 0; overflow: hidden;">
-                <div class="card-header" style="margin: 0; border-radius: 16px 16px 0 0; border-bottom: none;">
-                    <h3>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                        Directorio del Sistema
-                    </h3>
-                </div>
-                
-                <div class="table-wrapper" style="border: none; border-radius: 0; border-top: 1px solid var(--border-color);">
-                    <table id="tblUsuarios">
-                        <thead>
-                            <tr>
-                                <th>Nombre Completo</th>
-                                <th>Credencial (Login)</th>
-                                <th>Rol Asignado</th>
-                                <th>Región Base</th>
-                                <th>Accesos</th>
-                                <th style="text-align:center; width: 150px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">⏳ Cargando directorio de usuarios...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Administración</div>
+      <h1>Accesos</h1>
+      <p class="sub">Quién entra al sistema y hasta dónde llega cada uno.</p>
     </div>
+    <div class="row">
+      <button class="btn btn-primary" id="btnNuevo"></button>
+    </div>
+  </div>
 
+  <div id="avisoRol"></div>
+
+  <div class="card mt-4">
+    <div class="card-head">
+      <h3 id="tituloTabla">Directorio</h3>
+      <div class="row">
+        <div style="position:relative">
+          <input type="search" id="buscar" placeholder="Buscar persona…" style="width:200px;padding-left:30px">
+          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--ink-muted);display:grid" id="lupa"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body flush">
+      <div class="table-wrap">
+        <table class="data" id="tabla">
+          <thead>
+            <tr>
+              <th>Persona</th>
+              <th class="ocultar-chico">Rol</th>
+              <th class="ocultar-chico">Región</th>
+              <th>Accesos</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo">
+            <tr><td colspan="5" class="center muted" style="padding:var(--s-10)">Cargando directorio…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Editor de persona -->
+<dialog class="modal wide" id="editor">
+  <div class="modal-head">
+    <h3 id="editorTitulo">Nueva persona</h3>
+    <button class="btn btn-ghost btn-icon btn-sm" type="button" id="cerrarEditor" aria-label="Cerrar"></button>
+  </div>
+
+  <div class="modal-body">
+    <form id="formPersona" novalidate>
+      <div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:var(--s-5)">
+
+        <!-- Datos -->
+        <div>
+          <div class="field">
+            <label for="fNombre">Nombre completo</label>
+            <input type="text" id="fNombre" required placeholder="Ej. Juan Pérez">
+            <div class="help">Solo letras y espacios.</div>
+          </div>
+
+          <div class="field">
+            <label for="fUsuario">Usuario</label>
+            <input type="text" id="fUsuario" required autocapitalize="none" spellcheck="false" placeholder="Ej. jperez">
+            <div class="help">Sin espacios. Es lo que escribe al entrar.</div>
+          </div>
+
+          <div class="field">
+            <label for="fClave">Contraseña</label>
+            <input type="text" id="fClave" required placeholder="Mínimo 6 caracteres">
+            <div class="help">Letras y números.</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fRol">Rol</label>
+              <select id="fRol">
+                <option>Ruteador</option>
+                <option>Administrador</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fCiudad">Región</label>
+              <select id="fCiudad"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permisos -->
+        <div>
+          <div class="permisos-zona">
+            <div class="permisos-cab">
+              <strong style="font-size:var(--t-sm)">Módulos que puede abrir</strong>
+              <span class="badge accent" id="contadorPerm">0</span>
+            </div>
+
+            <p class="fs-xs muted mb-3" id="notaPermisos">
+              Lo que no marques desaparece de su menú y del inicio, y tampoco puede entrar escribiendo la dirección.
+            </p>
+
+            <div class="presets mb-3" id="presets">
+              <button type="button" class="btn btn-default btn-sm" data-preset="Administrador">Perfil Administrador</button>
+              <button type="button" class="btn btn-default btn-sm" data-preset="Ruteador">Perfil Ruteador</button>
+              <button type="button" class="btn btn-default btn-sm" data-preset="todo">Todo</button>
+              <button type="button" class="btn btn-default btn-sm" data-preset="minimo">Nada</button>
+            </div>
+
+            <div class="permisos-grid" id="gridPermisos"></div>
+
+            <div class="note mt-3 fs-xs" id="avisoPermisos"></div>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-foot">
+    <button type="button" class="btn btn-default" id="cancelar">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="guardar">Guardar</button>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/tarifas.js"></script>
+<script src="assets/api.js"></script>
 <script>
-    // 🔒 RECUPERAR SESIÓN
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
+FX.listo(async (sesion) => {
+  'use strict';
+  if (!sesion) return;
 
-    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
-    const savedTheme = localStorage.getItem('flexnet_theme');
-    let isDarkChecked = (!savedTheme || savedTheme === 'dark') ? 'checked' : '';
-    if (savedTheme === 'light') document.body.classList.add('light-theme');
+  const soySupremo = FX.esSupremo(sesion);
+  const miLogin = String(sesion.usuario || '').toLowerCase();
+  const miNombre = String(sesion.nombre || '').toLowerCase();
 
-    function toggleTheme() {
-        const isChecked = document.getElementById('theme-switch').checked;
-        if (isChecked) {
-            document.body.classList.remove('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'dark');
-        } else {
-            document.body.classList.add('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'light');
-        }
+  let personas = [];
+  let editando = null;          // login original, o null si es alta
+  let permisos = [];            // claves marcadas ahora
+
+  /* ---------- Iconos estáticos ---------- */
+  document.getElementById('btnNuevo').innerHTML = FX.icono('plus') + ' Nueva persona';
+  document.getElementById('cerrarEditor').innerHTML = FX.icono('close');
+  document.getElementById('lupa').innerHTML = FX.icono('search');
+  document.getElementById('fCiudad').innerHTML = FX.opcionesCiudad(sesion);
+
+  if (!soySupremo) {
+    document.getElementById('avisoRol').innerHTML = `
+      <div class="note">${FX.icono('info')}<div>
+        Puedes ver el directorio y editar a los ruteadores. <b>Solo el administrador supremo</b> reparte permisos.
+      </div></div>`;
+  }
+
+  /* ================= Tabla ================= */
+  const cuerpo = document.getElementById('cuerpo');
+
+  function puedeEditar(p) {
+    if (soySupremo) return true;
+    const suyo = p.usuario.toLowerCase() === miLogin || p.nombre.toLowerCase() === miNombre;
+    return suyo || p.rol !== 'Administrador';
+  }
+
+  function pintarTabla(filtro = '') {
+    const q = filtro.trim().toLowerCase();
+    const lista = personas.filter(p =>
+      !q || p.nombre.toLowerCase().includes(q) || p.usuario.toLowerCase().includes(q));
+
+    document.getElementById('tituloTabla').textContent = `Directorio · ${personas.length} personas`;
+
+    if (!lista.length) {
+      cuerpo.innerHTML = `<tr><td colspan="5"><div class="empty">${FX.icono('search')}
+        <h4>Sin resultados</h4><p>Nadie coincide con “${FX.escapar(filtro)}”.</p></div></td></tr>`;
+      return;
     }
 
-    let modoEdicion = false;
-    let usuarioOriginal = "";
-    let listaUsuarios = [];
+    cuerpo.innerHTML = lista.map(p => {
+      const supremo = FX.esSupremo(p);
+      const soyYo = p.usuario.toLowerCase() === miLogin || p.nombre.toLowerCase() === miNombre;
+      const activos = FX.permisosDe(p);
+      const configurado = String(p.permisos || '').trim() !== '';
 
-    // --- LÓGICA SEGURA DEL SUPERADMIN Y SESIÓN ---
-    const nombreSesion = (sesion && sesion.nombre) ? String(sesion.nombre).toLowerCase().trim() : "";
-    const usrSesion = (sesion && sesion.usuario) ? String(sesion.usuario).toLowerCase().trim() : "";
-    const esSuperAdmin = (nombreSesion.includes('hector') || usrSesion.includes('hector'));
+      const pips = FX.MODULOS.filter(m => !m.fijo).map(m => {
+        const on = activos.includes(m.clave);
+        return `<span class="acc-pip ${on ? (m.sensible ? 'sens' : '') : 'off'}"
+                      title="${m.nombre}: ${on ? 'permitido' : 'sin acceso'}">${FX.icono(m.icono)}</span>`;
+      }).join('');
 
-    // =====================================================
-    // 🔑 MOTOR DE PERMISOS (catálogo compartido en seguridad.js)
-    // =====================================================
-    const ACCESOS = window.FLEXNET_ACCESOS;
-    let permisosSeleccionados = [];   // claves marcadas ahora mismo en el formulario
-    let usuarioEnEdicionEsSupremo = false;
+      const etiqueta = supremo
+        ? '<span class="badge accent">Todo el sistema</span>'
+        : configurado
+          ? `<span class="badge">${activos.length - 1} de ${FX.MODULOS.length - 1}</span>`
+          : '<span class="badge" title="Aún no configurado: usa el perfil de su rol">Por rol</span>';
 
-    // Dibuja la lista de módulos con sus casillas
-    function construirGridPermisos() {
-        const grid = document.getElementById('gridPermisos');
-        if (!grid || !ACCESOS) return;
+      const editable = puedeEditar(p);
 
-        grid.innerHTML = ACCESOS.MODULOS.map(m => `
-            <label class="permiso-item ${m.fijo ? 'fijo' : ''} ${m.sensible ? 'sensible' : ''}" data-clave="${m.clave}">
-                <input type="checkbox" value="${m.clave}" ${m.fijo ? 'checked disabled' : ''}
-                       onchange="togglePermiso('${m.clave}', this.checked)">
-                <span class="p-ico">${m.icono}</span>
-                <span class="p-nom">${m.nombre}
-                    <span class="p-desc">${m.descripcion}</span>
+      return `
+        <tr>
+          <td>
+            <div class="persona ${soyYo ? 'yo' : ''}">
+              <span class="av">${FX.escapar(FX.fmt.iniciales(p.nombre))}</span>
+              <span>
+                <span class="nom">${FX.escapar(p.nombre)}
+                  ${soyYo ? '<span class="badge accent">Tú</span>' : ''}
+                  ${supremo ? '<span class="badge warn" title="Siempre tiene acceso completo">Supremo</span>' : ''}
                 </span>
-            </label>
-        `).join('');
+                <span class="usr mono">${FX.escapar(p.usuario)}</span>
+              </span>
+            </div>
+          </td>
+          <td class="ocultar-chico"><span class="badge ${p.rol === 'Administrador' ? 'info' : ''}">${FX.escapar(p.rol)}</span></td>
+          <td class="ocultar-chico">${FX.escapar(p.ciudad || '—')}</td>
+          <td><div class="acc-lista">${pips} ${etiqueta}</div></td>
+          <td>
+            <div class="fila-acciones">
+              ${editable ? `<button class="btn btn-default btn-sm btn-icon" data-editar="${FX.escapar(p.usuario)}"
+                              title="Editar a ${FX.escapar(p.nombre)}">${FX.icono('edit')}</button>` : ''}
+              ${(editable && !soyYo && !supremo) ? `<button class="btn btn-ghost btn-sm btn-icon c-danger" data-borrar="${FX.escapar(p.usuario)}"
+                              title="Eliminar a ${FX.escapar(p.nombre)}">${FX.icono('trash')}</button>` : ''}
+              ${!editable ? `<span class="badge" title="No tienes permiso">${FX.icono('lock')}</span>` : ''}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ================= Editor ================= */
+  const dlg = document.getElementById('editor');
+  const grid = document.getElementById('gridPermisos');
+
+  grid.innerHTML = FX.MODULOS.map(m => `
+    <label class="check-card ${m.sensible ? 'is-sensitive' : ''}">
+      <input type="checkbox" value="${m.clave}" ${m.fijo ? 'checked disabled' : ''}>
+      <span>
+        <span class="cc-title">${FX.icono(m.icono)} ${m.nombre}</span>
+        <span class="cc-desc">${m.descripcion}</span>
+      </span>
+    </label>`).join('');
+
+  grid.addEventListener('change', e => {
+    if (e.target.type !== 'checkbox') return;
+    const c = e.target.value;
+    if (e.target.checked) { if (!permisos.includes(c)) permisos.push(c); }
+    else permisos = permisos.filter(x => x !== c);
+    reflejarPermisos();
+  });
+
+  function reflejarPermisos() {
+    if (!permisos.includes('inicio')) permisos.push('inicio');
+
+    grid.querySelectorAll('input').forEach(i => { i.checked = permisos.includes(i.value); });
+
+    const total = FX.MODULOS.length;
+    document.getElementById('contadorPerm').textContent = `${permisos.length} de ${total}`;
+
+    const aviso = document.getElementById('avisoPermisos');
+    if (permisos.includes('accesos')) {
+      aviso.className = 'note warn mt-3 fs-xs';
+      aviso.innerHTML = FX.icono('alert') + '<div>Con <b>Accesos</b> marcado, esta persona podrá crear usuarios y cambiar los permisos de los demás.</div>';
+    } else {
+      aviso.className = 'note mt-3 fs-xs';
+      aviso.innerHTML = FX.icono('info') + '<div>El cambio se aplica la próxima vez que abra cualquier pantalla. No necesita volver a entrar.</div>';
     }
+  }
 
-    function togglePermiso(clave, activo) {
-        if (activo) {
-            if (!permisosSeleccionados.includes(clave)) permisosSeleccionados.push(clave);
-        } else {
-            permisosSeleccionados = permisosSeleccionados.filter(c => c !== clave);
-        }
-        pintarPermisos();
-    }
-
-    // Refleja el arreglo en pantalla (casillas, colores, contador y aviso)
-    function pintarPermisos() {
-        if (!ACCESOS) return;
-
-        // "inicio" siempre va incluido: es la pantalla de aterrizaje
-        if (!permisosSeleccionados.includes('inicio')) permisosSeleccionados.push('inicio');
-
-        document.querySelectorAll('#gridPermisos .permiso-item').forEach(item => {
-            const clave = item.dataset.clave;
-            const check = item.querySelector('input');
-            const activo = permisosSeleccionados.includes(clave);
-            check.checked = activo;
-            item.classList.toggle('activo', activo);
-        });
-
-        const total = permisosSeleccionados.length;
-        const chip = document.getElementById('contadorPermisos');
-        chip.innerText = `${total} de ${ACCESOS.MODULOS.length} módulos`;
-        chip.className = 'accesos-chip' + (total === ACCESOS.MODULOS.length ? ' total' : (total <= 2 ? ' pocos' : ''));
-
-        const aviso = document.getElementById('avisoPermisos');
-        if (permisosSeleccionados.includes('accesos')) {
-            aviso.className = 'aviso-permisos warn';
-            aviso.innerHTML = '⚠️ <b>Atención:</b> con el módulo <b>Accesos</b> marcado, esta persona podrá crear usuarios y cambiar los permisos de los demás.';
-        } else {
-            aviso.className = 'aviso-permisos';
-            aviso.innerHTML = 'ℹ️ Los cambios se aplican la próxima vez que la persona abra cualquier pantalla del sistema. No necesita volver a iniciar sesión.';
-        }
-    }
-
-    function aplicarPreset(tipo) {
-        if (document.getElementById('cajaPermisos').classList.contains('bloqueado')) return;
-
-        if (tipo === 'todo') permisosSeleccionados = ACCESOS.TODAS_LAS_CLAVES.slice();
-        else if (tipo === 'admin') permisosSeleccionados = ACCESOS.DEFAULT_ADMIN.slice();
-        else if (tipo === 'ruteador') permisosSeleccionados = ACCESOS.DEFAULT_RUTEADOR.slice();
-        else permisosSeleccionados = ['inicio'];
-
-        pintarPermisos();
-    }
-
-    // Bloquea el panel cuando quien está conectado no puede repartir permisos
-    function configurarCandadoPermisos(esSupremoElEditado) {
-        const caja = document.getElementById('cajaPermisos');
-        const sub = document.getElementById('subtituloPermisos');
-        usuarioEnEdicionEsSupremo = !!esSupremoElEditado;
-
-        const puedeEditar = esSuperAdmin && !esSupremoElEditado;
-        caja.classList.toggle('bloqueado', !puedeEditar);
-
-        document.querySelectorAll('#gridPermisos input').forEach(i => {
-            const fijo = i.closest('.permiso-item').classList.contains('fijo');
-            i.disabled = !puedeEditar || fijo;
-        });
-        document.querySelectorAll('#presetsPermisos .preset-btn').forEach(b => b.disabled = !puedeEditar);
-
-        if (esSupremoElEditado) {
-            sub.innerHTML = '👑 <b>Administrador supremo:</b> siempre tiene acceso a todo el sistema. Sus permisos no se pueden recortar, para que nadie quede fuera del control de accesos.';
-        } else if (!esSuperAdmin) {
-            sub.innerHTML = '🔒 Solo el administrador supremo puede modificar los accesos. Aquí solo se muestran los permisos actuales de esta persona.';
-        } else {
-            sub.innerHTML = 'Marca a qué pantallas puede entrar esta persona. Lo que no marques desaparece de su menú y del Inicio, y tampoco podrá entrar escribiendo la dirección.';
-        }
-    }
-
-    // Resumen corto de permisos para mostrar en la tabla
-    function resumenAccesos(u) {
-        if (ACCESOS.esSupremo(u)) return { texto: '👑 Todo el sistema', clase: 'total', detalle: 'Administrador supremo' };
-
-        const configurado = String(u.permisos || '').trim() !== '';
-        const lista = ACCESOS.efectivos(u);
-        const nombres = lista.map(c => ACCESOS.nombreDe(c)).join(', ');
-
-        if (!configurado) {
-            return { texto: `Por rol (${lista.length})`, clase: 'defecto', detalle: 'Sin configurar. Hoy ve: ' + nombres };
-        }
-        if (lista.length === ACCESOS.TODAS_LAS_CLAVES.length) {
-            return { texto: 'Todo el sistema', clase: 'total', detalle: nombres };
-        }
-        return { texto: `${lista.length} módulos`, clase: lista.length <= 2 ? 'pocos' : '', detalle: nombres };
-    }
-
-    window.onload = function() {
-        document.getElementById('infoUsuario').innerHTML = `
-            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
-            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
-                <div class="toggle"></div>
-                <div class="names">
-                    <p class="light">Light</p>
-                    <p class="dark">Dark</p>
-                </div>
-            </label>
-            <span style="opacity:0.3; margin: 0 5px;">|</span>
-            <span>📍 ${sesion.ciudad}</span>
-            <span>👤 <b>${sesion.nombre}</b> ${esSuperAdmin ? '👑' : ''}</span>
-            <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-        `;
-        construirGridPermisos();
-        cancelarEdicion();     // deja el formulario en modo "nuevo usuario" con el preset del rol
-        cargarUsuarios();
-    };
-
-    // Al cambiar el rol en un usuario NUEVO, se propone el perfil de ese rol
-    document.getElementById('rol').addEventListener('change', function () {
-        if (modoEdicion) return;
-        aplicarPreset(this.value === 'Administrador' ? 'admin' : 'ruteador');
+  function bloquearPermisos(bloqueado, motivo) {
+    grid.querySelectorAll('input').forEach(i => {
+      const fijo = FX.MODULOS.find(m => m.clave === i.value)?.fijo;
+      i.disabled = bloqueado || !!fijo;
     });
+    document.querySelectorAll('#presets .btn').forEach(b => b.disabled = bloqueado);
+    document.getElementById('notaPermisos').innerHTML = motivo;
+  }
 
-    function cerrarSesion() {
-        localStorage.removeItem('sesionActiva');
-        window.location.href = 'index.html';
+  document.getElementById('presets').addEventListener('click', e => {
+    const b = e.target.closest('[data-preset]');
+    if (!b || b.disabled) return;
+    const p = b.dataset.preset;
+    permisos = p === 'todo' ? FX.CLAVES.slice()
+             : p === 'minimo' ? ['inicio']
+             : FX.PERFILES[p].slice();
+    reflejarPermisos();
+  });
+
+  function abrirEditor(persona) {
+    editando = persona ? persona.usuario : null;
+    const supremo = persona ? FX.esSupremo(persona) : false;
+
+    document.getElementById('editorTitulo').textContent = persona ? `Editar · ${persona.nombre}` : 'Nueva persona';
+    document.getElementById('fNombre').value  = persona ? persona.nombre : '';
+    document.getElementById('fUsuario').value = persona ? persona.usuario : '';
+    document.getElementById('fClave').value   = persona ? (persona.password || '') : '';
+    document.getElementById('fRol').value     = persona ? persona.rol : 'Ruteador';
+    document.getElementById('fCiudad').value  = persona ? (persona.ciudad || 'QUITO') : 'QUITO';
+
+    permisos = persona
+      ? (supremo ? FX.CLAVES.slice()
+                 : (String(persona.permisos || '').trim() ? FX.parsePermisos(persona.permisos) : FX.perfilPorRol(persona)))
+      : FX.PERFILES.Ruteador.slice();
+
+    const editablePerm = soySupremo && !supremo;
+    bloquearPermisos(!editablePerm,
+      supremo ? 'Este es el <b>administrador supremo</b>: siempre tiene acceso completo. No se le puede recortar, para que nadie quede fuera del control de accesos.'
+      : !soySupremo ? 'Solo el administrador supremo puede modificar accesos. Aquí ves los permisos actuales.'
+      : 'Lo que no marques desaparece de su menú y del inicio, y tampoco puede entrar escribiendo la dirección.');
+
+    reflejarPermisos();
+    dlg.showModal();
+    document.getElementById('fNombre').focus();
+  }
+
+  const cerrar = () => { dlg.close(); editando = null; };
+  document.getElementById('cerrarEditor').onclick = cerrar;
+  document.getElementById('cancelar').onclick = cerrar;
+  dlg.addEventListener('cancel', e => { e.preventDefault(); cerrar(); });
+
+  // El rol propone un perfil solo cuando la persona es nueva
+  document.getElementById('fRol').addEventListener('change', function () {
+    if (editando) return;
+    permisos = FX.PERFILES[this.value].slice();
+    reflejarPermisos();
+  });
+
+  /* ================= Guardar ================= */
+  document.getElementById('guardar').onclick = async function () {
+    const nombre  = document.getElementById('fNombre').value.trim();
+    const usuario = document.getElementById('fUsuario').value.trim();
+    const clave   = document.getElementById('fClave').value.trim();
+    const rol     = document.getElementById('fRol').value;
+    const ciudad  = document.getElementById('fCiudad').value;
+
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,}$/.test(nombre))
+      return FX.toast('El nombre solo puede tener letras y espacios.', 'danger');
+    if (!/^[a-zA-Z0-9._-]{3,}$/.test(usuario))
+      return FX.toast('El usuario no admite espacios ni símbolos raros.', 'danger');
+    if (clave.length < 6)
+      return FX.toast('La contraseña necesita al menos 6 caracteres.', 'danger');
+
+    const chocado = personas.find(p =>
+      p.usuario.toLowerCase() === usuario.toLowerCase() && p.usuario !== editando);
+    if (chocado) return FX.toast(`El usuario “${usuario}” ya está tomado.`, 'danger');
+
+    // El supremo nunca pierde su acceso completo, se edite desde donde se edite
+    const esSupremoEditado = FX.esSupremo({ nombre, usuario });
+    const permisosTexto = esSupremoEditado ? '*' : FX.serializarPermisos(permisos);
+
+    const liberar = FX.ocupar(this, 'Guardando…');
+    try {
+      await API.guardarUsuario({ nombre, usuario, password: clave, rol, ciudad, permisos: permisosTexto }, editando);
+
+      // Si me edité a mí mismo, la sesión se actualiza al vuelo
+      if (editando && editando.toLowerCase() === miLogin) {
+        FX.guardarSesion({ ...sesion, nombre, usuario, rol, ciudad, permisos: permisosTexto });
+      }
+
+      FX.toast(editando ? 'Cambios guardados.' : `${nombre} ya puede entrar.`, 'ok');
+      cerrar();
+      await cargar();
+    } catch (err) {
+      FX.toast(err.message || 'No se pudo guardar.', 'danger');
+    } finally {
+      liberar();
+    }
+  };
+
+  /* ================= Eventos de la tabla ================= */
+  cuerpo.addEventListener('click', async e => {
+    const bEditar = e.target.closest('[data-editar]');
+    const bBorrar = e.target.closest('[data-borrar]');
+
+    if (bEditar) {
+      const p = personas.find(x => x.usuario === bEditar.dataset.editar);
+      if (p) abrirEditor(p);
+      return;
     }
 
-    async function cargarUsuarios() {
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=getUsuarios`);
-            listaUsuarios = await res.json();
-            dibujarTabla();
-        } catch (e) {
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="6" style="color:var(--neon-red); text-align:center; padding:40px;">❌ Error de conexión al cargar la base de datos.</td></tr>`;
-        }
+    if (bBorrar) {
+      const login = bBorrar.dataset.borrar;
+      const p = personas.find(x => x.usuario === login);
+      const ok = await FX.confirmar('Eliminar persona',
+        `Se borran las credenciales de <b>${FX.escapar(p ? p.nombre : login)}</b> y deja de poder entrar. Esta acción no se deshace.`,
+        { aceptar: 'Eliminar', tono: 'danger' });
+      if (!ok) return;
+      try {
+        await API.eliminarUsuario(login);
+        FX.toast('Persona eliminada.', 'ok');
+        await cargar();
+      } catch (err) { FX.toast(err.message || 'No se pudo eliminar.', 'danger'); }
     }
+  });
 
-    function dibujarTabla() {
-        const tbody = document.querySelector('#tblUsuarios tbody');
-        tbody.innerHTML = '';
-        
-        listaUsuarios.forEach(u => {
-            let badgeRol = u.rol === 'Administrador' ? `<span class="badge-rol rol-admin">Administrador</span>` : `<span class="badge-rol rol-rut">Ruteador</span>`;
-            
-            // Verificación infalible: ¿Esta fila es la de la persona conectada?
-            let uNombre = String(u.nombre).toLowerCase().trim();
-            let uUsuario = String(u.usuario).toLowerCase().trim();
-            let esMiCuenta = (uNombre === nombreSesion) || (usrSesion !== "" && uUsuario === usrSesion);
+  document.getElementById('btnNuevo').onclick = () => abrirEditor(null);
+  document.getElementById('buscar').addEventListener('input', e => pintarTabla(e.target.value));
 
-            let badgeSesion = esMiCuenta ? `<span class="current-user-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> TÚ</span>` : '';
-            
-            // --- LÓGICA DE PERMISOS DE EDICIÓN ---
-            let puedeEditar = false;
-            if (esSuperAdmin) {
-                puedeEditar = true; // Héctor puede editar a todos
-            } else if (esMiCuenta) {
-                puedeEditar = true; // El administrador actual puede editarse a sí mismo
-            } else if (u.rol === 'Ruteador') {
-                puedeEditar = true; // El administrador actual puede editar a cualquier Ruteador
-            }
-
-            // Resumen de accesos de esta persona
-            const acc = resumenAccesos(u);
-            const celdaAccesos = `
-                <div class="accesos-cell" title="${acc.detalle}">
-                    <span class="accesos-chip ${acc.clase}">${acc.texto}</span>
-                </div>`;
-
-            let botones = "";
-            if (puedeEditar) {
-                const btnLlave = (esSuperAdmin && !ACCESOS.esSupremo(u)) ? `
-                        <button class="btn-icon btn-key" title="Editar accesos de ${u.nombre}" onclick="prepararEdicion('${u.usuario}', true)">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-                        </button>` : '';
-
-                botones = `
-                    <div class="action-cell">
-                        ${btnLlave}
-                        <button class="btn-icon btn-edit" title="Editar Usuario" onclick="prepararEdicion('${u.usuario}')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="btn-icon btn-delete" title="Eliminar Usuario" onclick="eliminarUsuario('${u.usuario}')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                        </button>
-                    </div>
-                `;
-            } else {
-                botones = `<div class="restricted-tag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Bloqueado</div>`;
-            }
-
-            tbody.innerHTML += `
-                <tr>
-                    <td style="font-weight:600; color:var(--text-main); font-size:1.05em;">${u.nombre} ${badgeSesion}</td>
-                    <td style="font-family:monospace; opacity:0.8; letter-spacing:0.5px;">${u.usuario}</td>
-                    <td>${badgeRol}</td>
-                    <td class="badge-city">${u.ciudad}</td>
-                    <td>${celdaAccesos}</td>
-                    <td>${botones}</td>
-                </tr>
-            `;
-        });
+  /* ================= Carga ================= */
+  async function cargar() {
+    try {
+      personas = await API.usuarios();
+      pintarTabla(document.getElementById('buscar').value);
+    } catch (err) {
+      cuerpo.innerHTML = `<tr><td colspan="5"><div class="empty">${FX.icono('alert')}
+        <h4>No se pudo cargar el directorio</h4><p>${FX.escapar(err.message)}</p></div></td></tr>`;
     }
+  }
 
-    function prepararEdicion(username, enfocarPermisos = false) {
-        const user = listaUsuarios.find(u => u.usuario === username);
-        if(!user) return;
-
-        // Doble validación al intentar editar
-        let uNombre = String(user.nombre).toLowerCase().trim();
-        let uUsuario = String(user.usuario).toLowerCase().trim();
-        let esMiCuentaEdit = (uNombre === nombreSesion) || (usrSesion !== "" && uUsuario === usrSesion);
-
-        if (!esSuperAdmin && !esMiCuentaEdit && user.rol === 'Administrador') {
-            alert("⛔ No tienes permisos suficientes para editar a otro Administrador.");
-            return;
-        }
-
-        modoEdicion = true;
-        usuarioOriginal = user.usuario;
-
-        document.getElementById('formTitulo').innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--neon-amber);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            Editar Credenciales
-        `;
-        document.getElementById('nombre').value = user.nombre;
-        document.getElementById('usuario').value = user.usuario;
-        document.getElementById('password').value = user.password;
-        document.getElementById('rol').value = user.rol;
-        document.getElementById('ciudad').value = user.ciudad;
-
-        // 🔑 Cargar los accesos actuales de esa persona
-        const yaConfigurado = String(user.permisos || '').trim() !== '';
-        permisosSeleccionados = yaConfigurado ? ACCESOS.parse(user.permisos) : ACCESOS.defaultPorRol(user);
-        configurarCandadoPermisos(ACCESOS.esSupremo(user));
-        if (ACCESOS.esSupremo(user)) permisosSeleccionados = ACCESOS.TODAS_LAS_CLAVES.slice();
-        pintarPermisos();
-
-        document.getElementById('btnGuardar').innerHTML = "Guardar Cambios";
-        document.getElementById('btnCancelar').style.display = "flex";
-
-        // Si entró por el botón de la llave, se lleva la vista al panel y se resalta
-        const caja = document.getElementById('cajaPermisos');
-        if (enfocarPermisos) {
-            caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            caja.classList.add('resaltado');
-            setTimeout(() => caja.classList.remove('resaltado'), 2200);
-        } else {
-            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
-    function cancelarEdicion() {
-        modoEdicion = false;
-        usuarioOriginal = "";
-        document.getElementById('formTitulo').innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-            Nuevo Usuario
-        `;
-        document.getElementById('btnGuardar').innerHTML = "Guardar Registro";
-        document.getElementById('btnCancelar').style.display = "none";
-        document.getElementById('formRegistro').reset();
-
-        // 🔑 Un usuario nuevo arranca con el perfil sugerido de su rol
-        configurarCandadoPermisos(false);
-        const rolNuevo = document.getElementById('rol').value;
-        permisosSeleccionados = (rolNuevo === 'Administrador' ? ACCESOS.DEFAULT_ADMIN : ACCESOS.DEFAULT_RUTEADOR).slice();
-        pintarPermisos();
-    }
-
-    // AL HACER CLIC EN GUARDAR
-    document.getElementById('formRegistro').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // 1. OBTENER VALORES LIMPIOS
-        const nombreVal = document.getElementById('nombre').value.trim();
-        const usuarioVal = document.getElementById('usuario').value.trim();
-        const passwordVal = document.getElementById('password').value.trim();
-        
-        // ==========================================
-        // 🛡️ INICIO DE VALIDACIONES ESTRICTAS
-        // ==========================================
-        
-        // Filtro 1: Nombre (Solo letras, espacios y tildes/ñ)
-        const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-        if (!regexLetras.test(nombreVal)) {
-            alert("❌ Error: El Nombre Completo solo puede contener letras y espacios.");
-            return;
-        }
-
-        // Filtro 2: Usuario (Solo letras, SIN ESPACIOS, sin números)
-        const regexUsuario = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$/;
-        if (!regexUsuario.test(usuarioVal)) {
-            alert("❌ Error: El Usuario (Login) solo debe contener letras, sin espacios ni números.");
-            return;
-        }
-
-        // Filtro 3: Contraseña (Solo letras y números, sin espacios ni caracteres raros)
-        const regexPassword = /^[a-zA-Z0-9]+$/;
-        if (!regexPassword.test(passwordVal)) {
-            alert("❌ Error: La Contraseña solo puede contener letras y números (sin espacios ni símbolos especiales).");
-            return;
-        }
-
-        // Filtro 4: Duplicados (Buscar si el usuario ya existe en la lista)
-        const usuarioExistente = listaUsuarios.find(u => u.usuario.toLowerCase() === usuarioVal.toLowerCase());
-        
-        if (usuarioExistente && (!modoEdicion || usuarioExistente.usuario !== usuarioOriginal)) {
-            alert(`❌ Error: El nombre de usuario "${usuarioVal}" ya está en uso. Por favor, elige otro.`);
-            return;
-        }
-        
-        // ==========================================
-        // ✅ FIN DE VALIDACIONES - TODO ESTÁ BIEN
-        // ==========================================
-
-        const btn = document.getElementById('btnGuardar');
-        let txtOld = btn.innerHTML;
-        btn.innerHTML = `<span class="loader-spinner"></span> Procesando...`;
-        btn.disabled = true;
-
-        // 🔑 Permisos: el supremo siempre conserva acceso total
-        let permisosFinal = ACCESOS.serializar(permisosSeleccionados);
-        if (usuarioEnEdicionEsSupremo || ACCESOS.esSupremo({ nombre: nombreVal, usuario: usuarioVal })) {
-            permisosFinal = '*';
-        }
-
-        const dataUsuario = {
-            action: modoEdicion ? 'edit_user' : '',
-            usuarioOriginal: usuarioOriginal,
-            nombre: nombreVal,
-            usuario: usuarioVal,
-            password: passwordVal,
-            rol: document.getElementById('rol').value,
-            ciudad: document.getElementById('ciudad').value,
-            permisos: permisosFinal
-        };
-
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(dataUsuario)
-            });
-            
-            setTimeout(() => {
-                cancelarEdicion();
-                cargarUsuarios();
-                btn.innerHTML = txtOld;
-                btn.disabled = false;
-                
-                // Si la persona se editó a sí misma, actualizar el nombre en memoria para que no tenga que volver a iniciar sesión
-                let uNombreEd = String(usuarioOriginal).toLowerCase().trim();
-                let esMiCuentaEd = (uNombreEd === nombreSesion) || (usrSesion !== "" && uNombreEd === usrSesion);
-                if(esMiCuentaEd) {
-                    sesion.nombre = nombreVal;
-                    sesion.usuario = usuarioVal;
-                    sesion.rol = dataUsuario.rol;
-                    sesion.permisos = permisosFinal;
-                    localStorage.setItem('sesionActiva', JSON.stringify(sesion));
-                    document.getElementById('infoUsuario').innerHTML = `
-                        <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
-                        <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
-                            <div class="toggle"></div>
-                            <div class="names">
-                                <p class="light">Light</p>
-                                <p class="dark">Dark</p>
-                            </div>
-                        </label>
-                        <span style="opacity:0.3; margin: 0 5px;">|</span>
-                        <span>📍 ${sesion.ciudad} &nbsp;|&nbsp; 👤 <b>${sesion.nombre}</b> ${esSuperAdmin ? '👑' : ''}</span>
-                        <button onclick="cerrarSesion()" class="btn-logout">Salir</button>
-                    `;
-                }
-
-            }, 1000);
-
-        } catch (error) {
-            alert("❌ Error de conexión al guardar los datos.");
-            cancelarEdicion();
-            btn.innerHTML = txtOld;
-            btn.disabled = false;
-        }
-    });
-
-    async function eliminarUsuario(username) {
-        let uNombre = String(username).toLowerCase().trim();
-        let esMiCuenta = (uNombre === nombreSesion) || (usrSesion !== "" && uNombre === usrSesion);
-        
-        if (esMiCuenta) {
-            alert("⛔ No puedes eliminar tu propia cuenta mientras estás conectado.");
-            return;
-        }
-
-        if (!confirm(`⚠️ ATENCIÓN: ¿Estás seguro de que deseas eliminar permanentemente las credenciales del usuario "${username}"?`)) return;
-
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ action: 'delete_user', usuario: username })
-            });
-            
-            document.querySelector('#tblUsuarios tbody').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--neon-red);"><span class="loader-spinner" style="margin-right:10px;"></span> 🗑️ Eliminando registro de la base de datos...</td></tr>`;
-            
-            setTimeout(() => { cargarUsuarios(); }, 1000);
-        } catch (error) {
-            alert("❌ Error de red al intentar eliminar el usuario.");
-        }
-    }
+  await cargar();
+});
 </script>
-
 </body>
 </html>

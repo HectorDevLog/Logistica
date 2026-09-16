@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<!-- Sistema de Rentabilidad · Distribución
+     © 2026 Héctor Torres. Todos los derechos reservados. -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Héctor Torres">
+<meta name="copyright" content="© 2026 Héctor Torres. Todos los derechos reservados.">
+<title>Auditoría de cartas porte · Rentabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* ---- Ficha de la carta porte ---- */
+  .ficha { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-4); }
+  .ficha .dato .k { font-size: var(--t-xs); color: var(--ink-muted); text-transform: uppercase;
+                    letter-spacing: .05em; font-weight: 650; margin-bottom: 3px; }
+  .ficha .dato .v { font-size: var(--t-md); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .ficha .dato .v.grande { font-size: var(--t-lg); font-weight: 700; letter-spacing: -.02em; }
+
+  /* ---- Motivo de un cobro en cero ---- */
+  /* Cada motivo tiene su color porque no significan lo mismo: un movimiento
+     interno está bien, una tarifa que falta no. */
+  .motivo { display: inline-flex; align-items: center; gap: 5px; font-size: var(--t-xs); font-weight: 600; }
+  .motivo svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .motivo.bien   { color: var(--ok); }
+  .motivo.aviso  { color: var(--warn); }
+  .motivo.malo   { color: var(--danger); }
+  .motivo.duda   { color: var(--ink-muted); }
+
+  tr.cero td { background: var(--surface-inset); }
+  tr.revisar td { background: var(--danger-soft) !important; }
+  tr.revisar { box-shadow: inset 3px 0 0 var(--danger); }
+
+  .buscador { display: flex; gap: var(--s-3); align-items: flex-end; flex-wrap: wrap; }
+  .buscador .field { margin: 0; flex: 1; min-width: 220px; }
+  .buscador textarea { resize: vertical; min-height: 52px; font-family: var(--mono, inherit); }
+
+  /* ---- Corregir un cobro ---- */
+  .editar-tarifa { display: inline-flex; align-items: center; gap: 3px; justify-content: flex-end; }
+  .editar-tarifa .signo { color: var(--ink-muted); font-size: var(--t-xs); }
+  .tarifa-edit { width: 92px; text-align: right; padding: 5px 8px; font-weight: 650;
+                 font-variant-numeric: tabular-nums; border: 1px solid var(--line);
+                 border-radius: var(--r-sm); background: var(--surface); color: var(--ink); }
+  .tarifa-edit:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .tarifa-edit.cambiado { border-color: var(--warn); background: var(--warn-soft, var(--surface-inset)); }
+  .tarifa-edit.malo { border-color: var(--danger); background: var(--danger-soft); }
+  tr.editada td { background: var(--warn-soft, var(--surface-inset)); }
+  .barra-guardar { display: flex; align-items: center; justify-content: space-between;
+                   gap: var(--s-3); flex-wrap: wrap; border-top: 1px solid var(--line); }
+
+  /* ---- Índice de varias cartas porte ----
+     Con más de una en pantalla hace falta saltar a la que interesa sin
+     bajar rueda abajo: esta tabla es el índice y cada fila es un enlace. */
+  #indice tr.ir { cursor: pointer; }
+  #indice tr.ir:hover td { background: var(--surface-hover, var(--surface-inset)); }
+  .card.destacada { outline: 2px solid var(--brand, var(--ink)); outline-offset: 3px; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    .topbar, .nav, .buscador, .btn { display: none !important; }
+    body { background: #fff; }
+    .page { max-width: none; padding: 0; }
+    .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    .scroll-y, .table-wrap { max-height: none !important; overflow: visible !important; }
+  }
+</style>
+</head>
+<body data-modulo="auditoria">
+
+<main class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Control</div>
+      <h1>Auditoría de cartas porte</h1>
+      <p class="sub">Qué se le cobró a cada pedido de una carta porte ya cerrada, y por qué.</p>
+    </div>
+  </div>
+
+  <div class="card mb-5">
+    <div class="card-body">
+      <div class="buscador">
+        <div class="field">
+          <label for="cp">Cartas porte</label>
+          <textarea id="cp" rows="2" placeholder="70236, 70237, 70238…"
+                    autocomplete="off" spellcheck="false"></textarea>
+          <div class="conteo" id="pista"></div>
+        </div>
+        <button class="btn btn-primary" id="btnBuscar"></button>
+        <button class="btn btn-default" id="btnExcel" hidden></button>
+        <button class="btn btn-default" id="btnImprimir" hidden></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="salida"></div>
+
+</main>
+
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/tarifas.js"></script>
+<script src="assets/api.js"></script>
+<script>
+FX.listo(async (sesion) => {
+  'use strict';
+  if (!sesion) return;
+
+  const $ = id => document.getElementById(id);
+  $('btnBuscar').innerHTML = FX.icono('search') + ' Buscar';
+  $('btnImprimir').innerHTML = FX.icono('down') + ' Imprimir';
+  $('btnExcel').innerHTML = FX.icono('down') + ' Excel';
+
+  /* ==================================================================
+     DATOS
+     ------------------------------------------------------------------
+     Se bajan una vez y se reutilizan: el histórico de cartas porte y el
+     monitor. El monitor es el que pone cliente, destino, peso y bultos,
+     porque DB_Simulador solo guarda el id del pedido y lo que se le cobró.
+     ================================================================== */
+  let RUTAS = [], PORID = new Map(), monitorOk = true;
+
+  /* Quién puede corregir un cobro. Es un permiso aparte del de entrar aquí:
+     auditar es mirar, corregir es escribir en la base. Se da en Accesos. */
+  const puedeEditar = FX.puede('auditcobros', sesion);
+  /* Lo que se está mostrando, ya resuelto. Lo lee el botón de Excel para
+     bajar exactamente esto y no volver a calcularlo. */
+  let loQueSeVe = [];
+
+  async function cargar() {
+    const [rutas] = await Promise.all([API.rutas(), API.tarifario()]);
+    RUTAS = rutas;
+    try {
+      const monitor = await API.monitorCompleto();
+      monitor.forEach(p => PORID.set(API.claveCodigo(p.idPedido), p));
+    } catch (e) {
+      monitorOk = false;   // se puede auditar igual, con menos detalle
+    }
+  }
+
+  /* «1260842 - ($5.77)» → { id, cobrado } */
+  function partir(lista) {
+    return String(lista == null ? '' : lista)
+      .split(',').map(t => t.trim()).filter(Boolean)
+      .map(trozo => {
+        const corte = trozo.indexOf('-');
+        const id  = (corte >= 0 ? trozo.slice(0, corte) : trozo).trim();
+        const val = corte >= 0 ? trozo.slice(corte + 1) : '';
+        const n = parseFloat(String(val).replace(/[()$\s]/g, '').replace(',', '.'));
+        return { id, cobrado: isFinite(n) ? n : 0 };
+      })
+      .filter(x => x.id);
+  }
+
+  /** Cuándo se cargó la carta porte, legible.
+      La hoja lo guarda de dos formas —«2026-09-15 12:05» y el ISO completo
+      con Z— y el ISO crudo en pantalla no lo lee nadie. */
+  function cuandoSeCargo(v) {
+    const s = String(v == null ? '' : v).trim();
+    if (!s) return '—';
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
+    if (!m) return s;
+    const d = new Date(s);
+    const hora = isNaN(d) ? m[2]
+      : d.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${FX.fmt.fecha(m[1])} · ${hora}`;
+  }
+
+  /** Todas las cartas porte que llevaron este pedido, ordenadas por fecha. */
+  function historialDe(idPedido) {
+    const clave = API.claveCodigo(idPedido);
+    const fuera = [];
+    RUTAS.forEach(r => {
+      partir(r.listaIds).forEach(({ id, cobrado }) => {
+        if (API.claveCodigo(id) === clave) {
+          fuera.push({ cartaPorte: r.cartaPorte, fecha: r.fecha, cobrado, placa: r.placa });
+        }
+      });
+    });
+    return fuera.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+  }
+
+  /* ==================================================================
+     POR QUÉ ESTÁ EN CERO
+     ------------------------------------------------------------------
+     Esto es lo que hace útil la pantalla. Un cero puede ser correcto
+     (movimiento interno, reentrega ya facturada, trayecto sin cargo) o
+     puede ser un cobro perdido. No es lo mismo y hay que distinguirlo.
+
+     Aviso importante sobre el método: el motivo se deduce HOY, con el
+     tarifario de hoy y el histórico de hoy. Si la tarifa cambió desde que
+     se cerró la carta porte, el motivo puede no ser el que hubo entonces.
+     Por eso, cuando el sistema hoy cobraría algo, se dice tal cual en vez
+     de inventar una explicación.
+     ================================================================== */
+  function motivoDelCero(p, fila) {
+    const cli = String((p && p.cliente) || '').toUpperCase();
+
+    // 1. Movimiento interno declarado en config.js
+    const internos = (CONFIG.CLIENTES_INTERNOS || []).map(x => String(x).toUpperCase());
+    const norm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (internos.some(x => norm(x) === norm(cli))) {
+      return { clase: 'bien', icono: 'check', texto: 'Movimiento interno: no se factura' };
+    }
+
+    // 2. Ya se había cobrado en una carta porte anterior
+    const antes = historialDe(p ? p.idPedido : fila.id)
+      .filter(h => h.cobrado > 0 &&
+                   API.claveCodigo(h.cartaPorte) !== API.claveCodigo(fila.cartaPorte) &&
+                   String(h.fecha) <= String(fila.fecha));
+    if (antes.length) {
+      const a = antes[0];
+      return { clase: 'bien', icono: 'check',
+               texto: `Ya se cobró en la CP ${a.cartaPorte} del ${FX.fmt.fecha(a.fecha)} · ${FX.fmt.money(a.cobrado)}` };
+    }
+
+    // 3. Lo que diría el motor hoy
+    if (!p) {
+      return { clase: 'duda', icono: 'info',
+               texto: 'El pedido ya no está en el monitor: no se puede comprobar' };
+    }
+    const t = API.calcularTarifa({ ...p, yaCobrado: null });
+    if (t.sinCargo) {
+      return { clase: 'bien', icono: 'check', texto: t.detalle || 'Trayecto sin cargo' };
+    }
+    if (t.sinTarifa) {
+      return { clase: 'malo', icono: 'alert',
+               texto: 'No hay tarifa configurada para este cliente y trayecto' };
+    }
+    if (t.total > 0) {
+      return { clase: 'malo', icono: 'alert', cobroPerdido: t.total,
+               texto: `Se guardó en cero, pero hoy cobraría ${FX.fmt.money(t.total)} (${t.origen})` };
+    }
+    return { clase: 'duda', icono: 'info', texto: 'Sin motivo identificable' };
+  }
+
+  /* ==================================================================
+     PINTADO
+     ================================================================== */
+  /**
+   * Pinta N cartas porte de una vez.
+   *
+   * Se audita por tandas —las de un día, las de un cliente, las que salieron
+   * raras en el Dashboard—, así que la pantalla acepta una lista. Con más de
+   * una sale primero el consolidado y el índice para saltar a cualquiera.
+   *
+   * @param {string[]} pedidas  tal como las escribió la persona
+   */
+  function pintar(pedidas) {
+    /* De menor a mayor y sin repetidas: es como se buscan y como salen en
+       el Dashboard. La comparación va por claveCodigo, así que da igual que
+       vengan como 70.236 o 070236. */
+    const claves = [];
+    const vistas = new Set();
+    pedidas.forEach(cp => {
+      const k = API.claveCodigo(cp);
+      if (k && !vistas.has(k)) { vistas.add(k); claves.push({ k, cp }); }
+    });
+    claves.sort((a, b) => {
+      const x = Number(a.k), y = Number(b.k);
+      return (isFinite(x) && isFinite(y)) ? x - y : String(a.k).localeCompare(String(b.k));
+    });
+
+    const encontradas = [];
+    const faltan = [];
+    claves.forEach(({ k, cp }) => {
+      /* Una carta porte puede estar guardada más de una vez —se cerró, se
+         corrigió y se volvió a guardar—. Se muestran todas: ocultar una sería
+         justo lo contrario de auditar. */
+      const filas = RUTAS.filter(r => API.claveCodigo(r.cartaPorte) === k);
+      if (filas.length) encontradas.push(...filas);
+      else faltan.push(cp);
+    });
+
+    loQueSeVe = [];
+
+    if (!encontradas.length) {
+      $('salida').innerHTML = `<div class="card"><div class="empty">${FX.icono('search')}
+        <h4>No hay ninguna carta porte ${FX.escapar(faltan.join(', '))}</h4>
+        <p>Solo se pueden auditar cartas porte que ya se guardaron desde el Simulador.</p></div></div>`;
+      $('btnImprimir').hidden = true;
+      $('btnExcel').hidden = true;
+      return;
+    }
+
+    // Las fichas se arman primero: llenan loQueSeVe, que es lo que suma el
+    // consolidado y lo que baja a Excel.
+    const fichas = encontradas.map(ficha).join('');
+
+    const aviso = faltan.length
+      ? `<div class="note warn">${FX.icono('alert')}<div>
+           <b>${faltan.length} de ${claves.length} no está${faltan.length === 1 ? '' : 'n'} guardada${
+             faltan.length === 1 ? '' : 's'}:</b> ${FX.escapar(faltan.join(', '))}.
+           O nunca se cerraron desde el Simulador, o están escritas distinto.</div></div>`
+      : '';
+
+    $('salida').innerHTML = aviso + consolidado() + fichas;
+    engancharIndice();
+    $('btnImprimir').hidden = false;
+    $('btnExcel').hidden = false;
+  }
+
+  /* ------------------------------------------------------------------
+     CONSOLIDADO
+     Con una sola carta porte no aporta nada —la ficha ya lo dice—, así que
+     solo aparece cuando hay varias. Suma lo mismo que las fichas, no
+     recalcula por su cuenta: si el total no cuadra con las partes, es que
+     algo está mal en las partes.
+     ------------------------------------------------------------------ */
+  function consolidado() {
+    if (loQueSeVe.length < 2) return '';
+
+    const t = loQueSeVe.reduce((o, x) => {
+      o.ing += Number(x.r.ingresos) || 0;
+      o.cos += x.costo;
+      o.ped += x.detalle.length;
+      o.peso += Number(x.r.pesoTotal) || 0;
+      o.cero += x.enCero;
+      o.perdido += x.perdido;
+      return o;
+    }, { ing: 0, cos: 0, ped: 0, peso: 0, cero: 0, perdido: 0 });
+    const util = t.ing - t.cos;
+    const margen = t.ing ? (util / t.ing) * 100 : 0;
+
+    const filas = loQueSeVe.map((x, i) => {
+      const util1 = (Number(x.r.ingresos) || 0) - x.costo;
+      return `
+        <tr class="ir" data-ir="${i}" title="Ir a la carta porte ${FX.escapar(x.r.cartaPorte)}">
+          <td><b>${FX.escapar(x.r.cartaPorte)}</b></td>
+          <td>${FX.escapar(FX.fmt.fecha(x.r.fecha))}</td>
+          <td class="mono fs-xs">${FX.escapar(x.r.placa || '—')}</td>
+          <td class="num">${x.detalle.length}</td>
+          <td class="num">${x.enCero ? x.enCero : '<span class="muted">—</span>'}</td>
+          <td class="num c-ingreso">${FX.fmt.money(x.r.ingresos)}</td>
+          <td class="num c-costo">${FX.fmt.money(x.costo)}</td>
+          <td class="num ${util1 < 0 ? 'c-danger' : 'c-ok'}"><b>${FX.fmt.money(util1)}</b></td>
+          <td class="num ${x.margen < 0 ? 'c-danger' : ''}">${FX.fmt.pct(x.margen)}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+    <div class="card mb-5">
+      <div class="card-head">
+        <h3>${loQueSeVe.length} cartas porte</h3>
+        <span class="hint">Toca una fila para ir a su desglose.</span>
+      </div>
+      <div class="card-body">
+        <div class="ficha">
+          <div class="dato"><div class="k">Pedidos</div><div class="v">${FX.fmt.num(t.ped)}</div></div>
+          <div class="dato"><div class="k">Peso total</div>
+            <div class="v">${t.peso ? FX.fmt.dec(t.peso, 2) + ' kg' : '—'}</div></div>
+          <div class="dato"><div class="k">En cero</div><div class="v">${FX.fmt.num(t.cero)}</div></div>
+          <div class="dato"><div class="k">Ingreso</div>
+            <div class="v grande c-ingreso">${FX.fmt.money(t.ing)}</div></div>
+          <div class="dato"><div class="k">Costo</div>
+            <div class="v grande c-costo">${FX.fmt.money(t.cos)}</div></div>
+          <div class="dato"><div class="k">Utilidad</div>
+            <div class="v grande ${util < 0 ? 'c-danger' : 'c-ok'}">${FX.fmt.money(util)}</div>
+            <div class="fs-xs muted">Margen ${FX.fmt.pct(margen)}</div></div>
+        </div>
+        ${t.perdido > 0 ? `<div class="note warn mt-4">${FX.icono('alert')}<div>
+          <b>${FX.fmt.money(t.perdido)} en total que hoy se cobrarían y quedaron en cero</b>,
+          repartidos en estas cartas porte.</div></div>` : ''}
+      </div>
+      <div class="card-body flush">
+        <div class="table-wrap scroll-y" style="max-height:340px">
+          <table class="data" id="indice">
+            <thead><tr>
+              <th>Carta porte</th><th>Fecha</th><th>Placa</th>
+              <th class="num">Pedidos</th><th class="num">En cero</th>
+              <th class="num">Ingreso</th><th class="num">Costo</th>
+              <th class="num">Utilidad</th><th class="num">Margen</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+            <tfoot><tr>
+              <td colspan="3"><b>Total</b></td>
+              <td class="num"><b>${FX.fmt.num(t.ped)}</b></td>
+              <td class="num"><b>${FX.fmt.num(t.cero)}</b></td>
+              <td class="num c-ingreso"><b>${FX.fmt.money(t.ing)}</b></td>
+              <td class="num c-costo"><b>${FX.fmt.money(t.cos)}</b></td>
+              <td class="num ${util < 0 ? 'c-danger' : 'c-ok'}"><b>${FX.fmt.money(util)}</b></td>
+              <td class="num"><b>${FX.fmt.pct(margen)}</b></td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ==================================================================
+     CORREGIR UN COBRO
+     ------------------------------------------------------------------
+     Auditar sirve para encontrar el error; esto es para arreglarlo sin
+     salir de la pantalla. Se cambia lo que se le cobró a un pedido y, al
+     guardar, se reescribe en DB_Simulador la lista de pedidos, cuántos son
+     y el ingreso de la carta porte. Los costos no se tocan: lo que se
+     corrige aquí es la tarifa, no el flete pagado al transportista.
+
+     Requiere el permiso «Corregir cobros», que se da en Accesos.
+     ================================================================== */
+  function leerMonto(texto) {
+    const limpio = String(texto == null ? '' : texto)
+      .replace(/[$\s ]/g, '')
+      .replace(/\.(?=\d{3}\b)/g, '')   // separador de miles
+      .replace(',', '.');
+    const n = parseFloat(limpio);
+    return isFinite(n) ? Math.round(Math.abs(n) * 100) / 100 : null;
+  }
+
+  /** Vuelve a armar la columna LISTA_IDS tal como la escribe el Simulador. */
+  function armarLista(detalle) {
+    return detalle.map(d => `${d.id} - ($${(Number(d.cobrado) || 0).toFixed(2)})`).join(', ');
+  }
+
+  /** Relee los campos de una ficha y actualiza total, estado y botones. */
+  function repasarFicha(i) {
+    const item = loQueSeVe[i];
+    if (!item) return;
+    const campos = [...document.querySelectorAll(`.tarifa-edit[data-ficha="${i}"]`)];
+    let suma = 0, cambiados = 0, malos = 0;
+
+    campos.forEach(campo => {
+      const n = leerMonto(campo.value);
+      const original = Number(campo.dataset.original) || 0;
+      campo.classList.toggle('malo', n === null);
+      if (n === null) { malos++; suma += original; return; }
+      suma += n;
+      const cambio = Math.abs(n - original) > 0.004;
+      campo.classList.toggle('cambiado', cambio);
+      campo.closest('tr').classList.toggle('editada', cambio);
+      if (cambio) cambiados++;
+    });
+
+    const total = Math.round(suma * 100) / 100;
+    const marcador = $('suma-' + i);
+    if (marcador) marcador.textContent = FX.fmt.money(total);
+
+    const btn = $('guardar-' + i), deshacer = $('deshacer-' + i), estado = $('estado-' + i);
+    if (btn) btn.disabled = !cambiados || !!malos;
+    if (deshacer) deshacer.hidden = !cambiados;
+    if (estado) {
+      const antes = Number(item.r.ingresos) || 0;
+      estado.textContent = malos
+        ? 'Hay un monto que no se entiende. Escríbelo como 12,50.'
+        : cambiados
+          ? `${cambiados} pedido${cambiados === 1 ? '' : 's'} con el cobro cambiado. ` +
+            `El ingreso de la carta porte pasaría de ${FX.fmt.money(antes)} a ${FX.fmt.money(total)}.`
+          : 'Se puede corregir el cobro de cualquier pedido. Al guardar se reescribe ' +
+            'esta carta porte en la base con el nuevo ingreso.';
+      estado.classList.toggle('c-danger', !!malos);
+    }
+  }
+
+  async function guardarFicha(i, boton) {
+    const item = loQueSeVe[i];
+    if (!item) return;
+    const campos = [...document.querySelectorAll(`.tarifa-edit[data-ficha="${i}"]`)];
+
+    // Se arma el detalle nuevo con lo que hay en pantalla
+    const nuevos = item.detalle.map((d, fila) => {
+      const campo = campos.find(c => Number(c.dataset.fila) === fila);
+      const n = campo ? leerMonto(campo.value) : null;
+      return { ...d, cobrado: n === null ? d.cobrado : n };
+    });
+
+    const cambiados = nuevos.filter((d, k) => Math.abs(d.cobrado - item.detalle[k].cobrado) > 0.004);
+    if (!cambiados.length) return;
+
+    const ingresos = Math.round(nuevos.reduce((s, d) => s + d.cobrado, 0) * 100) / 100;
+    /* Se enseña exactamente qué va a cambiar antes de tocar la base: es una
+       corrección de facturación, no un ajuste de pantalla. */
+    const lista = cambiados.map((d, k) => {
+      const antes = item.detalle.find(x => x.id === d.id);
+      return `<li><b class="mono">${FX.escapar(d.id)}</b>: ${FX.fmt.money(antes ? antes.cobrado : 0)}
+              → <b>${FX.fmt.money(d.cobrado)}</b></li>`;
+    }).join('');
+
+    const ok = await FX.confirmar(
+      `Corregir la carta porte ${FX.escapar(item.r.cartaPorte)}`,
+      `<ul style="margin:0 0 10px 18px;line-height:1.9">${lista}</ul>
+       <p>El ingreso de la carta porte pasa de <b>${FX.fmt.money(item.r.ingresos)}</b>
+          a <b>${FX.fmt.money(ingresos)}</b>. Los costos no cambian.</p>
+       <p class="fs-xs muted">Se reescribe la fila en DB_Simulador. No queda copia de lo anterior.</p>`,
+      { aceptar: 'Guardar en la base' });
+    if (!ok) return;
+
+    const liberar = FX.ocupar(boton, 'Guardando…');
+    try {
+      await API.actualizarCobros({
+        idRegistro: item.r.idRegistro,
+        pedidos:    nuevos.length,
+        ingresos,
+        listaIds:   armarLista(nuevos)
+      });
+
+      /* La copia local se actualiza sin volver a bajar todo: el histórico son
+         miles de filas y la persona está esperando. La caché sí se limpió, así
+         que la próxima pantalla lo lee ya corregido de la hoja. */
+      const fila = RUTAS.find(x => String(x.idRegistro) === String(item.r.idRegistro));
+      if (fila) {
+        fila.ingresos = ingresos;
+        fila.pedidos  = nuevos.length;
+        fila.listaIds = armarLista(nuevos);
+      }
+      FX.toast(`Carta porte ${item.r.cartaPorte} actualizada.`, 'ok');
+      buscar();          // se repinta con el dato nuevo, motivos incluidos
+    } catch (err) {
+      FX.toast('No se pudo guardar: ' + (err.message || err), 'danger');
+    } finally {
+      liberar();
+    }
+  }
+
+  /* Un solo escuchador para toda la salida: las fichas se vuelven a pintar
+     entera cada búsqueda y así no hay que volver a enganchar nada. */
+  $('salida').addEventListener('input', e => {
+    const campo = e.target.closest('.tarifa-edit');
+    if (campo) repasarFicha(Number(campo.dataset.ficha));
+  });
+
+  $('salida').addEventListener('click', e => {
+    const guardar = e.target.closest('[id^="guardar-"]');
+    if (guardar) { guardarFicha(Number(guardar.id.split('-')[1]), guardar); return; }
+    const deshacer = e.target.closest('[id^="deshacer-"]');
+    if (deshacer) {
+      const i = Number(deshacer.id.split('-')[1]);
+      document.querySelectorAll(`.tarifa-edit[data-ficha="${i}"]`).forEach(c => {
+        c.value = FX.fmt.dec(Number(c.dataset.original) || 0, 2);
+      });
+      repasarFicha(i);
+    }
+  });
+
+  /** Cada fila del índice lleva a su ficha, y la ficha se marca un momento
+      para que se vea a cuál se llegó. */
+  function engancharIndice() {
+    const tabla = $('indice');
+    if (!tabla) return;
+    tabla.querySelectorAll('tr.ir').forEach(tr => {
+      tr.onclick = () => {
+        const destino = document.getElementById('ficha-' + tr.dataset.ir);
+        if (!destino) return;
+        destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        destino.classList.add('destacada');
+        setTimeout(() => destino.classList.remove('destacada'), 1600);
+      };
+    });
+  }
+
+  function ficha(r) {
+    const pedidos = partir(r.listaIds);
+    const costo = (Number(r.cBase) || 0) + (Number(r.cExc) || 0) +
+                  (Number(r.cAyudantes) || 0) + (Number(r.cHE) || 0);
+    const utilidad = (Number(r.ingresos) || 0) - costo;
+    const margen = r.ingresos ? (utilidad / r.ingresos) * 100 : 0;
+
+    const veh = window.Tarifas ? Tarifas.vehiculoDePlaca(r.placa) : null;
+    const tipoVehiculo = (veh && veh.tipo) || (window.Tarifas ? Tarifas.tipoDePlaca(r.placa) : '') || '—';
+
+    // Suma de lo cobrado pedido por pedido, para contrastarla con el ingreso
+    // guardado en la cabecera. Si no cuadran, algo se editó por fuera.
+    const sumaPedidos = pedidos.reduce((s, x) => s + x.cobrado, 0);
+    const descuadre = Math.abs(sumaPedidos - (Number(r.ingresos) || 0));
+
+    let perdido = 0, enCero = 0;
+
+    /* Primero los datos, después el HTML. Así la descarga a Excel sale de lo
+       mismo que se ve, sin recalcular nada por su cuenta. */
+    const detalle = pedidos.map(f => {
+      const p = PORID.get(API.claveCodigo(f.id));
+      const cero = f.cobrado <= 0;
+      let motivo = null;
+      if (cero) {
+        enCero++;
+        motivo = motivoDelCero(p ? { ...p } : null, { ...f, cartaPorte: r.cartaPorte, fecha: r.fecha });
+        if (motivo.cobroPerdido) perdido += motivo.cobroPerdido;
+      }
+      return { ...f, p, cero, motivo };
+    });
+
+    const indice = loQueSeVe.length;   // el mismo número que usa el índice
+    loQueSeVe.push({ r, detalle, costo, utilidad, margen, tipoVehiculo, sumaPedidos, perdido, enCero });
+
+    /* ¿Se puede corregir esta carta porte aquí mismo?
+       Hacen falta dos cosas: el permiso «Corregir cobros» (se da en Accesos)
+       y que la fila tenga número de registro, que es por donde el Apps Script
+       la encuentra. Sin lo segundo no se toca: reescribir por fecha y placa
+       podría pisar otra carta porte. */
+    const editable = puedeEditar && String(r.idRegistro || '').trim() !== '';
+
+    const cuerpo = detalle.map(({ id, cobrado, p, cero, motivo }, fila) => {
+      const f = { id, cobrado };
+      const revisar = motivo && motivo.clase === 'malo';
+      const celda = editable
+        ? `<div class="editar-tarifa">
+             <span class="signo">$</span>
+             <input type="text" inputmode="decimal" class="tarifa-edit"
+                    data-ficha="${indice}" data-fila="${fila}" data-id="${FX.escapar(f.id)}"
+                    data-original="${f.cobrado.toFixed(2)}"
+                    value="${FX.fmt.dec(f.cobrado, 2)}"
+                    aria-label="Lo que se le cobró al pedido ${FX.escapar(f.id)}">
+           </div>`
+        : `<b class="${cero ? 'muted' : ''}">${FX.fmt.money(f.cobrado)}</b>`;
+      return `
+        <tr class="${cero ? 'cero' : ''} ${revisar ? 'revisar' : ''}" data-fila="${fila}">
+          <td><b class="mono">${FX.escapar(f.id)}</b></td>
+          <td>${FX.escapar(p ? p.cliente : '—')}</td>
+          <td>${p ? `<span class="tag">${FX.escapar(p.destino)}</span>` : '<span class="muted">—</span>'}</td>
+          <td class="num">${p ? FX.fmt.dec(p.peso, 1) + '<span class="muted fs-xs"> kg</span>' : '—'}</td>
+          <td class="num muted">${p ? p.bultos : '—'}</td>
+          <td class="num">${celda}</td>
+          <td>${motivo
+            ? `<span class="motivo ${motivo.clase}">${FX.icono(motivo.icono)}${FX.escapar(motivo.texto)}</span>`
+            : ''}</td>
+        </tr>`;
+    }).join('');
+
+    const avisos = [];
+    if (descuadre > 0.02) {
+      avisos.push(`<div class="note danger">${FX.icono('alert')}<div>
+        <b>El ingreso guardado no cuadra con el desglose.</b>
+        La cabecera dice ${FX.fmt.money(r.ingresos)} y los pedidos suman ${FX.fmt.money(sumaPedidos)},
+        una diferencia de ${FX.fmt.money(descuadre)}.</div></div>`);
+    }
+    if (perdido > 0) {
+      avisos.push(`<div class="note warn">${FX.icono('alert')}<div>
+        <b>Hay ${FX.fmt.money(perdido)} que hoy se cobrarían y quedaron en cero.</b>
+        Puede ser que la tarifa se configurara después de cerrar esta carta porte.
+        Mira las filas en rojo.</div></div>`);
+    }
+    if (!monitorOk) {
+      avisos.push(`<div class="note warn">${FX.icono('info')}<div>
+        No se pudo leer el monitor, así que no se muestran cliente, destino ni peso
+        de cada pedido. Los cobros sí son los guardados.</div></div>`);
+    }
+
+    return `
+    <div class="card mb-5" id="ficha-${indice}">
+      <div class="card-head">
+        <div class="row" style="gap:var(--s-3);flex-wrap:wrap;align-items:center;flex:1">
+          <h3>Carta porte ${FX.escapar(r.cartaPorte)}</h3>
+          <span class="badge">${FX.icono('truck')} ${FX.escapar(r.placa)}</span>
+          <span class="tag">${FX.escapar(tipoVehiculo)}</span>
+          <span class="badge ${r.tipoRuta === 'EXCLUSIVO' ? 'warn' : ''}">${FX.escapar(r.tipoRuta)}</span>
+          ${enCero ? `<span class="badge">${enCero} en cero</span>` : ''}
+        </div>
+      </div>
+
+      <div class="card-body">
+        ${avisos.join('')}
+        <div class="ficha">
+          <div class="dato"><div class="k">Fecha de despacho</div>
+            <div class="v">${FX.escapar(FX.fmt.fecha(r.fecha))}</div></div>
+          <div class="dato"><div class="k">Se cargó</div>
+            <div class="v">${FX.escapar(cuandoSeCargo(r.fechaCreacion))}</div></div>
+          <div class="dato"><div class="k">La cargó</div>
+            <div class="v">${FX.escapar(r.usuario || '—')}</div></div>
+          <div class="dato"><div class="k">Ciudad</div>
+            <div class="v">${FX.escapar(r.ciudad || '—')}</div></div>
+          <div class="dato"><div class="k">Proveedor</div>
+            <div class="v">${FX.escapar(r.proveedor || '—')}</div></div>
+          <div class="dato"><div class="k">Peso total</div>
+            <div class="v">${r.pesoTotal ? FX.fmt.dec(r.pesoTotal, 2) + ' kg' : '—'}</div></div>
+          <div class="dato"><div class="k">Pedidos</div>
+            <div class="v">${pedidos.length}</div></div>
+          <div class="dato"><div class="k">Ingreso</div>
+            <div class="v grande c-ingreso">${FX.fmt.money(r.ingresos)}</div></div>
+          <div class="dato"><div class="k">Costo</div>
+            <div class="v grande c-costo">${FX.fmt.money(costo)}</div></div>
+          <div class="dato"><div class="k">Utilidad</div>
+            <div class="v grande ${utilidad < 0 ? 'c-danger' : 'c-ok'}">${FX.fmt.money(utilidad)}</div>
+            <div class="fs-xs muted">Margen ${FX.fmt.pct(margen)}</div></div>
+        </div>
+
+        <div class="fs-xs muted mt-4">
+          Costo del vehículo ${FX.fmt.money(r.cBase)} ·
+          exclusivo ${FX.fmt.money(r.cExc)} ·
+          estibas ${FX.fmt.money(r.cAyudantes)} ·
+          adicionales ${FX.fmt.money(r.cHE)}
+        </div>
+      </div>
+
+      <div class="card-body flush">
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Pedido</th><th>Cliente</th><th>Destino</th>
+                <th class="num">Peso</th><th class="num">Bultos</th>
+                <th class="num">Se cobró</th><th>Por qué en cero</th>
+              </tr>
+            </thead>
+            <tbody>${cuerpo}</tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5"><b>Total</b></td>
+                <td class="num"><b id="suma-${indice}">${FX.fmt.money(sumaPedidos)}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      ${editable ? `
+      <div class="card-body barra-guardar" id="barra-${indice}">
+        <div class="fs-xs muted" id="estado-${indice}">
+          Se puede corregir el cobro de cualquier pedido. Al guardar se reescribe
+          esta carta porte en la base con el nuevo ingreso.
+        </div>
+        <div class="row" style="gap:var(--s-2)">
+          <button class="btn btn-ghost btn-sm" id="deshacer-${indice}" hidden>Deshacer</button>
+          <button class="btn btn-primary btn-sm" id="guardar-${indice}" disabled>
+            ${FX.icono('save')} Guardar cambios</button>
+        </div>
+      </div>` : (puedeEditar ? `
+      <div class="card-body">
+        <div class="note warn">${FX.icono('info')}<div>
+          Esta carta porte se guardó sin número de registro, así que no se puede
+          corregir desde aquí: habría que reescribirla por fecha y placa y eso
+          puede pisar otra. Se corrige en la hoja.</div></div>
+      </div>` : '')}
+    </div>`;
+  }
+
+  /* ==================================================================
+     ARRANQUE
+     ================================================================== */
+  $('pista').textContent = 'Una o varias, pegadas desde Excel o separadas por coma: ' +
+                           '70.236, 70 236 o 70236. Enter busca.';
+
+  try {
+    await cargar();
+  } catch (err) {
+    $('salida').innerHTML = `<div class="note danger">${FX.icono('alert')}<div>
+      No se pudieron cargar los datos: ${FX.escapar(err.message)}</div></div>`;
+    return;
+  }
+
+  function buscar() {
+    // Se reutiliza el mismo lector de códigos del Simulador, así que da
+    // igual cómo vengan pegadas: en columna desde Excel, separadas por coma
+    // o con separador de miles.
+    const lista = API.listaDeCodigos($('cp').value);
+    if (!lista.length) {
+      $('salida').innerHTML = '';
+      $('btnImprimir').hidden = true;
+      $('btnExcel').hidden = true;
+      loQueSeVe = [];
+      return;
+    }
+    pintar(lista);
+  }
+
+  /* ==================================================================
+     DESCARGA
+     ------------------------------------------------------------------
+     Baja exactamente lo que está en pantalla: la ficha de la carta porte
+     y el desglose con el motivo de cada cero. Es CSV con BOM y punto y
+     coma, que es lo que Excel en español abre en columnas sin preguntar.
+     ================================================================== */
+  $('btnExcel').onclick = () => {
+    if (!loQueSeVe.length) { FX.toast('Busca una carta porte primero.', 'warn'); return; }
+
+    const dec = n => String((Math.round((Number(n) || 0) * 100) / 100).toFixed(2)).replace('.', ',');
+    const escapa = v => {
+      const x = String(v == null ? '' : v);
+      return /[;"\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x;
+    };
+    const lineas = [];
+
+    /* Con varias cartas porte, primero el consolidado y el índice: es lo que
+       se mira al abrir el archivo. Después va cada una con su desglose. */
+    if (loQueSeVe.length > 1) {
+      const t = loQueSeVe.reduce((o, x) => {
+        o.ing += Number(x.r.ingresos) || 0; o.cos += x.costo;
+        o.ped += x.detalle.length; o.peso += Number(x.r.pesoTotal) || 0;
+        o.cero += x.enCero; o.perdido += x.perdido;
+        return o;
+      }, { ing: 0, cos: 0, ped: 0, peso: 0, cero: 0, perdido: 0 });
+      const util = t.ing - t.cos;
+
+      lineas.push(['CONSOLIDADO', loQueSeVe.length + ' cartas porte']);
+      lineas.push(['Pedidos', t.ped]);
+      lineas.push(['Peso total (kg)', dec(t.peso)]);
+      lineas.push(['Pedidos en cero', t.cero]);
+      lineas.push(['Ingreso', dec(t.ing)]);
+      lineas.push(['Costo', dec(t.cos)]);
+      lineas.push(['Utilidad', dec(util)]);
+      lineas.push(['Margen %', dec(t.ing ? (util / t.ing) * 100 : 0)]);
+      if (t.perdido > 0) lineas.push(['Cobros en cero que hoy se cobrarían', dec(t.perdido)]);
+      lineas.push([]);
+
+      lineas.push(['Carta porte', 'Fecha', 'Placa', 'Pedidos', 'En cero',
+                   'Ingreso', 'Costo', 'Utilidad', 'Margen %']);
+      loQueSeVe.forEach(x => {
+        const u = (Number(x.r.ingresos) || 0) - x.costo;
+        lineas.push([x.r.cartaPorte, x.r.fecha, x.r.placa || '', x.detalle.length, x.enCero,
+                     dec(x.r.ingresos), dec(x.costo), dec(u), dec(x.margen)]);
+      });
+      lineas.push(['TOTAL', '', '', t.ped, t.cero, dec(t.ing), dec(t.cos), dec(util),
+                   dec(t.ing ? (util / t.ing) * 100 : 0)]);
+      lineas.push([]);
+      lineas.push([]);
+    }
+
+    loQueSeVe.forEach(({ r, detalle, costo, utilidad, margen, tipoVehiculo, sumaPedidos, perdido }) => {
+      // La ficha, en vertical: se lee mejor en una hoja que en una fila larga
+      lineas.push(['CARTA PORTE', r.cartaPorte]);
+      lineas.push(['Fecha de despacho', r.fecha]);
+      lineas.push(['Se cargó', r.fechaCreacion || '']);
+      lineas.push(['La cargó', r.usuario || '']);
+      lineas.push(['Ciudad', r.ciudad || '']);
+      lineas.push(['Placa', r.placa || '']);
+      lineas.push(['Tipo de vehículo', tipoVehiculo || '']);
+      lineas.push(['Proveedor', r.proveedor || '']);
+      lineas.push(['Tipo de ruta', r.tipoRuta || '']);
+      lineas.push(['Peso total (kg)', dec(r.pesoTotal)]);
+      lineas.push(['Pedidos', detalle.length]);
+      lineas.push(['Ingreso', dec(r.ingresos)]);
+      lineas.push(['Costo del vehículo', dec(r.cBase)]);
+      lineas.push(['Costo exclusivo', dec(r.cExc)]);
+      lineas.push(['Costo estibas', dec(r.cAyudantes)]);
+      lineas.push(['Otros costos', dec(r.cHE)]);
+      lineas.push(['Costo total', dec(costo)]);
+      lineas.push(['Utilidad', dec(utilidad)]);
+      lineas.push(['Margen %', dec(margen)]);
+      if (perdido > 0) lineas.push(['Cobros en cero que hoy se cobrarían', dec(perdido)]);
+      lineas.push([]);
+
+      lineas.push(['Pedido', 'Cliente', 'Destino', 'Peso (kg)', 'Bultos',
+                   'Se cobró', 'Por qué en cero']);
+      detalle.forEach(({ id, cobrado, p, motivo }) => {
+        lineas.push([id, p ? p.cliente : '', p ? p.destino : '',
+                     p ? dec(p.peso) : '', p ? p.bultos : '',
+                     dec(cobrado), motivo ? motivo.texto : '']);
+      });
+      lineas.push(['TOTAL', '', '', '', '', dec(sumaPedidos), '']);
+      lineas.push([]);
+      lineas.push([]);
+    });
+
+    lineas.push([`© ${CONFIG.ANIO || ''} ${CONFIG.AUTOR || ''}. Todos los derechos reservados.`]);
+    const csv = '\uFEFF' + lineas.map(f => f.map(escapa).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    /* El nombre dice qué trae, pero con veinte cartas porte no cabe: a
+       partir de tres se pone la primera, la última y cuántas son. */
+    const cps = loQueSeVe.map(x => String(x.r.cartaPorte));
+    a.download = 'auditoria_CP_' + (cps.length > 3
+      ? `${cps[0]}_a_${cps[cps.length - 1]}_${cps.length}CP`
+      : cps.join('-')) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    FX.toast('Descargado.', 'ok');
+  };
+
+  $('btnBuscar').onclick = buscar;
+  /* Enter busca; Shift+Enter deja escribir otra carta porte en la línea de
+     abajo, que es como se pega una columna de Excel. */
+  $('cp').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); buscar(); }
+  });
+  $('btnImprimir').onclick = () => print();
+
+  /* Si se llega con ?cp=70236 —o con varias, ?cp=70236,70237— se busca sola:
+     así el Dashboard puede mandar aquí lo que se esté viendo. */
+  const pedida = new URLSearchParams(location.search).get('cp');
+  if (pedida) { $('cp').value = pedida.replace(/,/g, '\n'); buscar(); }
+});
+</script>
+</body>
+</html>

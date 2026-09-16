@@ -1,1244 +1,273 @@
 <!DOCTYPE html>
+<!-- Sistema de Rentabilidad · Distribución
+     © 2026 Héctor Torres. Todos los derechos reservados. -->
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlexNet - Centro de Operaciones</title>
-    <script src="config.js"></script>
-    <script src="seguridad.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Héctor Torres">
+<meta name="copyright" content="© 2026 Héctor Torres. Todos los derechos reservados.">
+<title>Inicio · Rentabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .saludo h1 { font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -.028em; }
+  /* Sin `capitalize`: en español pondría mayúscula también en «de». */
+  .saludo .fecha { color: var(--ink-muted); font-size: var(--t-sm); margin-top: 2px; }
+  .saludo .fecha::first-letter { text-transform: uppercase; }
 
-        :root { 
-            /* VARIABLES TEMA OSCURO (Por defecto) */
-            --bg-main: #070b14;
-            --bg-panel: rgba(17, 24, 39, 0.6);
-            --bg-card: #171717;
-            --card-overlay: rgba(23, 23, 23, 0.7);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255,255,255,0.05);
-            
-            --neon-blue: #00f0ff;
-            --neon-purple: #8a2be2;
-            --neon-green: #00ff9d;
-            --neon-amber: #ffb700;
-            --neon-red: #ff3333;
-            
-            /* Colores del Capibara Cyberpunk */
-            --capy-body: #a06b3e; 
-            --capy-snout: #8b572a; 
-            --capy-dark: #2a1608; 
-        }
+  /* Aviso de trabajo pendiente */
+  .pendiente {
+    display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;
+    padding: var(--s-4) var(--s-5); border-radius: var(--r-lg);
+    background: var(--warn-soft); border: 1px solid var(--warn-line);
+  }
+  .pendiente .ico { width: 38px; height: 38px; border-radius: var(--r-md); display: grid; place-items: center;
+                    background: var(--surface-raised); color: var(--warn); border: 1px solid var(--warn-line); flex-shrink: 0; }
+  .pendiente .ico svg { width: 19px; height: 19px; }
+  .pendiente b { color: var(--warn); display: block; font-size: var(--t-md); }
+  .pendiente span { font-size: var(--t-sm); color: var(--ink-soft); }
 
-        /* VARIABLES TEMA CLARO */
-        body.light-theme {
-            --bg-main: #f1f5f9;
-            --bg-panel: rgba(255, 255, 255, 0.8);
-            --bg-card: #ffffff;
-            --card-overlay: rgba(255, 255, 255, 0.8);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: rgba(0,0,0,0.1);
-        }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main); 
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
-            margin: 0; padding: 0; color: var(--text-main); 
-            min-height: 100vh; overflow-x: hidden;
-            transition: background-color 0.4s ease, color 0.4s ease;
-        }
-        
-        /* NAVBAR */
-        .navbar { 
-            background: var(--bg-panel); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px 4%; display: flex; align-items: center; justify-content: space-between; 
-            position: sticky; top: 0; z-index: 50; flex-wrap: wrap; gap: 15px;
-            transition: background-color 0.4s ease, border-color 0.4s ease;
-        }
-        
-        .navbar-brand { font-size: clamp(1.2em, 2vw, 1.4em); font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-        .navbar-brand svg { filter: drop-shadow(0 0 8px var(--neon-blue)); }
+  /* Accesos a módulos */
+  .modulos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--s-4); }
+  .modulo {
+    display: flex; flex-direction: column; gap: var(--s-3);
+    padding: var(--s-5); border-radius: var(--r-lg);
+    background: var(--surface-raised); border: 1px solid var(--line);
+    text-decoration: none; color: inherit;
+    transition: border-color .18s, transform .18s, box-shadow .18s;
+  }
+  .modulo:hover { border-color: var(--accent-line); transform: translateY(-2px); box-shadow: var(--shadow-md); text-decoration: none; }
+  .modulo .cab { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+  .modulo .ico { width: 38px; height: 38px; border-radius: var(--r-md); display: grid; place-items: center;
+                 background: var(--accent-soft); color: var(--accent-ink); border: 1px solid var(--accent-line); }
+  .modulo .ico svg { width: 19px; height: 19px; }
+  .modulo.sensible .ico { background: var(--warn-soft); color: var(--warn); border-color: var(--warn-line); }
+  .modulo h3 { font-size: var(--t-md); }
+  .modulo p { font-size: var(--t-sm); color: var(--ink-muted); line-height: 1.5; }
+  .modulo .flecha { color: var(--ink-muted); transition: transform .18s, color .18s; }
+  .modulo:hover .flecha { transform: translateX(3px); color: var(--accent); }
+  .modulo .flecha svg { width: 17px; height: 17px; }
 
-        .user-info { display: flex; align-items: center; gap: 15px; font-size: clamp(0.85em, 1.5vw, 0.95em); font-weight: 500; flex-wrap: wrap; justify-content: flex-end;}
-        
-        .btn-nav { 
-            background: transparent; color: var(--text-main); border: 1px solid var(--border-color); 
-            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;
-        }
-        .btn-nav:hover { background: var(--border-color); transform: translateY(-2px); }
-        
-        .btn-sync { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border-color: rgba(0, 255, 157, 0.3); box-shadow: 0 0 10px rgba(0, 255, 157, 0.1); }
-        .btn-sync:hover { background: var(--neon-green); color: #070b14; box-shadow: 0 0 15px rgba(0, 255, 157, 0.4); }
+  /* Barra de actividad reciente */
+  .mini-dia { display: flex; align-items: flex-end; gap: 3px; height: 42px; margin-top: var(--s-3); }
+  .mini-dia i { flex: 1; border-radius: 2px 2px 0 0; background: var(--accent); opacity: .8; min-height: 2px; display: block; }
+  .mini-dia i.neg { background: var(--danger); }
 
-        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
-        #theme-switch { display: none; }
-        .theme-label {
-            width: 90px; height: 34px; background-color: var(--border-color);
-            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2);
-        }
-        .theme-label .toggle {
-            position: absolute; width: 45px; height: 28px; background-color: #fff; left: 3px;
-            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
-            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
-        }
-        #theme-switch:checked + .theme-label .toggle {
-            transform: translateX(39px); background-color: #1e293b;
-        }
-        .theme-label .names {
-            font-size: 11px; font-weight: bolder; width: 100%; position: absolute;
-            display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main);
-        }
-        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
-        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
-        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
-        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
-        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
-
-
-        /* GRID PRINCIPAL RESPONSIVO ABSOLUTO */
-        .app-container {
-            display: flex; flex-direction: column; gap: 30px;
-            padding: 3vw 4%; max-width: 1500px; margin: 0 auto; box-sizing: border-box; width: 100%;
-        }
-
-        /* HERO SECTION */
-        .hero { 
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 20px 30px; position: relative; flex-wrap: wrap; gap: 20px;
-        }
-        .hero-texts { flex: 1; text-align: center; min-width: 280px;}
-        .hero h1 { font-size: clamp(2em, 4vw, 3em); margin: 0 0 10px 0; font-weight: 800; letter-spacing: -1px; animation: fadeUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px);}
-        .text-neon-cyan { color: var(--neon-blue); text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
-        body.light-theme .text-neon-cyan { color: #0284c7; text-shadow: none; }
-        
-        .hero p { color: var(--text-muted); font-size: clamp(0.95em, 1.5vw, 1.1em); max-width: 650px; margin: 0 auto; animation: fadeUp 0.6s ease-out forwards 0.1s; opacity: 0; transform: translateY(20px);}
-
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-
-        /* PÍLDORAS DE ESTADO */
-        .status-dashboard { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 25px; animation: fadeUp 0.6s ease-out forwards 0.2s; opacity: 0; transform: translateY(20px);}
-        .status-pill {
-            background: var(--bg-panel); border: 1px solid var(--border-color);
-            padding: 10px 20px; border-radius: 50px; font-size: clamp(0.8em, 1.2vw, 0.9em); font-weight: 600;
-            display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px);
-            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .status-pill.success { border-color: rgba(0, 255, 157, 0.3); color: var(--neon-green); box-shadow: 0 0 15px rgba(0, 255, 157, 0.1);}
-        .status-pill.loading { border-color: rgba(0, 240, 255, 0.3); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);}
-        .status-pill.error { border-color: rgba(255, 50, 50, 0.3); color: #ff4d4d; box-shadow: 0 0 15px rgba(255, 50, 50, 0.1);}
-        
-        body.light-theme .status-pill.success { color: #059669; }
-        body.light-theme .status-pill.loading { color: #0284c7; }
-        body.light-theme .status-pill.error { color: #dc2626; }
-
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;}
-        .status-dot.success { background-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
-        .status-dot.loading { background-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); animation: pulseDot 1s infinite alternate; }
-        .status-dot.error { background-color: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; }
-        @keyframes pulseDot { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
-
-        /* 🔥 MENSAJE RESPALDO (SOLO SE VE EN MÓVILES) 🔥 */
-        #msgBloqueo {
-            margin-top: 15px; padding: 10px 20px; border-radius: 50px; font-size: 0.9em; font-weight: 600;
-            background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); border: 1px solid rgba(0, 240, 255, 0.3);
-            display: none; opacity: 0; transition: opacity 0.3s ease;
-        }
-        body.light-theme #msgBloqueo {
-            background: #eff6ff; color: #0284c7; border-color: #bae6fd;
-        }
-        @media (min-width: 1201px) {
-            #msgBloqueo { display: none !important; }
-        }
-
-        /* 🔥 CAPIBARA CYBERPUNK RESTAURADO 🔥 */
-        .mascot-wrapper {
-            position: absolute; right: 2%; top: 0; width: 120px; height: 120px;
-            display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
-            animation: floatMascot 4s ease-in-out infinite; z-index: 10;
-        }
-
-        @media (max-width: 1200px) {
-            /* En pantallas menores a 1200px (móviles/tablets pequeñas), escondemos al capibara y delegamos al msgBloqueo */
-            .mascot-wrapper { display: none; }
-        }
-
-        @keyframes floatMascot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-        .capy-speech-bubble {
-            position: absolute; top: -15px; left: -140px; background: var(--bg-panel);
-            border: 1px solid var(--neon-blue); padding: 8px 15px; border-radius: 12px;
-            font-size: 0.85em; font-weight: 600; color: var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-            opacity: 0; transform: scale(0.8) translateY(10px);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 10; pointer-events: none; white-space: nowrap; backdrop-filter: blur(5px);
-        }
-        .capy-speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
-        .capy-speech-bubble::after {
-            content: ''; position: absolute; top: 10px; right: -6px; width: 10px; height: 10px;
-            background: var(--bg-panel); border-top: 1px solid var(--neon-blue); border-right: 1px solid var(--neon-blue);
-            transform: rotate(45deg);
-        }
-
-        .mascot-container { position: relative; width: 80px; height: 80px; margin-top: 10px;}
-        
-        @keyframes earTwitchLeft { 0%, 94%, 100% { transform: rotate(-30deg); } 96%, 98% { transform: rotate(-45deg); } }
-        @keyframes earTwitchRight { 0%, 94%, 100% { transform: rotate(30deg); } 96%, 98% { transform: rotate(45deg); } }
-        .capy-ear { position: absolute; top: 12px; width: 14px; height: 12px; background: var(--capy-dark); z-index: 0; transition: all 0.3s;}
-        .capy-ear.left { left: -2px; border-radius: 10px 5px 0 10px; transform: rotate(-30deg); animation: earTwitchLeft 6s infinite;}
-        .capy-ear.right { right: -2px; border-radius: 5px 10px 10px 0; transform: rotate(30deg); animation: earTwitchRight 8s infinite;}
-        
-        @keyframes breathe { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-2px) scaleY(1.02); } }
-        .capy-body { position: absolute; bottom: 0; left: 0; width: 80px; height: 75px; background: var(--capy-body); border-radius: 35px 35px 20px 20px; z-index: 1; overflow: hidden; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); animation: breathe 3s ease-in-out infinite; }
-        
-        .capy-snout { position: absolute; bottom: 5px; left: 12px; width: 56px; height: 35px; background: var(--capy-snout); border-radius: 20px 20px 25px 25px; z-index: 2; }
-        .capy-nose { position: absolute; top: 4px; left: 16px; width: 24px; height: 14px; background: var(--capy-dark); border-radius: 10px 10px 15px 15px; }
-        .capy-mouth { position: absolute; top: 18px; left: 27px; width: 2px; height: 8px; background: var(--capy-dark); transition: all 0.3s;}
-        .capy-mouth::after { content: ''; position: absolute; bottom: 0; left: -6px; width: 14px; height: 5px; border-bottom: 2px solid var(--capy-dark); border-radius: 50%; }
-        
-        .capy-eye { position: absolute; top: 22px; width: 12px; height: 12px; background: var(--capy-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 2; transition: all 0.3s;}
-        .capy-eye.left { left: 14px; } .capy-eye.right { right: 14px; }
-        .capy-pupil { width: 4px; height: 4px; background: var(--neon-blue); border-radius: 50%; position: relative; transition: transform 0.1s ease-out; transform: translate(1px, -1px); box-shadow: 0 0 5px var(--neon-blue);}
-        
-        .capy-blush { position: absolute; top: 32px; width: 10px; height: 5px; background: rgba(0, 240, 255, 0.4); border-radius: 50%; z-index: 1; transition: background 0.3s;}
-        .capy-blush.left { left: 8px; } .capy-blush.right { right: 8px; }
-        
-        .capy-eyelid { position: absolute; top: -14px; left: -2px; width: 16px; height: 16px; background: var(--capy-body); z-index: 5; animation: blink 5s infinite; transition: all 0.3s; transform: translateY(2px);}
-        @keyframes blink { 0%, 96%, 98%, 100% { transform: translateY(2px); } 97%, 99% { transform: translateY(12px); } }
-        
-        .capy-arm { position: absolute; width: 16px; height: 22px; background: var(--capy-snout); border-radius: 10px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 4; box-shadow: -2px 2px 4px rgba(0,0,0,0.3); }
-        .capy-arm.left { bottom: 5px; left: 4px; transform-origin: top center; transform: rotate(15deg); }
-        .capy-arm.right { bottom: 5px; right: 4px; transform-origin: top center; transform: rotate(-15deg); }
-
-        /* Emociones en tiempo real del Capibara */
-        @keyframes paddleArms { 0%, 100% { transform: translateY(0) rotate(15deg); } 50% { transform: translateY(-4px) rotate(45deg); } }
-        @keyframes paddleArmsRight { 0%, 100% { transform: translateY(0) rotate(-15deg); } 50% { transform: translateY(-4px) rotate(-45deg); } }
-        @keyframes lookReading { 0%, 100% { transform: translate(3px, 0); } 50% { transform: translate(-3px, 0); } }
-        @keyframes thinkBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        
-        body.state-loading .capy-arm.left { animation: paddleArms 0.4s infinite ease-in-out; } 
-        body.state-loading .capy-arm.right { animation: paddleArmsRight 0.4s infinite ease-in-out; } 
-        body.state-loading .capy-pupil { animation: lookReading 0.8s infinite ease-in-out !important; } 
-        body.state-loading .capy-eyelid { transform: translateY(-2px); animation: none; } 
-        body.state-loading .capy-body { animation: thinkBounce 1s infinite ease-in-out; }
-        body.state-loading .capy-ear.left { transform: rotate(-40deg) translateY(2px); }
-        body.state-loading .capy-ear.right { transform: rotate(40deg) translateY(2px); }
-
-        @keyframes jumpHappy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        body.state-success .capy-body, body.state-success .capy-ear, body.state-success .capy-arm { animation: jumpHappy 0.4s ease 2; } 
-        body.state-success .capy-arm.left { transform: translateY(-10px) rotate(130deg); } 
-        body.state-success .capy-arm.right { transform: translateY(-10px) rotate(-130deg); }
-        body.state-success .capy-eye { background: transparent !important; border-top: 3px solid var(--capy-dark); border-radius: 50% 50% 0 0; height: 6px; transform: translateY(4px);}
-        body.state-success .capy-pupil { display: none !important; } 
-        body.state-success .capy-eyelid { display: none !important; }
-        body.state-success .capy-blush { background: rgba(0, 255, 157, 0.5); } /* Rubor verde éxito */
-
-        /* Adapta el Capibara al Light Theme */
-        body.light-theme .capy-speech-bubble { background: white; border-color: var(--border-color); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        body.light-theme .capy-speech-bubble::after { background: white; border-color: var(--border-color); }
-        body.light-theme .capy-pupil { background: white; box-shadow: none; }
-        body.light-theme .capy-blush { background: rgba(239, 68, 68, 0.3); }
-        body.light-theme.state-success .capy-blush { background: rgba(239, 68, 68, 0.6); }
-
-
-        /* 🔥 TARJETAS DE MÓDULOS (FLUID GRID) 🔥 */
-        .menu-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 2vw; 
-            transition: all 0.5s ease;
-            padding-bottom: 50px;
-            width: 100%;
-        }
-
-        .menu-grid.locked { pointer-events: none; opacity: 0.4; filter: grayscale(100%); }
-        
-        /* Colores Base por Tarjeta */
-        .card-simulador { --card-glow: rgba(0, 240, 255, 0.6); --card-color: var(--neon-blue); }
-        .card-proyeccion { --card-glow: rgba(138, 43, 226, 0.6); --card-color: var(--neon-purple); }
-        .card-cp { --card-glow: rgba(0, 255, 157, 0.6); --card-color: var(--neon-green); }
-        .card-auditor { --card-glow: rgba(255, 183, 0, 0.6); --card-color: var(--neon-amber); }
-        .card-rentabilidad { --card-glow: rgba(16, 185, 129, 0.6); --card-color: #10b981; } 
-        .card-vehiculos { --card-glow: rgba(236, 72, 153, 0.6); --card-color: #ec4899; } 
-        .card-rutas { --card-glow: rgba(245, 158, 11, 0.6); --card-color: #f59e0b; } 
-        .card-registro { --card-glow: rgba(255, 255, 255, 0.5); --card-color: #94a3b8; } 
-
-        .space-card {
-            position: relative; width: 100%; min-height: 280px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-color: var(--bg-card); color: var(--text-main);
-            font-family: 'Montserrat', sans-serif; padding: 1.5em; border-radius: 20px;
-            overflow: hidden; z-index: 1; text-decoration: none; box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: none; /* Ocultas por defecto para el sistema de permisos */
-        }
-
-        .space-card:nth-child(1) { animation-delay: 0.05s; }
-        .space-card:nth-child(2) { animation-delay: 0.10s; }
-        .space-card:nth-child(3) { animation-delay: 0.15s; }
-        .space-card:nth-child(4) { animation-delay: 0.20s; }
-        .space-card:nth-child(5) { animation-delay: 0.25s; }
-        .space-card:nth-child(6) { animation-delay: 0.30s; }
-        .space-card:nth-child(7) { animation-delay: 0.35s; }
-        .space-card:nth-child(8) { animation-delay: 0.40s; }
-
-        .space-icon {
-            width: 70px; height: 70px; margin-bottom: 1em; z-index: 5;
-            color: var(--card-color); filter: drop-shadow(0 0 10px var(--card-glow));
-            transition: transform 0.4s ease;
-        }
-
-        .space-card:hover { 
-            cursor: pointer; transform: translateY(-8px); 
-            border-color: var(--card-color);
-            box-shadow: 0 10px 30px var(--card-glow);
-        }
-        .space-card:hover .space-icon { transform: scale(1.15) rotate(-5deg); }
-
-        /* Estrellas y Nebulosas de Fondo */
-        .space-card::before {
-            content: ""; position: absolute; width: 100%; height: 100%; inset: -3px;
-            border-radius: 10px; background: radial-gradient(rgba(133,133,133,0.15), transparent, transparent);
-            transform: translate(-5px, 200px); transition: 0.4s ease-in-out; z-index: -1;
-        }
-        .space-card:hover::before { width: 150%; height: 100%; margin-left: -4.25em; filter: blur(3px); background: radial-gradient(var(--card-glow), transparent, transparent);}
-        
-        .space-card::after {
-            content: ""; position: absolute; inset: 2px; border-radius: 20px;
-            background: var(--card-overlay); transition: all 0.4s ease-in-out; z-index: -1;
-        }
-        
-        /* Oculta las estrellas en modo claro porque se ven sucias */
-        body.light-theme .space-card::before,
-        body.light-theme .space-desc-container::before,
-        body.light-theme .space-desc-container::after,
-        body.light-theme .space-heading::before {
-            display: none;
-        }
-
-        .space-heading { z-index: 2; transition: 0.4s ease-in-out; font-size: clamp(1.1em, 1.5vw, 1.25em); font-weight: 700; text-align: center; }
-        .space-card:hover .space-heading { letter-spacing: 0.025em; }
-
-        .space-heading::after {
-            content: ""; top: -10%; left: -10%; position: absolute; width: 8em; height: 8em;
-            border: none; outline: none; border-radius: 50%; background: #f9f9fb; opacity: 0.7;
-            box-shadow: 0px 0px 80px var(--card-glow), inset var(--card-color) 0px 0px 40px -12px;
-            transition: 0.4s ease-in-out; z-index: -1;
-        }
-        .space-card:hover .space-heading::after {
-            box-shadow: 0px 0px 150px var(--card-glow), inset var(--card-color) 0px 0px 40px -12px;
-        }
-
-        .space-heading::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
-            box-shadow: 220px 118px #fff, 140px 176px #fff, 40px 50px #fff, 60px 180px #fff, 120px 130px #fff, 180px 176px #fff, 220px 290px #fff, 280px 250px #fff, 200px 220px #fff, 50px 250px #fff, 10px 230px #fff;
-            z-index: -1; transition: 1s ease; animation: 1s glowing-stars linear alternate infinite;
-        }
-        .space-desc-container { z-index: 1; position: relative; width: 100%; }
-        .space-desc-container::before {
-            content: ""; position: absolute; top: -50px; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
-            box-shadow: 140px 20px #fff, 250px 20px #fff, 70px 120px #fff, 20px 130px #fff, 110px 80px #fff, 280px 80px #fff, 250px 250px #fff, 280px 230px #fff, 220px 190px #fff, 150px 100px #fff, 80px 80px #fff, 120px 50px #fff;
-            z-index: -1; transition: 1.5s ease; animation: 1s glowing-stars linear alternate infinite; animation-delay: 0.4s;
-        }
-        .space-desc-container::after {
-            content: ""; position: absolute; top: -50px; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1;
-            box-shadow: 190px 230px #fff, 120px 200px #fff, 220px 180px #fff, 180px 250px #fff, 246px 170px #fff, 120px 180px #fff, 170px 150px #fff, 200px 250px #fff, 80px 20px #fff, 190px 50px #fff, 270px 20px #fff, 120px 230px #fff, 150px -1px #fff, 150px 269px #fff;
-            z-index: -1; transition: 2s ease; animation: 1s glowing-stars linear alternate infinite; animation-delay: 0.8s;
-        }
-        .space-card:hover .space-heading::before, .space-card:hover .space-desc-container::before, .space-card:hover .space-desc-container::after { filter: blur(3px); }
-
-        .space-desc { z-index: 2; font-size: clamp(0.8em, 1.2vw, 0.9em); color: var(--text-muted); text-align: center; line-height: 1.5; margin-top: 15px; font-family: 'Inter', sans-serif; font-weight: normal; }
-        
-        .space-action { margin-top: 20px; font-size: 0.9em; color: var(--card-color); display: flex; align-items: center; justify-content: center; z-index: 2; font-weight: 600; opacity: 0; transform: translateY(10px); transition: all 0.3s;}
-        .space-card:hover .space-action { opacity: 1; transform: translateY(0); }
-
-        .shooting-star {
-            content: ""; position: absolute; top: -10%; left: 80%; rotate: -45deg; width: 5em; height: 1px;
-            background: linear-gradient(90deg, #ffffff, transparent);
-            animation: 4s shootingStar ease-in-out infinite; transition: 1s ease; opacity:0;
-        }
-        .space-card:hover .shooting-star { filter: blur(2px); }
-        .st-1 { animation-delay: 1s; top: 10%; left: 90%; }
-        .st-2 { animation-delay: 3s; top: 40%; left: 110%; }
-
-        @keyframes shootingStar {
-            0% { transform: translateX(0) translateY(0); opacity: 1; }
-            50% { transform: translateX(-55em) translateY(0); opacity: 1; }
-            70% { transform: translateX(-70em) translateY(0); opacity: 0; }
-            100% { transform: translateX(0) translateY(0); opacity: 0; }
-        }
-
-        @keyframes glowing-stars { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-
-        /* ================= MODAL PERFIL ================= */
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(7, 11, 20, 0.8); backdrop-filter: blur(8px);
-            display: none; align-items: center; justify-content: center; z-index: 1000; 
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .modal-overlay.active { opacity: 1; }
-        .modal-box { 
-            background: var(--bg-panel); width: 100%; max-width: 400px; padding: 30px; 
-            border-radius: 16px; border: 1px solid var(--border-color);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
-            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .modal-overlay.active .modal-box { transform: scale(1); }
-        
-        .modal-box h3 { margin-top: 0; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .modal-box label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--text-muted); }
-        .modal-box input { 
-            width: 100%; padding: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); 
-            color: var(--text-main); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: all 0.3s;
-        }
-        .modal-box input:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 3px rgba(0,240,255,0.1); }
-        
-        .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-cancel { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color); }
-        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
-        .btn-save { background: rgba(0, 240, 255, 0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);}
-        .btn-save:hover { background: var(--neon-blue); color: #070b14; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);}
-
-        /* 🔥 NOTIFICACIÓN FLOTANTE (TOAST) 🔥 */
-        .toast-container {
-            position: fixed; bottom: 30px; right: 30px;
-            background: var(--bg-panel); border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px); padding: 20px; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border-left: 5px solid var(--neon-amber);
-            display: flex; align-items: flex-start; gap: 15px;
-            transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 9999; max-width: 400px; line-height: 1.5; color: var(--text-muted);
-        }
-        .toast-container.show { transform: translateX(0); }
-        .toast-container strong { color: var(--text-main); display: block; margin-bottom: 5px; font-size: 1.05em; }
-
-        @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 15px; padding: 20px; text-align: center; }
-            .user-info { justify-content: center; }
-            .toast-container { right: 5%; left: 5%; bottom: 20px; width: auto; max-width: 100%; }
-        }
-    </style>
+</style>
 </head>
-<body>
+<body data-modulo="inicio">
 
-    <nav class="navbar">
-        <div class="navbar-brand">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M8 15h8"></path></svg>
-            FlexNet<span style="color:var(--neon-blue);">.</span>
-        </div>
-        
-        <div class="user-info" id="infoUsuario">
-            <!-- Rellenado por JS -->
-        </div>
-    </nav>
+<main class="page">
 
-    <div class="app-container">
-        <main class="main-content">
-            
-            <header class="hero">
-                <div class="hero-texts">
-                    <h1>¡Bienvenido, <span id="lblNombre" class="text-neon-cyan"></span>!</h1>
-                    <p>Selecciona un módulo para gestionar la facturación, auditar rutas o analizar las métricas de rendimiento en tiempo real.</p>
-                    
-                    <div class="status-dashboard">
-                        <div class="status-pill loading" id="pillTarifas">
-                            <span class="status-dot loading" id="dotTarifas"></span>
-                            <span id="txtTarifas">Tarifario: Verificando...</span>
-                        </div>
-                        <div class="status-pill loading" id="pillMonitor">
-                            <span class="status-dot loading" id="dotMonitor"></span>
-                            <span id="txtMonitor">Base Operativa: Verificando...</span>
-                        </div>
-                    </div>
-
-                    <div id="msgBloqueo">⏳ Verificando la nube...</div>
-                </div>
-
-                <!-- 🔥 CAPIBARA CYBERPUNK MEJORADO 🔥 -->
-                <div class="mascot-wrapper">
-                    <div class="capy-speech-bubble" id="mascot-bubble"></div>
-                    <div class="mascot-container">
-                        <div class="capy-ear left"></div>
-                        <div class="capy-ear right"></div>
-                        <div class="capy-body">
-                            <div class="capy-blush left"></div>
-                            <div class="capy-blush right"></div>
-                            <div class="capy-snout">
-                                <div class="capy-nose"></div>
-                                <div class="capy-mouth"></div>
-                            </div>
-                            <div class="capy-eye left" id="eye-left">
-                                <div class="capy-eyelid"></div>
-                                <div class="capy-pupil" id="pupil-left"></div>
-                            </div>
-                            <div class="capy-eye right" id="eye-right">
-                                <div class="capy-eyelid"></div>
-                                <div class="capy-pupil" id="pupil-right"></div>
-                            </div>
-                        </div>
-                        <div class="capy-arm left"></div>
-                        <div class="capy-arm right"></div>
-                    </div>
-                </div>
-            </header>
-
-            <div class="menu-grid locked" id="menuGrid">
-                
-                <a href="Simulador.html" class="space-card card-simulador" id="cardSimuladorIds">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-                    <div class="space-heading">Simulador (Por IDs)</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Herramienta de tarificación rápida pegando listados de IDs individuales.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="ProyeccionGlobal.html" class="space-card card-proyeccion" id="cardProyeccion">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                    <div class="space-heading">Proyección Global</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Planea el costo de tu flota y proyecta la rentabilidad total del día con cientos de IDs.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="SimuladorCartaPorte.html" class="space-card card-cp" id="cardSimuladorCp">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                    <div class="space-heading">Simulador (Carta Porte)</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Calcula múltiples rutas extrayendo vehículos desde listados de Carta Porte.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="AuditorMasivo.html" class="space-card card-auditor" id="cardMasivo">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                    <div class="space-heading">Auditor Masivo</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Sube matrices de Excel, audita la facturación de miles de pedidos e inyecta a la nube.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="Rentabilidad.html" class="space-card card-rentabilidad" id="cardRentabilidad">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                    <div class="space-heading">Rentabilidad Diaria</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Visualiza en tiempo real los ingresos, costos operativos y la utilidad neta.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="RentabilidadVehiculos.html" class="space-card card-vehiculos" id="cardVehiculos">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-                    <div class="space-heading">Auditoría de Vehículos</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Controla los viajes despachados y descubre el margen exacto de ganancia por placa.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="AuditoriaRutas.html" class="space-card card-rutas" id="cardAuditoria">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                    <div class="space-heading">Auditoría de Rutas</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Revisa y ajusta manualmente los ingresos de rutas despachadas en fechas anteriores.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="Reportes.html" class="space-card card-proyeccion" id="cardReportes">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-                    <div class="space-heading">Dashboard Gerencial</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Genera reportes corporativos en PDF con gráficos interactivos y KPIs financieros.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-                <a href="Registro.html" class="space-card card-registro" id="cardRegistro">
-                    <svg class="space-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-                    <div class="space-heading">Control de Accesos</div>
-                    <div class="space-desc-container">
-                        <div class="space-desc">Administra el alta de nuevos usuarios, roles, permisos y seguridad de la plataforma.</div>
-                        <div class="shooting-star st-1"></div><div class="shooting-star st-2"></div>
-                    </div>
-                    <div class="space-action">Abrir Módulo &rarr;</div>
-                </a>
-
-            </div>
-        </main>
+  <div class="page-head saludo">
+    <div>
+      <h1 id="titulo">Hola</h1>
+      <div class="fecha" id="fecha"></div>
     </div>
+    <div class="row" id="acciones"></div>
+  </div>
 
-    <!-- 🔥 NOTIFICACIÓN FLOTANTE (TOAST) 🔥 -->
-    <div id="toastInfo" class="toast-container" style="border-left-color: var(--neon-amber);">
-        <span style="font-size: 2em; line-height: 1;">💡</span>
-        <div>
-            <strong>Datos actualizados</strong>
-            <span style="font-size: 0.95em;">Si no visualiza los pedidos más recientes en la tabla, se debe a que el servidor local los está procesando de forma progresiva.</span>
+  <div class="stack">
+
+    <!-- Trabajo pendiente -->
+    <div id="zonaPendiente"></div>
+
+    <!-- Pulso del negocio -->
+    <section>
+      <div class="row row-between mb-3">
+        <h2 style="font-size:var(--t-lg)">Últimos 30 días</h2>
+        <span class="muted fs-sm" id="rangoTexto"></span>
+      </div>
+      <div class="grid grid-4" id="indicadores">
+        <div class="stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel mt-3" style="height:28px;width:80%"></div></div>
+        <div class="stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel mt-3" style="height:28px;width:80%"></div></div>
+        <div class="stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel mt-3" style="height:28px;width:80%"></div></div>
+        <div class="stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel mt-3" style="height:28px;width:80%"></div></div>
+      </div>
+    </section>
+
+    <!-- Accesos -->
+    <section>
+      <h2 style="font-size:var(--t-lg)" class="mb-3">Tus módulos</h2>
+      <div class="modulos" id="modulos"></div>
+    </section>
+
+    <!-- Diagnóstico de la conexión -->
+    <section id="zonaDiag" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h3>Conexión con la base de datos</h3>
+          <button class="btn btn-default btn-sm" id="btnDiag"></button>
         </div>
-    </div>
-
-    <!-- ================= MODAL PERFIL ================= -->
-    <div class="modal-overlay" id="modalPerfil">
-        <div class="modal-box">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Actualizar Mi Perfil</h3>
-            
-            <label>Tu Usuario Original (Requerido para buscarte)</label>
-            <input type="text" id="inpUsrOriginal" placeholder="Ej: admin123" required>
-
-            <label>Nuevo Nombre Completo</label>
-            <input type="text" id="inpNombre">
-            
-            <label>Nuevo Usuario</label>
-            <input type="text" id="inpUsuario">
-            
-            <label>Nueva Contraseña</label>
-            <input type="password" id="inpPassword">
-            
-            <div class="modal-buttons">
-                <button class="modal-btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
-                <button class="modal-btn btn-save" id="btnGuardar" onclick="guardarPerfil()">Guardar Cambios</button>
-            </div>
+        <div class="card-body" id="resultadoDiag">
+          <p class="fs-sm muted">Comprueba que cada hoja de Drive responde y con cuántos registros. No actualiza los datos: para eso está el botón de recargar de la barra superior.</p>
         </div>
-    </div>
+      </div>
+    </section>
 
+  </div>
+
+</main>
+
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/tarifas.js"></script>
+<script src="assets/api.js"></script>
 <script>
-    // 🔒 RECUPERAR SESIÓN
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (!sesion) { window.location.href = 'index.html'; }
+FX.listo(async (sesion) => {
+  'use strict';
+  if (!sesion) return;
 
-    const bodyState = document.body;
+  /* ---------------- Saludo ---------------- */
+  const hora = new Date().getHours();
+  const momento = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const soloNombre = String(sesion.nombre).split(' ')[0];
+  document.getElementById('titulo').textContent = `${momento}, ${soloNombre}`;
+  document.getElementById('fecha').textContent =
+    new Date().toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
-    const savedTheme = localStorage.getItem('flexnet_theme');
-    let isDarkChecked = (!savedTheme || savedTheme === 'dark') ? 'checked' : '';
-    if (savedTheme === 'light') document.body.classList.add('light-theme');
+  /* ---------------- Módulos permitidos ---------------- */
+  const permitidos = FX.permisosDe(sesion);
+  document.getElementById('modulos').innerHTML = FX.MODULOS
+    // Sin página es un permiso, no una pantalla: no tiene tarjeta a la que ir.
+    .filter(m => !m.fijo && m.pagina && permitidos.includes(m.clave))
+    .map(m => `
+      <a class="modulo ${m.sensible ? 'sensible' : ''}" href="${m.pagina}">
+        <div class="cab">
+          <span class="ico">${FX.icono(m.icono)}</span>
+          <span class="flecha">${FX.icono('down')}</span>
+        </div>
+        <div>
+          <h3>${m.nombre}</h3>
+          <p>${m.descripcion}</p>
+        </div>
+      </a>`)
+    .join('');
 
-    function toggleTheme() {
-        const isChecked = document.getElementById('theme-switch').checked;
-        if (isChecked) {
-            document.body.classList.remove('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'dark');
-        } else {
-            document.body.classList.add('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'light');
-        }
-    }
+  // La flecha del icono 'down' apunta hacia abajo; se rota para que apunte a la derecha
+  document.querySelectorAll('.modulo .flecha svg').forEach(s => s.style.transform = 'rotate(-90deg)');
 
-    // 🔥 APLICAR PERMISOS SEGÚN EL ROL DEL USUARIO 🔥
-    function aplicarPermisos() {
-        const cardSimIds = document.getElementById('cardSimuladorIds');
-        const cardProyeccion = document.getElementById('cardProyeccion');
-        const cardSimCp = document.getElementById('cardSimuladorCp');
-        const cardMasivo = document.getElementById('cardMasivo');
-        const cardRentabilidad = document.getElementById('cardRentabilidad');
-        const cardVehiculos = document.getElementById('cardVehiculos');
-        const cardAuditoria = document.getElementById('cardAuditoria');
-        const cardReportes = document.getElementById('cardReportes');
-        const cardRegistro = document.getElementById('cardRegistro');
+  /* ---------------- Datos ---------------- */
+  let rutas = [], monitor = [];
+  try {
+    [rutas, monitor] = await Promise.all([
+      API.rutas(),
+      permitidos.includes('simcp') ? API.monitorCompleto() : Promise.resolve([])
+    ]);
+  } catch (err) {
+    document.getElementById('indicadores').innerHTML =
+      `<div class="note danger" style="grid-column:1/-1">${FX.icono('alert')}<div>No se pudieron cargar los datos: ${FX.escapar(err.message)}</div></div>`;
+    return;
+  }
 
-        // Por defecto, mostramos las tarjetas para que CSS Grid funcione, y luego ocultamos según el rol
-        const allCards = [cardSimIds, cardProyeccion, cardSimCp, cardMasivo, cardRentabilidad, cardVehiculos, cardAuditoria, cardReportes, cardRegistro];
-        allCards.forEach(card => { if(card) card.style.display = 'flex'; });
+  const costoDe = r => (Number(r.cBase)||0) + (Number(r.cExc)||0) + (Number(r.cAyudantes)||0) + (Number(r.cHE)||0);
 
-        // Si NO es Administrador, empezamos a ocultar módulos críticos
-        if (sesion.rol !== 'Administrador') {
-            
-            // Ocultamos Control de Accesos (solo Admin puede verlo)
-            if (cardRegistro) cardRegistro.style.display = 'none';
-            // Ocultamos Reportes Gerenciales (solo Admin puede verlo)
-            if (cardReportes) cardReportes.style.display = 'none';
+  /* ---------------- Pendientes de costear ----------------
+     Una carta porte está pendiente si aparece en el monitor pero todavía
+     no tiene una ruta cerrada en DB_Simulador. */
+  const yaCerradas = new Set(rutas.map(r => String(r.cartaPorte).toUpperCase()));
+  const monitorConCP = monitor.filter(p => p.cartaPorte && !yaCerradas.has(String(p.cartaPorte).toUpperCase()));
+  const cpsPendientes = [...new Set(monitorConCP.map(p => p.cartaPorte))];
+  if (cpsPendientes.length) {
+    document.getElementById('zonaPendiente').innerHTML = `
+      <div class="pendiente">
+        <span class="ico">${FX.icono('inbox')}</span>
+        <div style="flex:1;min-width:180px">
+          <b>${cpsPendientes.length} carta${cpsPendientes.length===1?'':'s'} porte sin costear</b>
+          <span>${monitorConCP.length} pedidos esperando que les asignes tarifa y costo de vehículo.</span>
+        </div>
+        <a class="btn btn-primary" href="SimuladorCartaPorte.html">Costear ahora</a>
+      </div>`;
+  }
 
-            // Si es un "Usuario" estándar u "Operador"
-            if (sesion.rol === 'Usuario' || sesion.rol === 'Operador') {
-                if (cardRentabilidad) cardRentabilidad.style.display = 'none';
-                if (cardMasivo) cardMasivo.style.display = 'none';
-                if (cardVehiculos) cardVehiculos.style.display = 'none';
-                if (cardAuditoria) cardAuditoria.style.display = 'none';
-            }
-            
-            // Excepciones especiales (Ejemplo: Si creaste un rol llamado 'Auditor')
-            if (sesion.rol === 'Auditor') {
-                if (cardRentabilidad) cardRentabilidad.style.display = 'none'; 
-            }
-        }
-    }
+  /* ---------------- Indicadores de 30 días ---------------- */
+  const desde = new Date(); desde.setDate(desde.getDate() - 30);
+  const desdeISO = desde.toISOString().slice(0, 10);
+  const recientes = rutas.filter(r => r.fecha >= desdeISO);
 
-    // 🔥 SEGUIMIENTO DEL MOUSE PARA EL CAPIBARA MASCOTA 🔥
-    const pupilLeft = document.getElementById('pupil-left');
-    const pupilRight = document.getElementById('pupil-right');
-    const eyeLeft = document.querySelector('.capy-eye.left');
-    const eyeRight = document.querySelector('.capy-eye.right');
+  const ingresos = recientes.reduce((s, r) => s + (Number(r.ingresos) || 0), 0);
+  const costos   = recientes.reduce((s, r) => s + costoDe(r), 0);
+  const utilidad = ingresos - costos;
+  const margen   = ingresos > 0 ? (utilidad / ingresos) * 100 : 0;
+  const pedidos  = recientes.reduce((s, r) => s + (Number(r.pedidos) || 0), 0);
 
-    document.addEventListener('mousemove', (e) => {
-        if(window.innerWidth <= 950) return; 
-        if(bodyState.classList.contains('state-loading') || bodyState.classList.contains('state-success')) return;
+  document.getElementById('rangoTexto').textContent =
+    `${recientes.length} rutas · ${FX.fmt.num(pedidos)} pedidos`;
 
-        const rectL = eyeLeft.getBoundingClientRect();
-        const rectR = eyeRight.getBoundingClientRect();
-        const cxL = rectL.left + rectL.width / 2;
-        const cyL = rectL.top + rectL.height / 2;
-        const cxR = rectR.left + rectR.width / 2;
-        const cyR = rectR.top + rectR.height / 2;
-        
-        const angleL = Math.atan2(e.clientY - cyL, e.clientX - cxL);
-        const angleR = Math.atan2(e.clientY - cyR, e.clientX - cxR);
-        const maxDist = 3; 
+  // Serie diaria de utilidad, para la barra de actividad
+  const porDia = {};
+  recientes.forEach(r => { porDia[r.fecha] = (porDia[r.fecha] || 0) + (Number(r.ingresos)||0) - costoDe(r); });
+  const dias = Object.keys(porDia).sort();
+  const tope = Math.max(...dias.map(d => Math.abs(porDia[d])), 1);
+  const barras = dias.map(d => {
+    const v = porDia[d];
+    const alto = Math.max(2, Math.round(Math.abs(v) / tope * 100));
+    return `<i class="${v < 0 ? 'neg' : ''}" style="height:${alto}%" title="${FX.fmt.fecha(d)}: ${FX.fmt.money(v)}"></i>`;
+  }).join('');
 
-        pupilLeft.style.transform = `translate(${Math.cos(angleL) * maxDist}px, ${Math.sin(angleL) * maxDist}px)`;
-        pupilRight.style.transform = `translate(${Math.cos(angleR) * maxDist}px, ${Math.sin(angleR) * maxDist}px)`;
-    });
+  const claseMargen = margen < 0 ? 'danger' : margen < 15 ? 'warn' : 'ok';
 
-    function mostrarMensajeMascota(mensaje, duracionMs = 0) {
-        const bubble = document.getElementById('mascot-bubble');
-        const msgMovil = document.getElementById('msgBloqueo'); 
-        
-        if (mensaje) {
-            bubble.innerHTML = mensaje;
-            bubble.classList.add('show');
-            if(msgMovil) {
-                msgMovil.innerHTML = mensaje;
-                msgMovil.style.display = 'inline-block';
-                setTimeout(() => msgMovil.style.opacity = '1', 10);
-            }
-        } else {
-            bubble.classList.remove('show');
-            if(msgMovil) {
-                msgMovil.style.opacity = '0';
-                setTimeout(() => msgMovil.style.display = 'none', 300);
-            }
-        }
+  document.getElementById('indicadores').innerHTML = `
+    <div class="stat is-ingreso">
+      <div class="label">${FX.icono('down')} Ingresos</div>
+      <div class="value">${FX.fmt.money(ingresos)}</div>
+      <div class="foot">${FX.fmt.num(pedidos)} pedidos entregados</div>
+    </div>
+    <div class="stat is-costo">
+      <div class="label">${FX.icono('truck')} Costo operativo</div>
+      <div class="value">${FX.fmt.money(costos)}</div>
+      <div class="foot">${recientes.length} rutas despachadas</div>
+    </div>
+    <div class="stat ${utilidad < 0 ? 'is-neg' : 'is-utilidad'}">
+      <div class="label">${FX.icono('chart')} Utilidad</div>
+      <div class="value">${FX.fmt.money(utilidad)}</div>
+      <div class="foot">Margen ${FX.fmt.pct(margen)}</div>
+      <div class="meter ${claseMargen}"><span style="width:${Math.min(100, Math.max(0, margen))}%"></span></div>
+    </div>
+    <div class="stat">
+      <div class="label">${FX.icono('box')} Ritmo diario</div>
+      <div class="value">${FX.fmt.money(dias.length ? utilidad / dias.length : 0)}</div>
+      <div class="foot">Utilidad promedio por día</div>
+      <div class="mini-dia">${barras}</div>
+    </div>`;
 
-        if (duracionMs > 0) {
-            setTimeout(() => {
-                bubble.classList.remove('show');
-                if(msgMovil) {
-                    msgMovil.style.opacity = '0';
-                    setTimeout(() => msgMovil.style.display = 'none', 300);
-                }
-            }, duracionMs);
-        }
-    }
 
-    const dbNamePreload = "SimuladorDB";
-    const storeNamePreload = "MonitorStore";
+  /* ---------------- Diagnóstico de conexión ---------------- */
+  if (String(sesion.rol || '').toLowerCase().includes('admin')) {
+    document.getElementById('zonaDiag').hidden = false;
+    const btn = document.getElementById('btnDiag');
+    btn.innerHTML = FX.icono('refresh') + ' Probar conexión';
 
-    function initDBPreload() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(dbNamePreload, 1);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(storeNamePreload)) { db.createObjectStore(storeNamePreload, { keyPath: "id" }); }
-            };
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async function obtenerDatoDBPreload(id) {
-        const db = await initDBPreload();
-        const tx = db.transaction(storeNamePreload, "readonly");
-        const request = tx.objectStore(storeNamePreload).get(id);
-        return new Promise(resolve => {
-            request.onsuccess = () => resolve(request.result ? request.result : null);
-            request.onerror = () => resolve(null);
-        });
-    }
-
-    async function guardarDatoDBPreload(id, data, timestamp) {
-        const db = await initDBPreload();
-        const tx = db.transaction(storeNamePreload, "readwrite");
-        tx.objectStore(storeNamePreload).put({ id: id, data: data, timestamp: timestamp });
-        return new Promise(resolve => tx.oncomplete = resolve);
-    }
-
-    function setPillStatus(id, state, text) {
-        document.getElementById('pill' + id).className = 'status-pill ' + state;
-        document.getElementById('dot' + id).className = 'status-dot ' + state;
-        document.getElementById('txt' + id).innerText = text;
-    }
-
-    function desbloquearMenu(mostrarAlerta = false) {
-        document.getElementById('menuGrid').classList.remove('locked');
-        
-        let msg = document.getElementById('msgBloqueo');
-        if(msg) {
-            msg.style.background = 'rgba(0, 255, 157, 0.1)';
-            msg.style.color = 'var(--neon-green)';
-            msg.style.borderColor = 'rgba(0, 255, 157, 0.3)';
-        }
-
-        if(mostrarAlerta) {
-            setTimeout(() => {
-                let toast = document.getElementById('toastInfo');
-                toast.classList.add('show');
-                setTimeout(() => { toast.classList.remove('show'); }, 12000);
-            }, 1000);
-        }
-    }
-
-    window.onload = async function() {
-        window.dbRutasGlobal = [];
-        window.monitorGlobal = [];
-
-        document.getElementById('infoUsuario').innerHTML = `
-            <input id="theme-switch" type="checkbox" onchange="toggleTheme()" ${isDarkChecked}>
-            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
-                <div class="toggle"></div>
-                <div class="names">
-                    <p class="light">Light</p>
-                    <p class="dark">Dark</p>
-                </div>
-            </label>
-
-            <span style="opacity:0.3; margin: 0 10px;">|</span>
-            <span>📍 ${sesion.ciudad}</span>
-            <span>👤 <b id="uiNombre">${sesion.nombre}</b> (${sesion.rol})</span>
-            <button onclick="forzarDescarga()" class="btn-nav btn-sync">☁️ Actualizar Nube</button>
-            <button onclick="abrirModal()" class="btn-nav">⚙️ Perfil</button>
-            <button onclick="cerrarSesion()" class="btn-nav">Salir</button>
-        `;
-        
-        let primerNombre = sesion.nombre.split(' ')[0] || sesion.nombre;
-        document.getElementById('lblNombre').innerText = primerNombre;
-
-        // Ocultamos las tarjetas que el usuario no tiene permiso de ver
-        aplicarPermisos();
-
-        try {
-            const resPing = await fetch(`${SCRIPT_URL}?action=checkUpdates`);
-            const ping = await resPing.json();
-            
-            if (ping.error) throw new Error(ping.error);
-
-            let cacheTarifasStr = sessionStorage.getItem('cacheTarifarioFull');
-            let cacheMonitorObj = await obtenerDatoDBPreload("monitorCargado");
-            
-            let cacheTarifas = cacheTarifasStr ? JSON.parse(cacheTarifasStr) : null;
-            
-            let necesitaTarifas = !cacheTarifas || cacheTarifas.timestamp !== ping.tarifarioTs;
-
-            let necesitaMonitor = false;
-            
-            if (!cacheMonitorObj || !cacheMonitorObj.data || cacheMonitorObj.data.length === 0) {
-                necesitaMonitor = true;
-            } 
-            else if (ping.monitorTs && ping.monitorTs > cacheMonitorObj.timestamp) {
-                necesitaMonitor = true;
-            }
-
-            if (!necesitaTarifas && !necesitaMonitor) {
-                window.dbRutasGlobal = cacheTarifas.dbData || [];
-                window.monitorGlobal = cacheMonitorObj.data; 
-
-                setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
-                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${window.monitorGlobal.length} reg)`);
-                desbloquearMenu(false);
-                
-                mostrarMensajeMascota(`✅ Todo al día y sincronizado con la Nube.`, 6000, true);
-                return; 
-            }
-
-            mostrarMensajeMascota(`⏳ Sincronizando bases de datos...`);
-            bodyState.classList.add('state-loading');
-
-            const promesas = [];
-            
-            if (necesitaTarifas) {
-                    setPillStatus('Tarifas', 'loading', 'Descargando Tarifario Nuevo...');
-                    promesas.push(fetch(`${SCRIPT_URL}?action=getAllTarifas`).then(res => res.json()).then(allData => {
-                        const dbData = allData.db || [];
-                        window.dbRutasGlobal = dbData;
-                        const dTarifas = allData.tarifas || []; 
-                        const tfaPesoDB = allData.peso || [];
-                        const tfaPedidoDB = allData.pedido || []; 
-                        const tfaRangoDB = allData.rango || [];
-                        const tfaMedidaDB = allData.medida || []; 
-                        const trayectoDB = allData.trayecto || [];
-                        const tarifarioGlobalDB = allData.tarifarioGlobal || [];
-                        const tarifaExclusivosDB = allData.tarifaExclusivos || []; 
-
-                        let pedidosHistoricosArray = [];
-                        let rutasPorDiaYPlaca = {};
-                        let trackPedidosUnicos = new Set();
-                        
-                        dbData.forEach(row => { 
-                            if (row.fecha && row.placa) {
-                                let fLimpia = String(row.fecha).trim();
-                                if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
-                                if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
-                                let pLimpia = String(row.placa).trim().toUpperCase();
-                                
-                                rutasPorDiaYPlaca[`${fLimpia}|${pLimpia}`] = true;
-
-                                if (row.listaIds) {
-                                    row.listaIds.split(',').forEach(item => {
-                                        let cleanId = String(item).split('-')[0].trim().replace(/\D/g, '');
-                                        if(cleanId && !trackPedidosUnicos.has(cleanId)) {
-                                            trackPedidosUnicos.add(cleanId);
-                                            pedidosHistoricosArray.push({ id: cleanId, fecha: fLimpia, placa: pLimpia });
-                                        }
-                                    });
-                                }
-                            }
-                        });
-
-                        sessionStorage.setItem('cacheTarifarioFull', JSON.stringify({
-                            dbData: window.dbRutasGlobal,
-                            dTarifas, tfaPesoDB, tfaPedidoDB, tfaRangoDB, tfaMedidaDB, trayectoDB, 
-                            tarifarioGlobalDB, tarifaExclusivosDB, 
-                            rutasPorDiaYPlaca, pedidosHistoricosArray, timestamp: ping.tarifarioTs
-                        }));
-                        
-                        setPillStatus('Tarifas', 'success', 'Tarifario: Sincronizado OK');
-                    }));
-                } else {
-                window.dbRutasGlobal = cacheTarifas.dbData || []; 
-                setPillStatus('Tarifas', 'success', 'Tarifario: Listo (Caché Rápido)');
-            }
-
-            if (necesitaMonitor) {
-                setPillStatus('Monitor', 'loading', 'Descargando Pedidos Nuevos...');
-                promesas.push(fetch(`${SCRIPT_URL}?action=getMonitorBQ`).then(res => res.json()).then(async jsonResponse => {
-                    if(!jsonResponse.error) {
-                        window.monitorGlobal = reconstruirDesdeHeadersYFilas(jsonResponse); 
-                        
-                        await guardarDatoDBPreload("monitorCargado", window.monitorGlobal, ping.monitorTs);
-                        setPillStatus('Monitor', 'success', `Base Operativa: Sincronizada (${window.monitorGlobal.length} reg)`);
-                    } else {
-                        throw new Error(jsonResponse.error);
-                    }
-                }));
-            } else {
-                window.monitorGlobal = cacheMonitorObj.data; 
-                setPillStatus('Monitor', 'success', `Base Operativa: Lista (${window.monitorGlobal.length} reg)`);
-            }
-
-            await Promise.all(promesas);
-            
-            bodyState.classList.remove('state-loading');
-            bodyState.classList.add('state-success');
-
-            setTimeout(() => { 
-                conciliarCambiosMonitor(window.dbRutasGlobal, window.monitorGlobal); 
-            }, 2500);
-            
-            mostrarMensajeMascota(`✅ Todo al día y sincronizado con la Nube.`, 5000, true); 
-            setTimeout(() => { bodyState.classList.remove('state-success'); }, 2000); 
-            
-            desbloquearMenu(true);
-
-        } catch(e) { 
-            console.log("⚠️ Error en descarga:", e); 
-            setPillStatus('Tarifas', 'error', 'Error de ejecución');
-            setPillStatus('Monitor', 'error', 'Mire la mascota para detalle');
-            
-            // Ahora la mascota te dirá EXACTAMENTE cuál es el error para saber si es red o código.
-            mostrarMensajeMascota(`❌ Fallo: ${e.message}`, 10000);
-            bodyState.classList.remove('state-loading');
-        }
+    btn.onclick = async function () {
+      const liberar = FX.ocupar(this, 'Probando…');
+      const caja = document.getElementById('resultadoDiag');
+      try {
+        API.limpiarCache();
+        const d = await API.diagnostico();
+        caja.innerHTML = `
+          <div class="stack-sm">
+            ${d.pruebas.map(x => `
+              <div class="row" style="gap:var(--s-3);align-items:flex-start">
+                <span class="badge ${x.ok ? 'ok' : 'danger'}" style="min-width:76px;justify-content:center">
+                  ${x.ok ? 'Responde' : 'Falla'}
+                </span>
+                <span style="flex:1;min-width:0">
+                  <b class="fs-sm">${FX.escapar(x.nombre)}</b>
+                  <span class="fs-xs muted"> · ${FX.escapar(String(x.detalle))}</span>
+                </span>
+                <span class="fs-xs muted nowrap">${x.ms} ms</span>
+              </div>`).join('')}
+          </div>
+          <p class="fs-xs muted mt-4" style="word-break:break-all">Origen: ${FX.escapar(d.url)}</p>`;
+      } catch (err) {
+        caja.innerHTML = `<div class="note danger">${FX.icono('alert')}<div>${FX.escapar(err.message)}</div></div>`;
+      } finally { liberar(); }
     };
-
-    async function forzarDescarga() {
-        if(confirm("¿Forzar la descarga ignorando el caché inteligente?")) {
-            setPillStatus('Tarifas', 'loading', 'Borrando Memoria...');
-            setPillStatus('Monitor', 'loading', 'Borrando Memoria...');
-            
-            sessionStorage.removeItem('cacheTarifarioFull');
-            
-            try {
-                const request = indexedDB.open(dbNamePreload, 1);
-                request.onsuccess = (e) => {
-                    const db = e.target.result;
-                    const tx = db.transaction(storeNamePreload, "readwrite");
-                    tx.objectStore(storeNamePreload).delete("monitorCargado");
-                    tx.oncomplete = () => { location.reload(); };
-                };
-            } catch(e) {
-                location.reload();
-            }
-        }
-    }
-
-    function abrirModal() {
-        document.getElementById('inpNombre').value = sesion.nombre;
-        document.getElementById('inpUsrOriginal').value = sesion.usuario || '';
-        document.getElementById('inpUsuario').value = sesion.usuario || '';
-        document.getElementById('inpPassword').value = '';
-        const modal = document.getElementById('modalPerfil');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    }
-
-    function cerrarModal() {
-        const modal = document.getElementById('modalPerfil');
-        modal.classList.remove('active');
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    }
-
-    async function guardarPerfil() {
-        let uOrig = document.getElementById('inpUsrOriginal').value.trim();
-        let nNom = document.getElementById('inpNombre').value.trim();
-        let nUsr = document.getElementById('inpUsuario').value.trim();
-        let nPass = document.getElementById('inpPassword').value.trim();
-
-        if(!uOrig || !nNom || !nUsr || !nPass) {
-            alert("⚠️ Por favor llena todos los campos para poder actualizar tu cuenta.");
-            return;
-        }
-
-        let btn = document.getElementById('btnGuardar');
-        btn.innerText = "Guardando..."; btn.disabled = true;
-
-        let dataToSave = {
-            action: 'edit_user', usuarioOriginal: uOrig, nombre: nNom,
-            usuario: nUsr, password: nPass, rol: sesion.rol, ciudad: sesion.ciudad 
-        };
-
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { "Content-Type": "text/plain" }, body: JSON.stringify(dataToSave)
-            });
-
-            sesion.nombre = nNom; sesion.usuario = nUsr;
-            localStorage.setItem('sesionActiva', JSON.stringify(sesion));
-            
-            let primerNombre = nNom.split(' ')[0] || nNom;
-            document.getElementById('uiNombre').innerText = nNom;
-            document.getElementById('lblNombre').innerText = primerNombre;
-            
-            alert("✅ Perfil actualizado correctamente.");
-            cerrarModal();
-            
-        } catch (error) {
-            alert("❌ Hubo un error de conexión al intentar guardar. Inténtalo de nuevo.");
-        } finally {
-            btn.innerText = "Guardar Cambios"; btn.disabled = false;
-        }
-    }
-
-    function cerrarSesion() {
-        localStorage.removeItem('sesionActiva');
-        document.body.style.transition = "opacity 0.5s ease";
-        document.body.style.opacity = "0";
-        setTimeout(() => { window.location.href = 'index.html'; }, 500);
-    }
-
-    // =========================================================================
-    // 🚀 MOTOR DE CONCILIACIÓN PROACTIVA
-    // =========================================================================
-
-    async function conciliarCambiosMonitor(dbRutas, monitor) {
-        if (!dbRutas || !monitor || dbRutas.length === 0 || monitor.length === 0) return;
-
-        let d = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
-        let fechaHoyEC = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
-
-        let rutasDeHoy = dbRutas.filter(r => {
-            let fLimpia = String(r.fecha || r.Fecha || '').trim();
-            if (fLimpia.charAt(0) === "'") fLimpia = fLimpia.substring(1);
-            if (/^\d{4}-\d{2}-\d{2}/.test(fLimpia)) fLimpia = fLimpia.substring(0, 10);
-            return fLimpia === fechaHoyEC;
-        });
-
-        if (rutasDeHoy.length === 0) return;
-
-        let misRutas = rutasDeHoy;
-        if (sesion.rol !== 'Administrador') {
-            misRutas = rutasDeHoy.filter(r => String(r.usuario || r.Usuario).trim() === String(sesion.nombre).trim());
-        }
-
-        let alertasHTML = '';
-        let operacionesPendientes = [];
-
-        misRutas.forEach(ruta => {
-            let valCP = ruta.cartaPorte || ruta['Carta Porte'] || ruta.CARTA_PORTE || ruta.Carta_Porte;
-            let cpOriginal = String(valCP || '').trim().toUpperCase().replace(/\./g, '');
-            
-            let valIds = ruta.listaIds || ruta.IDs_Pedidos || ruta.ids_pedidos;
-            let idsEnRuta = String(valIds || '').split(',').filter(Boolean);
-
-            if (!cpOriginal || cpOriginal === 'UNDEFINED' || idsEnRuta.length === 0) return; 
-
-            let idsQueSeQuedan = [];
-            let ingresosPerdidos = 0;
-            let fugadosA_NoRegistrados = []; 
-            let fugadosB_Registrados = {};   
-
-            idsEnRuta.forEach(item => {
-                let idLimpio = item.split('-')[0].trim();
-                let cobro = parseFloat(item.split('-')[1].replace(/[^0-9.-]+/g, "")) || 0;
-                
-                let estadoMonitor = monitor.find(m => {
-                    let idM = m['PEDIDOID'] || m['idpedido'] || m['2idpedido'] || m['Nro Pedido:'] || m['Nro Pedido'] || m['NROPEDIDO'] || m['ID_Pedido'] || m['Orden'] || m['Nro_Pedido'];
-                    return String(idM || '').trim() === idLimpio;
-                });
-                
-                if (estadoMonitor) {
-                    let cpRaw = estadoMonitor['ULTIMA_CARTA_PORTE'] || estadoMonitor['Carta_Porte'] || estadoMonitor['CARTA PORTE'] || estadoMonitor['Nro Carta Porte:'] || estadoMonitor['Nro Carta Porte'] || estadoMonitor['NROCARTAPORTE'] || estadoMonitor['CP'] || 'SIN_CP';
-                    let cpMonitor = String(cpRaw).trim().toUpperCase().replace(/\./g, '');
-                    
-                    if (cpMonitor !== cpOriginal && cpMonitor !== 'SIN_CP' && cpMonitor !== '') {
-                        ingresosPerdidos += cobro;
-                        
-                        let rutaDestinoDB = rutasDeHoy.find(r => {
-                            let rCP = r.cartaPorte || r['Carta Porte'] || r.CARTA_PORTE;
-                            return String(rCP || '').trim().toUpperCase().replace(/\./g, '') === cpMonitor;
-                        });
-                        
-                        if (rutaDestinoDB) {
-                            if (!fugadosB_Registrados[cpMonitor]) {
-                                fugadosB_Registrados[cpMonitor] = { ids: [], gananciaSumar: 0, rutaRef: rutaDestinoDB };
-                            }
-                            fugadosB_Registrados[cpMonitor].ids.push(item);
-                            fugadosB_Registrados[cpMonitor].gananciaSumar += cobro;
-                        } else {
-                            fugadosA_NoRegistrados.push(item);
-                        }
-                    } else {
-                        idsQueSeQuedan.push(item);
-                    }
-                } else {
-                    idsQueSeQuedan.push(item); 
-                }
-            });
-
-            if (fugadosA_NoRegistrados.length > 0 || Object.keys(fugadosB_Registrados).length > 0) {
-                operacionesPendientes.push({
-                    rutaOrigen: ruta,
-                    nuevaListaOrigen: idsQueSeQuedan,
-                    descuentoOrigen: ingresosPerdidos,
-                    impactosNuevos: fugadosB_Registrados
-                });
-
-                let msj = `En la CP <b>${cpOriginal}</b>:<br>`;
-                
-                if (fugadosA_NoRegistrados.length > 0) {
-                    msj += `&nbsp;&nbsp;🔸 Se retiraron ${fugadosA_NoRegistrados.length} pedidos (ruta aún no ingresada).<br>`;
-                }
-
-                Object.keys(fugadosB_Registrados).forEach(cpDest => {
-                    let dest = fugadosB_Registrados[cpDest];
-                    let usrDestino = dest.rutaRef.usuario || dest.rutaRef.Usuario || 'Desconocido';
-                    msj += `&nbsp;&nbsp;🔸 Se movieron ${dest.ids.length} pedidos hacia la CP <b>${cpDest}</b> de ${usrDestino}.<br>`;
-                });
-
-                alertasHTML += `<div style="background:var(--bg-panel); padding:10px; margin-bottom:10px; border-radius:6px; font-size:13px; border-left: 4px solid var(--neon-blue);">${msj}</div>`;
-            }
-        });
-
-        if (operacionesPendientes.length > 0) {
-            let hashCambiosActuales = btoa(JSON.stringify(operacionesPendientes));
-            if (sessionStorage.getItem('cambiosIgnoradosHoy') === hashCambiosActuales) return;
-
-            ejecutarCorreccionSilenciosa(operacionesPendientes, alertasHTML, hashCambiosActuales);
-        }
-    }
-
-    async function ejecutarCorreccionSilenciosa(operaciones, alertasHTML, hash) {
-        let promesas = [];
-        let rutasAActualizar = {}; 
-
-        operaciones.forEach(op => {
-            let idOrig = op.rutaOrigen.idRegistro || op.rutaOrigen.id_registro;
-            if (!rutasAActualizar[idOrig]) rutasAActualizar[idOrig] = JSON.parse(JSON.stringify(op.rutaOrigen));
-
-            rutasAActualizar[idOrig].listaIds = op.nuevaListaOrigen.join(', ');
-            rutasAActualizar[idOrig].pedidos = op.nuevaListaOrigen.length;
-            let ingOrig = parseFloat(rutasAActualizar[idOrig].ingresos || rutasAActualizar[idOrig].Ingresos) || 0;
-            rutasAActualizar[idOrig].ingresos = Math.max(0, ingOrig - op.descuentoOrigen);
-
-            Object.keys(op.impactosNuevos).forEach(cpDest => {
-                let impacto = op.impactosNuevos[cpDest];
-                let idDest = impacto.rutaRef.idRegistro || impacto.rutaRef.id_registro;
-
-                if (!rutasAActualizar[idDest]) rutasAActualizar[idDest] = JSON.parse(JSON.stringify(impacto.rutaRef));
-
-                let valIdsDest = rutasAActualizar[idDest].listaIds || rutasAActualizar[idDest].IDs_Pedidos;
-                let listaActualDest = String(valIdsDest || '').split(',').filter(Boolean);
-                
-                impacto.ids.forEach(item => {
-                    let idP = item.split('-')[0].trim();
-                    if (!listaActualDest.some(x => x.includes(idP))) listaActualDest.push(item);
-                });
-
-                rutasAActualizar[idDest].listaIds = listaActualDest.join(', ');
-                rutasAActualizar[idDest].pedidos = listaActualDest.length;
-                let ingDest = parseFloat(rutasAActualizar[idDest].ingresos || rutasAActualizar[idDest].Ingresos) || 0;
-                rutasAActualizar[idDest].ingresos = ingDest + impacto.gananciaSumar;
-            });
-        });
-
-        Object.values(rutasAActualizar).forEach(rutaActualizada => {
-            let idEnvio = rutaActualizada.idRegistro || rutaActualizada.id_registro;
-            promesas.push(
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'update_ruta_completa', idRegistro: idEnvio, datos: rutaActualizada })
-                })
-            );
-        });
-
-        try {
-            await Promise.all(promesas);
-            sessionStorage.setItem('cambiosIgnoradosHoy', hash); 
-            
-            Swal.fire({
-                title: '✅ Ajuste Automático Realizado',
-                html: `<div style="text-align:left; font-size:14px; color:var(--text-main);">
-                        El sistema detectó modificaciones en el Monitor y ha cuadrado tus finanzas y paquetes automáticamente:<br><br>
-                        ${alertasHTML}
-                       </div>`,
-                icon: 'success',
-                background: 'var(--bg-dark)',
-                color: 'white',
-                confirmButtonColor: 'var(--neon-green)',
-                confirmButtonText: 'Entendido'
-            }).then(() => {
-                sessionStorage.removeItem('cacheTarifarioFull');
-                location.reload();
-            });
-
-        } catch (e) {
-            console.log("Error al intentar corregir silenciosamente en la base de datos", e);
-        }
-    }
-
-    function reconstruirDesdeHeadersYFilas(payload) {
-        if (!payload || !payload.headers || !payload.rows) return [];
-        const headersCrudos = payload.headers.map(h => String(h).trim());
-        const headersLimpios = headersCrudos.map(h => h.toUpperCase().replace(/[^A-Z0-9_]/g, ""));
-
-        return payload.rows.map(fila => {
-            let obj = {};
-            headersLimpios.forEach((hLimpio, i) => { obj[hLimpio] = fila[i]; });
-            headersCrudos.forEach((hCrudo, i) => { obj[hCrudo] = fila[i]; });
-            return obj;
-        });
-    }
+  }
+});
 </script>
 </body>
 </html>

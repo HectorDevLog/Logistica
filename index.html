@@ -1,591 +1,211 @@
 <!DOCTYPE html>
+<!-- Sistema de Rentabilidad · Distribución
+     © 2026 Héctor Torres. Todos los derechos reservados. -->
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlexNet Operaciones - Iniciar Sesión</title>
-    <script src="seguridad.js"></script>
-    <script src="config.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Héctor Torres">
+<meta name="copyright" content="© 2026 Héctor Torres. Todos los derechos reservados.">
+<title>Acceso · Rentabilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* Estilos propios de esta pantalla */
+  .acceso { min-height: 100vh; display: grid; grid-template-columns: 1.05fr .95fr; }
+  @media (max-width: 900px) { .acceso { grid-template-columns: 1fr; } .acceso .lado { display: none; } }
 
-        :root { 
-            /* VARIABLES TEMA OSCURO (Por defecto) */
-            --bg-main: #070b14;
-            --bg-panel: rgba(17, 24, 39, 0.6);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255,255,255,0.05);
-            --input-bg: rgba(0,0,0,0.3);
-            
-            --neon-blue: #00f0ff;
-            --neon-purple: #8a2be2;
-            --neon-green: #00ff9d;
-            --neon-red: #ff3333;
-            
-            /* Colores del Capibara Cyberpunk */
-            --capy-body: #a06b3e; 
-            --capy-snout: #8b572a; 
-            --capy-dark: #2a1608; 
-        }
+  /* Lado izquierdo: identidad */
+  .lado {
+    position: relative; overflow: hidden;
+    background: var(--n-900); color: #fff;
+    padding: var(--s-12) var(--s-10);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .lado::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(color-mix(in srgb, #fff 6%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, #fff 6%, transparent) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 90% 70% at 30% 20%, #000 20%, transparent 75%);
+  }
+  .lado > * { position: relative; z-index: 1; }
+  .lado .marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .lado .marca .brand-mark { width: 30px; height: 30px; }
+  .lado h1 { font-size: clamp(1.9rem, 3.2vw, 2.6rem); line-height: 1.15; letter-spacing: -.03em; margin-bottom: var(--s-4); }
+  .lado h1 em { font-style: normal; color: #7fc0ff; }
+  .lado .bajada { color: #9fb0c4; font-size: var(--t-lg); max-width: 34ch; line-height: 1.6; }
 
-        /* VARIABLES TEMA CLARO */
-        body.light-theme {
-            --bg-main: #f1f5f9;
-            --bg-panel: rgba(255, 255, 255, 0.9);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: rgba(0,0,0,0.1);
-            --input-bg: #ffffff;
-            
-            --neon-blue: #0284c7; 
-            --neon-green: #059669; 
-            --neon-red: #dc2626; 
-        }
+  .puntos { list-style: none; margin: var(--s-8) 0 0; padding: 0; display: grid; gap: var(--s-4); max-width: 40ch; }
+  .puntos li { display: flex; gap: var(--s-3); align-items: flex-start; }
+  .puntos svg { width: 18px; height: 18px; color: #7fc0ff; flex-shrink: 0; margin-top: 2px; }
+  .puntos b { display: block; font-size: var(--t-md); font-weight: 600; }
+  .puntos span { font-size: var(--t-sm); color: #8ea0b6; line-height: 1.5; }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main); 
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; color: var(--text-main); overflow: hidden;
-            transition: background-color 0.4s ease, color 0.4s ease;
-        }
+  .pie-lado { font-size: var(--t-xs); color: #64758a; }
 
-        @keyframes wrapperEnter {
-            0% { opacity: 0; transform: scale(0.95) translateY(30px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        }
+  /* Lado derecho: formulario */
+  .lado-form { display: grid; place-items: center; padding: var(--s-6); background: var(--surface); }
+  .caja { width: min(380px, 100%); }
+  .caja > header { margin-bottom: var(--s-6); }
+  .caja h2 { font-size: var(--t-2xl); letter-spacing: -.02em; }
+  .caja header p { color: var(--ink-soft); margin-top: var(--s-1); }
 
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
+  .marca-movil { display: none; align-items: center; gap: 10px; margin-bottom: var(--s-6); font-weight: 700; }
+  @media (max-width: 900px) { .marca-movil { display: flex; } }
 
-        /* CONTENEDOR PRINCIPAL DIVIDIDO */
-        .login-wrapper {
-            display: flex; width: 1000px; max-width: 95%; min-height: 620px;
-            background: var(--bg-panel); border-radius: 20px; overflow: hidden; opacity: 0; 
-            border: 1px solid var(--border-color); backdrop-filter: blur(15px);
-            animation: wrapperEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 0.1s;
-            position: relative;
-        }
-
-        /* PANEL IZQUIERDO */
-        .brand-panel {
-            flex: 1; background: linear-gradient(135deg, rgba(7, 11, 20, 0.9) 0%, rgba(138, 43, 226, 0.2) 100%);
-            color: white; padding: 50px; display: flex; flex-direction: column;
-            justify-content: center; position: relative; overflow: hidden;
-            border-right: 1px solid var(--border-color);
-        }
-        body.light-theme .brand-panel { background: linear-gradient(135deg, var(--neon-blue) 0%, #1e40af 100%); }
-
-        .bg-circle { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.03); pointer-events: none; }
-        .circle-1 { width: 300px; height: 300px; top: -100px; right: -50px; }
-        .circle-2 { width: 500px; height: 500px; bottom: -200px; left: -100px; }
-
-        .brand-panel h1 { font-size: clamp(2em, 3vw, 2.8em); margin: 0 0 10px 0; font-weight: 800; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.3s; line-height: 1.1;}
-        .brand-panel h1 span { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
-        body.light-theme .brand-panel h1 span { color: #bae6fd; text-shadow: none; }
-        
-        .divider { width: 50px; height: 4px; background-color: var(--neon-blue); margin: 25px 0; border-radius: 2px; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.4s; box-shadow: 0 0 10px var(--neon-blue);}
-        body.light-theme .divider { background-color: white; box-shadow: none;}
-
-        .brand-panel p { font-size: 1.1em; color: rgba(255,255,255,0.8); line-height: 1.6; z-index: 2; position: relative; opacity: 0; animation: fadeInUp 0.7s ease forwards 0.5s; }
-
-        /* PANEL DERECHO */
-        .form-panel {
-            flex: 1; padding: 40px 6vw; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; position: relative;
-        }
-
-        /* 🔥 SWITCH TEMA CLARO/OSCURO 🔥 */
-        .theme-switch-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
-        #theme-switch { display: none; }
-        .theme-label {
-            width: 70px; height: 28px; background-color: var(--border-color);
-            border-radius: 100px; position: relative; cursor: pointer; display: flex; align-items: center; margin: 0; border: 1px solid rgba(150,150,150,0.2);
-        }
-        .theme-label .toggle {
-            position: absolute; width: 34px; height: 22px; background-color: #fff; left: 3px;
-            border-radius: 100px; box-shadow: 0 2px 10px rgba(0,0,0,.2);
-            transition: transform .3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.3s;
-        }
-        #theme-switch:checked + .theme-label .toggle { transform: translateX(30px); background-color: #1e293b; }
-        .theme-label .names { font-size: 10px; font-weight: bolder; width: 100%; position: absolute; display: flex; justify-content: space-around; user-select: none; z-index: 2; color: var(--text-main); }
-        .theme-label .light, .theme-label .dark { margin: 0; transition: 0.3s; }
-        #theme-switch:not(:checked) + .theme-label .light { opacity: 1; color: #000; }
-        #theme-switch:not(:checked) + .theme-label .dark { opacity: 0.4; color: #000; }
-        #theme-switch:checked + .theme-label .light { opacity: 0.4; color: #fff; }
-        #theme-switch:checked + .theme-label .dark { opacity: 1; color: #fff; }
-
-        /* 🔥 ANATOMÍA CORRECTA DEL CAPIBARA 🔥 */
-        .mascot-container { position: relative; width: 80px; height: 80px; margin-bottom: 20px; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.3s;}
-        
-        .capy-speech-bubble {
-            position: absolute; top: -35px; left: -140px; background: var(--bg-panel);
-            border: 1px solid var(--neon-blue); padding: 8px 15px; border-radius: 12px;
-            font-size: 0.85em; font-weight: 600; color: var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-            opacity: 0; transform: scale(0.8) translateY(10px);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 10; pointer-events: none; white-space: nowrap; backdrop-filter: blur(5px);
-        }
-        .capy-speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
-        .capy-speech-bubble::after {
-            content: ''; position: absolute; top: 10px; right: -6px; width: 10px; height: 10px;
-            background: var(--bg-panel); border-top: 1px solid var(--neon-blue); border-right: 1px solid var(--neon-blue);
-            transform: rotate(45deg);
-        }
-
-        .capy-ear { position: absolute; top: 12px; width: 14px; height: 12px; background: var(--capy-dark); z-index: 0; transition: all 0.3s;}
-        .capy-ear.left { left: -2px; border-radius: 10px 5px 0 10px; transform: rotate(-30deg); }
-        .capy-ear.right { right: -2px; border-radius: 5px 10px 10px 0; transform: rotate(30deg); }
-        
-        .capy-body { position: absolute; bottom: 0; left: 0; width: 80px; height: 75px; background: var(--capy-body); border-radius: 35px 35px 20px 20px; z-index: 1; overflow: hidden; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); transition: transform 0.3s;}
-        .capy-snout { position: absolute; bottom: 5px; left: 12px; width: 56px; height: 35px; background: var(--capy-snout); border-radius: 20px 20px 25px 25px; z-index: 2; }
-        .capy-nose { position: absolute; top: 4px; left: 16px; width: 24px; height: 14px; background: var(--capy-dark); border-radius: 10px 10px 15px 15px; }
-        .capy-mouth { position: absolute; top: 18px; left: 27px; width: 2px; height: 8px; background: var(--capy-dark); transition: all 0.3s;}
-        .capy-mouth::after { content: ''; position: absolute; bottom: 0; left: -6px; width: 14px; height: 5px; border-bottom: 2px solid var(--capy-dark); border-radius: 50%; }
-        
-        .capy-eye { position: absolute; top: 22px; width: 12px; height: 12px; background: var(--capy-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 2; transition: all 0.3s;}
-        .capy-eye.left { left: 14px; } .capy-eye.right { right: 14px; }
-        .capy-pupil { width: 4px; height: 4px; background: var(--neon-blue); border-radius: 50%; position: relative; transition: transform 0.1s ease-out; transform: translate(1px, -1px); box-shadow: 0 0 5px var(--neon-blue);}
-        
-        .capy-blush { position: absolute; top: 32px; width: 10px; height: 5px; background: rgba(0, 240, 255, 0.4); border-radius: 50%; z-index: 1; transition: all 0.3s ease;}
-        .capy-blush.left { left: 8px; } .capy-blush.right { right: 8px; }
-        
-        .capy-eyelid { position: absolute; top: -14px; left: -2px; width: 16px; height: 16px; background: var(--capy-body); z-index: 5; animation: blink 5s infinite; transition: all 0.3s; transform: translateY(2px);}
-        @keyframes blink { 0%, 96%, 98%, 100% { transform: translateY(2px); } 97%, 99% { transform: translateY(12px); } }
-        
-        /* El eje de rotación DEBE ser 'top center' (los hombros) */
-        .capy-arm { position: absolute; width: 16px; height: 22px; background: var(--capy-snout); border-radius: 10px; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 4; box-shadow: -2px 2px 4px rgba(0,0,0,0.3); transform-origin: top center; }
-        .capy-arm.left { bottom: 5px; left: 4px; transform: rotate(15deg); cursor: pointer; }
-        .capy-arm.right { bottom: 5px; right: 4px; transform: rotate(-15deg); cursor: pointer; }
-
-        /* Animación Saludo Inicio */
-        @keyframes waveHello { 0%, 100% { transform: translateY(0) rotate(-15deg); } 50% { transform: translateY(-10px) rotate(-110deg); } }
-        .capy-arm.right.waving { animation: waveHello 2s ease-in-out; }
-
-        /* 🔥 ESTADOS EMOCIONALES GEOMÉTRICAMENTE PERFECTOS 🔥 */
-
-        /* 1. Tapado (Contraseña): Brazos giran sobre el hombro hacia la cara */
-        body.state-password .capy-arm.left { transform: translateY(-10px) translateX(8px) rotate(150deg); }
-        body.state-password .capy-arm.right { transform: translateY(-10px) translateX(-8px) rotate(-150deg); }
-        body.state-password .capy-eyelid { transform: translateY(14px); animation: none; } 
-        body.state-password .capy-pupil { display: none !important; }
-
-        /* 2. Espiando: Mano derecha baja y ojo derecho abre */
-        body.state-peek .capy-arm.left { transform: translateY(-10px) translateX(8px) rotate(150deg); } 
-        body.state-peek .capy-arm.right { transform: translateY(0px) translateX(0px) rotate(-15deg); }
-        body.state-peek .capy-eye.left .capy-eyelid { transform: translateY(14px); animation: none; } 
-        body.state-peek .capy-eye.right .capy-eyelid { transform: translateY(0px); animation: none; } 
-        body.state-peek .capy-eye.left .capy-pupil { display: none !important; }
-        body.state-peek .capy-eye.right .capy-pupil { transform: translate(-3px, 2px) scale(0.9) !important; }
-
-        /* 3. Error (Llorando): Párpados tristes \ /, lágrimas */
-        body.state-error .capy-ear.left { transform: rotate(-50deg) translateY(4px) translateX(-2px); } 
-        body.state-error .capy-ear.right { transform: rotate(50deg) translateY(4px) translateX(2px); }
-        body.state-error .capy-mouth { height: 10px; width: 6px; border-radius: 5px; background: var(--capy-dark); left: 25px; top: 19px;} 
-        body.state-error .capy-mouth::after { display:none; }
-        body.state-error .capy-eyelid { animation:none; } 
-        body.state-error .capy-eye.left .capy-eyelid { transform: translateY(8px) rotate(-25deg); } /* \ */
-        body.state-error .capy-eye.right .capy-eyelid { transform: translateY(8px) rotate(25deg); }  /* / */
-        body.state-error .capy-blush { 
-            background: var(--neon-blue); height: 12px; width: 4px; border-radius: 4px; top: 30px; box-shadow: 0 0 5px var(--neon-blue);
-        }
-        body.state-error .capy-blush.left { transform: translate(10px, 5px); } /* Cae exacto debajo del ojo */
-        body.state-error .capy-blush.right { transform: translate(-10px, 5px); }
-        body.state-error .capy-pupil { transform: translateY(3px) scale(0.9) !important; } /* Mirada baja triste */
-
-        /* 4. Angry (Enojado por inactividad): Párpados enojados / \, brazos cruzados */
-        body.state-angry .capy-arm.left { transform: translateY(-2px) translateX(4px) rotate(60deg); } 
-        body.state-angry .capy-arm.right { transform: translateY(-2px) translateX(-4px) rotate(-60deg); }
-        body.state-angry .capy-eyelid { animation: none;} 
-        body.state-angry .capy-eye.left .capy-eyelid { transform: translateY(8px) rotate(25deg); }  /* / */
-        body.state-angry .capy-eye.right .capy-eyelid { transform: translateY(8px) rotate(-25deg); } /* \ */
-        body.state-angry .capy-pupil { transform: translateY(1px) scale(0.85) !important; }
-        body.state-angry .capy-speech-bubble { opacity: 1; transform: scale(1) translateY(0); } 
-
-        /* 5. Éxito (Celebración: Saltito y mano derecha saludando) */
-        @keyframes jumpHappy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        @keyframes waveGoodbye { 
-            0%, 100% { transform: translateY(-10px) rotate(-130deg); } 
-            50% { transform: translateY(-10px) rotate(-90deg); } 
-        }
-        
-        /* 🔥 SOLUCIÓN PARA QUE NO DESAPAREZCA: Fijamos la opacidad a 1 🔥 */
-        body.state-success .mascot-container { 
-            opacity: 1 !important; 
-            animation: jumpHappy 0.4s ease 2 forwards; 
-        } 
-        
-        body.state-success .capy-arm.left { transform: translateY(0px) rotate(15deg); } /* Reposa */
-        body.state-success .capy-arm.right { animation: waveGoodbye 0.3s ease-in-out infinite !important; }
-        body.state-success .capy-eye { background: transparent !important; border-top: 3px solid var(--capy-dark); border-radius: 50% 50% 0 0; height: 6px; transform: translateY(4px);}
-        body.state-success .capy-pupil, body.state-success .capy-eyelid { display: none !important; } 
-        body.state-success .capy-blush { background: rgba(0, 255, 157, 0.6); box-shadow: 0 0 5px rgba(0, 255, 157, 0.8);}
-
-        /* Adapta el Capibara al Light Theme */
-        body.light-theme .capy-speech-bubble { background: white; border-color: var(--border-color); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        body.light-theme .capy-speech-bubble::after { background: white; border-color: var(--border-color); }
-        body.light-theme .capy-pupil { background: white; box-shadow: none; }
-        body.light-theme .capy-blush { background: rgba(239, 68, 68, 0.3); }
-        body.light-theme.state-success .capy-blush { background: rgba(16, 185, 129, 0.5); box-shadow: none;}
-        body.light-theme.state-error .capy-blush { background: #0ea5e9; box-shadow: none; } /* Lágrimas azules en modo claro */
+  #error[hidden] { display: none; }
 
 
-        /* Elementos del Formulario */
-        h2 { color: var(--text-main); margin: 0 0 5px 0; font-size: 1.8em; font-weight: 800; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.4s; width: 100%; text-align: center; }
-        p.subtitle { color: var(--text-muted); margin: 0 0 25px 0; font-size: 0.95em; opacity: 0; animation: fadeInUp 0.6s ease forwards 0.5s; width: 100%; text-align: center; }
-
-        form { width: 100%; max-width: 320px; }
-        .form-group { margin-bottom: 20px; position: relative; }
-        .form-group:nth-child(1) { opacity: 0; animation: fadeInUp 0.6s ease forwards 0.6s; }
-        .form-group:nth-child(2) { opacity: 0; animation: fadeInUp 0.6s ease forwards 0.7s; }
-
-        label { display: block; font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; color: var(--text-muted); }
-
-        input { 
-            width: 100%; padding: 14px 16px; border: 1px solid var(--border-color); 
-            border-radius: 8px; box-sizing: border-box; font-size: 1em; 
-            font-family: inherit; transition: all 0.3s; background: var(--input-bg); color: var(--text-main);
-        }
-        input:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 0 2px rgba(0,240,255,0.2); transform: translateY(-1px); }
-
-        input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear, input[type="password"]::-webkit-reveal { display: none; width: 0; height: 0; }
-
-        .btn-toggle-pass {
-            position: absolute; right: 12px; top: 35px; background: none; border: none;
-            color: var(--text-muted); cursor: pointer; padding: 0; transition: color 0.2s; z-index: 5;
-        }
-        .btn-toggle-pass:hover { color: var(--neon-blue); }
-
-        button.btn-submit { 
-            width: 100%; padding: 14px; background: rgba(0,240,255,0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue);
-            border-radius: 8px; font-weight: 700; font-size: 1em; 
-            cursor: pointer; transition: all 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px;
-            opacity: 0; animation: fadeInUp 0.6s ease forwards 0.8s;
-        }
-        button.btn-submit:hover:not(:disabled) { background: var(--neon-blue); color: #000; transform: translateY(-2px); box-shadow: 0 0 15px rgba(0,240,255,0.4); }
-        button.btn-submit:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
-        button.btn-submit:disabled { background: rgba(255,255,255,0.05); border-color: transparent; color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
-
-        #errorMsg { 
-            background: rgba(255,51,51,0.1); color: var(--neon-red); padding: 12px; border-radius: 8px; font-size: 0.9em; 
-            display: none; margin-bottom: 20px; font-weight: 600; border: 1px solid rgba(255,51,51,0.3); align-items: center; gap: 8px; animation: fadeInUp 0.4s ease; width: 100%; box-sizing: border-box; justify-content: center; text-align: center;
-        }
-
-        .loader-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: currentColor; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .footer-text { margin-top: 30px; font-size: 0.75em; color: var(--text-muted); text-align: center; opacity: 0; animation: fadeIn 1s ease forwards 1s; }
-
-        @media (max-width: 850px) {
-            .login-wrapper { flex-direction: column; height: auto; max-width: 450px; min-height: auto;}
-            .brand-panel { display: none; }
-            .form-panel { padding: 50px 30px; }
-            form { max-width: 100%; }
-        }
-    </style>
+  .tema-flotante { position: fixed; top: var(--s-4); right: var(--s-4); z-index: 10; }
+</style>
 </head>
 <body>
 
-<div class="login-wrapper">
-    <div class="brand-panel">
-        <div class="bg-circle circle-1"></div>
-        <div class="bg-circle circle-2"></div>
-        <h1>FlexNet<br><span>Operaciones</span></h1>
-        <div class="divider"></div>
-        <p>Sistema centralizado de Control Logístico, Tarifación Dinámica y Auditoría de Flotas. Acceso exclusivo para personal autorizado.</p>
+<button class="theme-toggle tema-flotante" type="button" id="btnTema" aria-label="Cambiar tema"></button>
+
+<div class="acceso">
+
+  <!-- Identidad -->
+  <aside class="lado">
+    <div class="logo-placa" style="width:156px;padding:var(--s-2)">
+      <img src="assets/logo.png" alt="Hector · Automatiza. Analiza. Avanza.">
     </div>
 
-    <div class="form-panel">
-        <div class="theme-switch-container">
-            <input id="theme-switch" type="checkbox" onchange="toggleTheme()">
-            <label for="theme-switch" class="theme-label" title="Alternar modo Claro / Oscuro">
-                <div class="toggle"></div>
-                <div class="names">
-                    <p class="light">Light</p>
-                    <p class="dark">Dark</p>
-                </div>
-            </label>
-        </div>
+    <div>
+      <h1>Saber si el día cerró en <em>verde</em>, antes de que termine.</h1>
+      <p class="bajada">Costeo por carta porte, proyección de flota e indicadores de rentabilidad para la operación de transporte.</p>
 
-        <div class="mascot-container">
-            <div class="capy-speech-bubble" id="mascot-bubble">¿Ya va a iniciar sesión?</div>
-            <div class="capy-ear left"></div>
-            <div class="capy-ear right"></div>
-            <div class="capy-body">
-                <div class="capy-blush left"></div>
-                <div class="capy-blush right"></div>
-                <div class="capy-snout">
-                    <div class="capy-nose"></div>
-                    <div class="capy-mouth"></div>
-                </div>
-                <div class="capy-eye left" id="eye-left">
-                    <div class="capy-eyelid"></div>
-                    <div class="capy-pupil" id="pupil-left"></div>
-                </div>
-                <div class="capy-eye right" id="eye-right">
-                    <div class="capy-eyelid"></div>
-                    <div class="capy-pupil" id="pupil-right"></div>
-                </div>
-            </div>
-            <div class="capy-arm left" onclick="togglePasswordView()"></div>
-            <div class="capy-arm right waving" id="arm-right" onclick="togglePasswordView()"></div>
-        </div>
-
-        <h2>¡Hola de nuevo!</h2>
-        <p class="subtitle">Ingresa tus credenciales para continuar</p>
-        
-        <div id="errorMsg" style="display: none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <span id="txtError">Usuario o contraseña incorrectos.</span>
-        </div>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="user">Usuario Corporativo</label>
-                <input type="text" id="user" placeholder="Ej. jperez" required autocomplete="username">
-            </div>
-            
-            <div class="form-group">
-                <label for="pass">Contraseña</label>
-                <input type="password" id="pass" placeholder="••••••••" required autocomplete="current-password">
-                <button type="button" class="btn-toggle-pass" onclick="togglePasswordView()" tabindex="-1">
-                    <svg id="icon-eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    <svg id="icon-eye-closed" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                </button>
-            </div>
-
-            <button type="submit" id="btnIngresar" class="btn-submit">
-                Acceder al Sistema
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
-            </button>
-        </form>
-        
-        <div class="footer-text">
-            FlexNet v5.0 &copy; 2026. Todos los derechos reservados.<br>
-            Desarrollado por: <strong style="color:var(--neon-blue);">Héctor Torres</strong>
-        </div>
+      <ul class="puntos" id="puntos"></ul>
     </div>
+
+    <p class="pie-lado" id="pieLado"></p>
+  </aside>
+
+  <!-- Formulario -->
+  <main class="lado-form">
+    <div class="caja">
+      <div class="marca-movil">
+        <div class="logo-placa" style="width:46px;padding:4px"><img src="assets/logo.png" alt=""></div>
+        <span id="marcaMovilTexto"></span>
+      </div>
+
+      <header>
+        <h2>Iniciar sesión</h2>
+        <p>Ingresa con tus credenciales del sistema.</p>
+      </header>
+
+      <div class="note danger mb-4" id="error" hidden role="alert"></div>
+
+      <form id="formulario" novalidate>
+        <div class="field">
+          <label for="usuario">Usuario</label>
+          <input type="text" id="usuario" name="usuario" autocomplete="username"
+                 autocapitalize="none" spellcheck="false" required placeholder="tu.usuario">
+        </div>
+
+        <div class="field">
+          <label for="clave">Contraseña</label>
+          <input type="password" id="clave" name="clave" autocomplete="current-password" required placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnEntrar">Entrar</button>
+      </form>
+
+      <p class="fs-xs muted mt-5" style="text-align:center">
+        Tus credenciales son las mismas del sistema. Si no puedes entrar, pídele
+        acceso al administrador.
+      </p>
+    </div>
+  </main>
+
 </div>
 
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/tarifas.js"></script>
+<script src="assets/api.js"></script>
 <script>
-    // 🔥 LOGICA DEL TEMA CLARO/OSCURO 🔥
-    const savedTheme = localStorage.getItem('flexnet_theme');
-    const themeSwitch = document.getElementById('theme-switch');
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
-    } else {
-        themeSwitch.checked = true; // Por defecto es Dark, el switch muestra Dark activo
+(function () {
+  'use strict';
+
+  // Si ya hay sesión abierta, no tiene sentido pedirla otra vez
+  if (FX.leerSesion()) { location.replace('Inicio.html'); return; }
+
+  // --- Tema ---
+  const btnTema = document.getElementById('btnTema');
+  btnTema.innerHTML = FX.icono('sun', 'icon-sun') + FX.icono('moon', 'icon-moon');
+  btnTema.onclick = FX.alternarTema;
+
+  // --- Textos de marca desde config.js, no escritos a mano ---
+  const NOMBRE = (window.CONFIG && CONFIG.APP_NOMBRE) || 'Rentabilidad';
+  const AREA   = (window.CONFIG && CONFIG.APP_AREA) || '';
+  document.getElementById('marcaMovilTexto').textContent = NOMBRE;
+  document.getElementById('pieLado').textContent = AREA ? `${NOMBRE} · ${AREA}` : NOMBRE;
+
+  // --- Sesión expirada por inactividad ---
+  if (new URLSearchParams(location.search).get('expirada')) {
+    const c = document.getElementById('error');
+    c.className = 'note warn mb-4';
+    c.innerHTML = FX.icono('info') + '<div>Tu sesión se cerró por inactividad. Vuelve a entrar.</div>';
+    c.hidden = false;
+  }
+
+  // --- Puntos de valor (se arman desde el catálogo de módulos: una sola fuente) ---
+  document.getElementById('puntos').innerHTML = FX.MODULOS
+    .filter(m => !m.fijo)
+    .map(m => `<li>${FX.icono(m.icono)}<div><b>${m.nombre}</b><span>${m.resumen}</span></div></li>`)
+    .join('');
+
+  // --- Envío ---
+  const form   = document.getElementById('formulario');
+  const cajaError = document.getElementById('error');
+  const btn    = document.getElementById('btnEntrar');
+  const campoUsuario = document.getElementById('usuario');
+  const campoClave   = document.getElementById('clave');
+
+  function mostrarError(msg) {
+    cajaError.innerHTML = FX.icono('alert') + `<div>${msg}</div>`;
+    cajaError.hidden = false;
+    [campoUsuario, campoClave].forEach(c => c.setAttribute('aria-invalid', 'true'));
+  }
+  function limpiarError() {
+    cajaError.hidden = true;
+    [campoUsuario, campoClave].forEach(c => c.removeAttribute('aria-invalid'));
+  }
+
+  [campoUsuario, campoClave].forEach(c => c.addEventListener('input', limpiarError));
+
+  async function entrar(usuario, clave) {
+    limpiarError();
+    if (!usuario || !clave) return mostrarError('Escribe tu usuario y tu contraseña.');
+
+    const liberar = FX.ocupar(btn, 'Verificando…');
+    try {
+      const sesion = await API.login(usuario, clave);
+      FX.guardarSesion(sesion);
+      btn.innerHTML = FX.icono('check') + ' Listo';
+      // Se ve el «Listo» un instante y la pantalla se va con la misma
+      // animación que usa el resto del sistema.
+      setTimeout(() => FX.ir('Inicio.html'), 220);
+    } catch (err) {
+      liberar();
+      mostrarError(err.message || 'No se pudo iniciar sesión.');
+      campoClave.value = '';
+      campoClave.focus();
     }
+  }
 
-    function toggleTheme() {
-        if (themeSwitch.checked) {
-            document.body.classList.remove('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'dark');
-        } else {
-            document.body.classList.add('light-theme'); 
-            localStorage.setItem('flexnet_theme', 'light');
-        }
-    }
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    entrar(campoUsuario.value.trim(), campoClave.value);
+  });
 
-    let sesion = JSON.parse(localStorage.getItem('sesionActiva'));
-    if (sesion && sesion.status === 'success') window.location.href = 'Inicio.html';
-
-    const userField = document.getElementById('user');
-    const passField = document.getElementById('pass');
-    const bodyState = document.body;
-    const armRight = document.getElementById('arm-right');
-    const pupilLeft = document.getElementById('pupil-left');
-    const pupilRight = document.getElementById('pupil-right');
-    const eyeLeft = document.getElementById('eye-left');
-    const eyeRight = document.getElementById('eye-right');
-    const mascotBubble = document.getElementById('mascot-bubble');
-
-    // 🔥 TIMER DE INACTIVIDAD ESTRICTO (15 seg) 🔥
-    let idleTimer;
-
-    function resetIdleTimer() {
-        clearTimeout(idleTimer);
-        
-        if (bodyState.className.includes('state-angry')) {
-            bodyState.classList.remove('state-angry');
-            mascotBubble.classList.remove('show');
-        }
-        
-        idleTimer = setTimeout(() => {
-            if (bodyState.className === '' || bodyState.className === 'light-theme') {
-                bodyState.classList.add('state-angry');
-                armRight.classList.remove('waving');
-                mascotBubble.innerHTML = "¿Sigues ahí?";
-                mascotBubble.classList.add('show');
-            }
-        }, 15000);
-    }
-
-    resetIdleTimer();
-
-    userField.addEventListener('input', resetIdleTimer);
-    passField.addEventListener('input', resetIdleTimer);
-    userField.addEventListener('click', resetIdleTimer);
-    passField.addEventListener('click', resetIdleTimer);
-
-    // Seguimiento del mouse para las pupilas
-    document.addEventListener('mousemove', (e) => {
-        if (bodyState.className.includes('state-password') || bodyState.className.includes('state-peek') || bodyState.className.includes('state-error') || bodyState.className.includes('state-success') || bodyState.className.includes('state-angry')) return;
-
-        const rectL = eyeLeft.getBoundingClientRect();
-        const rectR = eyeRight.getBoundingClientRect();
-        const cxL = rectL.left + rectL.width / 2;
-        const cyL = rectL.top + rectL.height / 2;
-        const cxR = rectR.left + rectR.width / 2;
-        const cyR = rectR.top + rectR.height / 2;
-        
-        const angleL = Math.atan2(e.clientY - cyL, e.clientX - cxL);
-        const angleR = Math.atan2(e.clientY - cyR, e.clientX - cxR);
-        const maxDist = 3;
-
-        pupilLeft.style.transform = `translate(${Math.cos(angleL) * maxDist}px, ${Math.sin(angleL) * maxDist}px)`;
-        pupilRight.style.transform = `translate(${Math.cos(angleR) * maxDist}px, ${Math.sin(angleR) * maxDist}px)`;
-    });
-
-    userField.addEventListener('input', () => {
-        armRight.classList.remove('waving');
-        bodyState.classList.remove('state-error');
-    });
-    
-    passField.addEventListener('input', () => {
-        if(bodyState.className.includes('state-error')) {
-            bodyState.classList.remove('state-error');
-            if(passField.type === 'password') bodyState.classList.add('state-password');
-            else bodyState.classList.add('state-peek');
-        }
-    });
-
-    userField.addEventListener('focus', () => {
-        armRight.classList.remove('waving');
-        bodyState.classList.remove('state-angry');
-        bodyState.classList.remove('state-password');
-        bodyState.classList.remove('state-peek');
-    });
-
-    passField.addEventListener('focus', () => {
-        armRight.classList.remove('waving');
-        pupilLeft.style.transform = '';
-        pupilRight.style.transform = '';
-        bodyState.classList.remove('state-angry');
-
-        if(passField.type === 'password') {
-            bodyState.classList.add('state-password');
-            bodyState.classList.remove('state-peek');
-        } else {
-            bodyState.classList.add('state-peek');
-            bodyState.classList.remove('state-password');
-        }
-    });
-
-    passField.addEventListener('blur', () => {
-        if(!bodyState.className.includes('state-error') && !bodyState.className.includes('state-success') && !bodyState.className.includes('state-angry')) {
-            bodyState.classList.remove('state-password');
-            bodyState.classList.remove('state-peek');
-        }
-    });
-
-    function togglePasswordView() {
-        armRight.classList.remove('waving');
-        pupilLeft.style.transform = '';
-        pupilRight.style.transform = '';
-        resetIdleTimer(); 
-        
-        if(passField.type === 'password') {
-            passField.type = 'text';
-            bodyState.classList.remove('state-password');
-            bodyState.classList.add('state-peek'); 
-            document.getElementById('icon-eye-open').style.display = 'none';
-            document.getElementById('icon-eye-closed').style.display = 'block';
-        } else {
-            passField.type = 'password';
-            bodyState.classList.remove('state-peek');
-            if (passField === document.activeElement) bodyState.classList.add('state-password');
-            document.getElementById('icon-eye-open').style.display = 'block';
-            document.getElementById('icon-eye-closed').style.display = 'none';
-        }
-    }
-
-    // LOGIN AL SERVIDOR
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        clearTimeout(idleTimer);
-        
-        bodyState.classList.remove('state-password');
-        bodyState.classList.remove('state-peek');
-        bodyState.classList.remove('state-error');
-        bodyState.classList.remove('state-angry');
-        
-        pupilLeft.style.transform = '';
-        pupilRight.style.transform = '';
-        mascotBubble.classList.remove('show');
-        
-        const btn = document.getElementById('btnIngresar');
-        const errorDiv = document.getElementById('errorMsg');
-        const txtError = document.getElementById('txtError');
-        
-        btn.innerHTML = `<span class="loader-spinner"></span> Validando...`;
-        btn.disabled = true;
-        errorDiv.style.display = 'none'; 
-
-        const u = userField.value.trim();
-        const p = passField.value.trim();
-
-        try {
-            const urlLogin = `${SCRIPT_URL}?action=login&usuario=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&v=${new Date().getTime()}`;
-            const response = await fetch(urlLogin);
-            
-            if (!response.ok) throw new Error("No se pudo conectar a la base de datos.");
-            
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                localStorage.setItem('sesionActiva', JSON.stringify(data));
-                
-                bodyState.classList.add('state-success');
-                btn.innerHTML = `Acceso Correcto <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                btn.style.background = "rgba(0,255,157,0.1)"; 
-                btn.style.color = "var(--neon-green)";
-                btn.style.borderColor = "var(--neon-green)";
-                
-                setTimeout(() => {
-                    document.body.style.transition = "opacity 0.5s ease";
-                    document.body.style.opacity = "0";
-                    setTimeout(() => { window.location.href = 'Inicio.html'; }, 500);
-                }, 1500);
-
-            } else {
-                bodyState.classList.add('state-error');
-                txtError.innerHTML = `<b>Error:</b> ${data.message || "Usuario o contraseña incorrectos."}`;
-                errorDiv.style.display = 'flex';
-                resetBoton(btn);
-                resetIdleTimer();
-            }
-        } catch (err) {
-            bodyState.classList.add('state-error');
-            txtError.innerHTML = `<b>Fallo en conexión:</b><br>${err.message}`;
-            errorDiv.style.display = 'flex';
-            resetBoton(btn);
-            resetIdleTimer();
-        }
-    });
-
-    function resetBoton(btn) {
-        btn.innerHTML = `Acceder al Sistema <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>`;
-        btn.disabled = false;
-    }
+  campoUsuario.focus();
+})();
 </script>
-
 </body>
 </html>
