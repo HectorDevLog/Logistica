@@ -95,6 +95,41 @@
   const texto = v => String(v == null ? '' : v).trim();
 
   /* =====================================================================
+     NOMBRES DE PERSONAS ESCRITOS DE MIL MANERAS
+     ---------------------------------------------------------------------
+     La hoja de costo de personal escribe «JuanMontalvo» y el sistema lo
+     tiene como «Juan Montalvo»; otra fila dice «Esteban» y el usuario es
+     «esteban». Se compara todo reducido a lo mismo: sin tildes, sin
+     espacios y en mayúsculas.
+     ===================================================================== */
+  const sinTildes = s => String(s == null ? '' : s)
+    .replace(/[ÁÀÄÂÃáàäâã]/g, 'A').replace(/[ÉÈËÊéèëê]/g, 'E')
+    .replace(/[ÍÌÏÎíìïî]/g, 'I').replace(/[ÓÒÖÔÕóòöôõ]/g, 'O')
+    .replace(/[ÚÙÜÛúùüû]/g, 'U').replace(/[Ññ]/g, 'N');
+
+  const llaveNombre = s => norm(sinTildes(s));
+
+  /**
+   * Busca en una lista de encargados el que corresponde a esta sesión.
+   * Se prueba, en orden, contra el usuario, el nombre completo y el primer
+   * nombre. Siempre por igualdad exacta del nombre reducido, nunca por
+   * «contiene»: si no, «Esteban» casaría con cualquier «Juan Esteban» y se
+   * le cobraría a quien no es.
+   */
+  function encargadoDe(filas, sesion) {
+    if (!sesion || !Array.isArray(filas) || !filas.length) return null;
+    const primerNombre = String(sesion.nombre || '').trim().split(/\s+/)[0];
+    const candidatos = [sesion.usuario, sesion.nombre, primerNombre]
+      .map(llaveNombre).filter(Boolean);
+
+    for (const c of candidatos) {
+      const fila = filas.find(f => llaveNombre(f.encargado) === c);
+      if (fila) return fila;
+    }
+    return null;
+  }
+
+  /* =====================================================================
      CÓDIGOS PEGADOS DESDE EXCEL
      Una carta porte es 69304, pero Excel la muestra como «69.304» y, según
      la configuración regional, a veces como «69 304». Si se copia una
@@ -316,6 +351,21 @@
     } catch (e) {}
   }
 
+  /**
+   * Bota lo guardado de esas tablas y las vuelve a bajar EN SEGUNDO PLANO.
+   *
+   * Después de escribir en la base el dato viejo ya no sirve —mostrarlo
+   * sería mentir—, pero tampoco hay por qué hacer esperar a la siguiente
+   * pantalla: la descarga se dispara aquí mismo, mientras la persona
+   * todavía está viendo el aviso de «Guardado». Así los ~2 s fijos que
+   * cuesta Apps Script se pagan cuando no le estorban a nadie, en vez de
+   * en la cara de quien abre el Dashboard justo después de guardar.
+   */
+  function recalentar(llaves) {
+    llaves.forEach(k => limpiarCache(k));
+    try { API.precargar(llaves); } catch (e) { /* si falla, la pantalla lo pedirá */ }
+  }
+
   /* =====================================================================
      TARIFARIO
      getAllTarifas devuelve las siete tablas de una sola llamada. Como cada
@@ -347,7 +397,15 @@
      ===================================================================== */
   const cobrados = new Map();   // idPedido -> { fecha, cartaPorte, placa, tarifa }
 
-  /* «1260842 - ($5.77)» -> { id: '1260842', tarifa: 5.77 } */
+  /* «1260842 - ($5.77)» -> { id: '1260842', tarifa: 5.77, manual: false }
+     «1260842 - ($9.50)M» -> { id: '1260842', tarifa: 9.50, manual: true }
+
+     La «M» al final marca que ese cobro lo escribió una persona desde
+     Auditoría, no el motor de tarifas. Va pegada tras el paréntesis, nunca
+     dentro del id ni del número, así que ninguna lectura existente del
+     campo se entera: el número se sigue leyendo igual porque parseFloat
+     corta en el primer carácter que no es parte del número. */
+  const MARCA_MANUAL = 'M';
   function partirLista(txt) {
     return String(txt == null ? '' : txt)
       .split(',')
@@ -357,9 +415,16 @@
         const corte = trozo.indexOf('-');
         const id = (corte >= 0 ? trozo.slice(0, corte) : trozo).trim();
         const val = corte >= 0 ? trozo.slice(corte + 1) : '';
-        return { id, tarifa: aNum(String(val).replace(/[()$\s]/g, '')) };
+        const manual = /\)\s*M\s*$/i.test(trozo);
+        return { id, tarifa: aNum(String(val).replace(/[()$\s]/g, '')), manual };
       })
       .filter(x => x.id);
+  }
+
+  /** Arma el texto de un pedido tal como lo espera LISTA_IDS. Un solo lugar
+      para escribirlo evita que cada pantalla lo formatee un poco distinto. */
+  function formatoCobro(id, tarifa, manual) {
+    return `${id} - ($${(Number(tarifa) || 0).toFixed(2)})${manual ? MARCA_MANUAL : ''}`;
   }
 
   function cargarCobrados(filas) {
@@ -485,6 +550,10 @@
     limpiarCache,
     listaDeCodigos,
     claveCodigo,
+    /** Lee y escribe la columna LISTA_IDS de DB_Simulador. Las usan el
+        Simulador (al guardar) y la Auditoría (al leer y al corregir). */
+    partirLista,
+    formatoCobro,
 
     /**
      * Adelanta las dos descargas grandes mientras la persona todavía está
@@ -495,12 +564,14 @@
      * llamada), así que la única forma de que el Simulador abra al instante
      * es que la espera ya haya ocurrido antes, cuando nadie la estaba mirando.
      */
-    precargar(llaves) {
+    precargar(llaves, ciudad) {
       if (CFG.PRECARGA === false) return;
       const trabajos = {
         tarifario: () => API.tarifario(),
         monitor:   () => API.monitorCompleto(),
-        programacion: () => API.programacion((CFG.CIUDADES || [])[0] || 'QUITO'),
+        // La ciudad de quien inició sesión, no una fija: precargar la
+        // programación de Quito no sirve de nada si trabaja en Guayaquil.
+        programacion: () => API.programacion(ciudad || (CFG.CIUDADES || [])[0] || 'QUITO'),
         rutas:     () => API.rutas(),
         proyecciones: () => API.proyecciones()
       };
@@ -724,8 +795,7 @@
 
     async guardarRutas(rutas) {
       const r = await post(rutas);
-      limpiarCache('rutas');
-      limpiarCache('monitor');
+      recalentar(['rutas', 'monitor']);
       return r;
     },
 
@@ -757,7 +827,7 @@
           nuevaListaIds:   String(cambio.listaIds || '')
         }]
       });
-      limpiarCache('rutas');
+      recalentar(['rutas']);
       return r;
     },
 
@@ -784,9 +854,42 @@
 
     async guardarProyeccion(p) {
       const r = await post({ action: 'save_proyeccion', ...p });
-      limpiarCache('proyecciones');
+      recalentar(['proyecciones']);
       return r;
     },
+
+    /* ---------------- Costo fijo de personal ----------------
+       La hoja «Costo Personal Operación» le pone a cada encargado de área
+       lo que cuesta su gente por día de operación (columna FC DÍA). No es
+       un costo del vehículo ni del pedido: se paga por abrir el día, así
+       que la Proyección se lo suma una sola vez a cada fecha.
+
+       Viaja dentro de getAllTarifas, así que leerla no cuesta una llamada
+       aparte. Si la hoja todavía no existe —o el Apps Script publicado aún
+       no la manda— esto devuelve una lista vacía y la Proyección sigue
+       funcionando igual, sin ese costo. */
+    async costoPersonal() {
+      const d = await tarifario();
+      const filas = (d && d.costoPersonal) || [];
+      return (Array.isArray(filas) ? filas : []).map(f => {
+        const o = Object.fromEntries(Object.entries(f).map(([k, v]) => [norm(k), v]));
+        return {
+          /* «FC DÍA» y «FC DIA» normalizan distinto —norm borra la tilde
+             en vez de convertirla—, así que se declaran las dos formas. */
+          fc:        aNum(campo(o, ['FC DÍA', 'FC DIA', 'FC', 'COSTO DÍA', 'COSTO DIA', 'COSTO'])),
+          area:      texto(campo(o, ['ÁREA', 'AREA', 'ZONA'])),
+          encargado: texto(campo(o, ['Encargados', 'ENCARGADO', 'RESPONSABLE']))
+        };
+      }).filter(x => x.encargado && x.fc > 0);
+    },
+
+    /** La fila que le toca a esta persona, o null si no es encargada de
+        ningún área (entonces no se le suma ningún costo fijo). */
+    async costoPersonalDe(sesion) {
+      return encargadoDe(await API.costoPersonal(), sesion);
+    },
+
+    encargadoDe,
 
     /**
      * Le pide al Apps Script que relea AHORA el Excel del monitor, sin esperar
@@ -828,4 +931,33 @@
   };
 
   global.API = API;
+
+  /* =====================================================================
+     PRECARGA AUTOMÁTICA
+     ------------------------------------------------------------------
+     `precargar()` existía pero nadie la llamaba, así que cada pantalla
+     pagaba de cero el costo fijo de Apps Script (~2 s por tabla): entrar al
+     Simulador, a Proyección o a Auditoría se sentía lento aunque el dato ya
+     se hubiera bajado minutos antes en otra pantalla.
+
+     Se dispara aquí, en cuanto este archivo se carga, sin esperar a que la
+     pantalla actual pida nada: como TODAS las pantallas cargan api.js, esto
+     corre sin importar por cuál se entró, y en reposo (requestIdleCallback),
+     así que no compite con el pintado de la pantalla que sí importa ahora.
+     Si la sesión no tiene el permiso de un módulo, esa tabla ni se pide.
+     ===================================================================== */
+  try {
+    const sesion = global.FX && FX.leerSesion && FX.leerSesion();
+    if (sesion) {
+      const permitidos = FX.permisosDe ? FX.permisosDe(sesion) : [];
+      const llaves = new Set(['rutas']);
+      // El tarifario y el monitor los usan Simulador, Proyección y Auditoría
+      if (['simcp', 'proyeccion', 'auditoria'].some(m => permitidos.includes(m))) {
+        llaves.add('tarifario'); llaves.add('monitor');
+      }
+      if (permitidos.includes('simcp'))      llaves.add('programacion');
+      if (permitidos.includes('proyeccion')) llaves.add('proyecciones');
+      API.precargar([...llaves], sesion.ciudad);
+    }
+  } catch (e) { /* sin sesión (pantalla de login) o FX no disponible: no hay nada que precargar */ }
 })(window);

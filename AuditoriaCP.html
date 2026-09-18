@@ -30,6 +30,11 @@
   .motivo.malo   { color: var(--danger); }
   .motivo.duda   { color: var(--ink-muted); }
 
+  /* ---- Quién puso el cobro ---- */
+  .tag.origen-manual  { color: var(--warn); border-color: var(--warn-line, var(--line)); }
+  .tag.origen-manual svg, .tag.origen-sistema svg { width: 12px; height: 12px; margin-right: 3px; }
+  .tag.origen-sistema { color: var(--ink-muted); }
+
   tr.cero td { background: var(--surface-inset); }
   tr.revisar td { background: var(--danger-soft) !important; }
   tr.revisar { box-shadow: inset 3px 0 0 var(--danger); }
@@ -133,28 +138,25 @@ FX.listo(async (sesion) => {
   let loQueSeVe = [];
 
   async function cargar() {
-    const [rutas] = await Promise.all([API.rutas(), API.tarifario()]);
-    RUTAS = rutas;
-    try {
-      const monitor = await API.monitorCompleto();
-      monitor.forEach(p => PORID.set(API.claveCodigo(p.idPedido), p));
-    } catch (e) {
-      monitorOk = false;   // se puede auditar igual, con menos detalle
-    }
+    // Las tres en paralelo: encadenarlas pagaba el costo fijo de Apps
+    // Script (~2 s) una vez por cada una, en vez de una sola vez las tres.
+    // Si vienes de otra pantalla, casi todas ya están tibias en caché.
+    const [rutas, , monitor] = await Promise.all([
+      API.rutas(),
+      API.tarifario(),
+      API.monitorCompleto().catch(() => { monitorOk = false; return []; })
+    ]);
+    // Un administrador audita cualquier carta porte; cualquier otro rol
+    // solo puede auditar las que él mismo cargó, así busque otro número.
+    RUTAS = FX.esAdministrador(sesion) ? rutas : FX.soloLoMio(rutas, sesion);
+    monitor.forEach(p => PORID.set(API.claveCodigo(p.idPedido), p));
   }
 
-  /* «1260842 - ($5.77)» → { id, cobrado } */
+  /* «1260842 - ($5.77)» → { id, cobrado, manual }. Un solo lector para
+     LISTA_IDS —el de api.js— para que Auditoría vea exactamente lo mismo
+     que ve el resto del sistema, incluida la marca de cobro manual. */
   function partir(lista) {
-    return String(lista == null ? '' : lista)
-      .split(',').map(t => t.trim()).filter(Boolean)
-      .map(trozo => {
-        const corte = trozo.indexOf('-');
-        const id  = (corte >= 0 ? trozo.slice(0, corte) : trozo).trim();
-        const val = corte >= 0 ? trozo.slice(corte + 1) : '';
-        const n = parseFloat(String(val).replace(/[()$\s]/g, '').replace(',', '.'));
-        return { id, cobrado: isFinite(n) ? n : 0 };
-      })
-      .filter(x => x.id);
+    return API.partirLista(lista).map(({ id, tarifa, manual }) => ({ id, cobrado: tarifa, manual }));
   }
 
   /** Cuándo se cargó la carta porte, legible.
@@ -412,9 +414,12 @@ FX.listo(async (sesion) => {
     return isFinite(n) ? Math.round(Math.abs(n) * 100) / 100 : null;
   }
 
-  /** Vuelve a armar la columna LISTA_IDS tal como la escribe el Simulador. */
+  /** Vuelve a armar la columna LISTA_IDS tal como la escribe el Simulador,
+      marcando manual el pedido que se corrigió aquí. Uno que no se tocó
+      conserva la marca que ya tenía —si el sistema lo cobró, sigue siendo
+      del sistema; si ya era una corrección anterior, sigue siendo manual—. */
   function armarLista(detalle) {
-    return detalle.map(d => `${d.id} - ($${(Number(d.cobrado) || 0).toFixed(2)})`).join(', ');
+    return detalle.map(d => API.formatoCobro(d.id, d.cobrado, !!d.manual)).join(', ');
   }
 
   /** Relee los campos de una ficha y actualiza total, estado y botones. */
@@ -461,11 +466,14 @@ FX.listo(async (sesion) => {
     if (!item) return;
     const campos = [...document.querySelectorAll(`.tarifa-edit[data-ficha="${i}"]`)];
 
-    // Se arma el detalle nuevo con lo que hay en pantalla
+    // Se arma el detalle nuevo con lo que hay en pantalla. El que cambia
+    // queda marcado manual: lo acaba de fijar una persona, no el motor.
     const nuevos = item.detalle.map((d, fila) => {
       const campo = campos.find(c => Number(c.dataset.fila) === fila);
       const n = campo ? leerMonto(campo.value) : null;
-      return { ...d, cobrado: n === null ? d.cobrado : n };
+      if (n === null) return d;
+      const cambio = Math.abs(n - d.cobrado) > 0.004;
+      return { ...d, cobrado: n, manual: cambio ? true : d.manual };
     });
 
     const cambiados = nuevos.filter((d, k) => Math.abs(d.cobrado - item.detalle[k].cobrado) > 0.004);
@@ -593,7 +601,7 @@ FX.listo(async (sesion) => {
        podría pisar otra carta porte. */
     const editable = puedeEditar && String(r.idRegistro || '').trim() !== '';
 
-    const cuerpo = detalle.map(({ id, cobrado, p, cero, motivo }, fila) => {
+    const cuerpo = detalle.map(({ id, cobrado, manual, p, cero, motivo }, fila) => {
       const f = { id, cobrado };
       const revisar = motivo && motivo.clase === 'malo';
       const celda = editable
@@ -606,14 +614,22 @@ FX.listo(async (sesion) => {
                     aria-label="Lo que se le cobró al pedido ${FX.escapar(f.id)}">
            </div>`
         : `<b class="${cero ? 'muted' : ''}">${FX.fmt.money(f.cobrado)}</b>`;
+      // «Manual» es lo que se corrigió a mano, en el Simulador o aquí mismo;
+      // sin la marca, lo puso el motor de tarifas.
+      const quienLoPuso = manual
+        ? `<span class="tag origen-manual" title="Alguien corrigió este cobro a mano">${FX.icono('edit')}Manual</span>`
+        : `<span class="tag origen-sistema" title="Lo calculó el motor de tarifas">${FX.icono('check')}Sistema</span>`;
       return `
         <tr class="${cero ? 'cero' : ''} ${revisar ? 'revisar' : ''}" data-fila="${fila}">
           <td><b class="mono">${FX.escapar(f.id)}</b></td>
           <td>${FX.escapar(p ? p.cliente : '—')}</td>
+          <td>${p ? `<span class="tag">${FX.escapar(p.servicio || 'NORMAL')}</span>` : '<span class="muted">—</span>'}</td>
+          <td>${p ? FX.escapar(p.origen || '—') : '<span class="muted">—</span>'}</td>
           <td>${p ? `<span class="tag">${FX.escapar(p.destino)}</span>` : '<span class="muted">—</span>'}</td>
           <td class="num">${p ? FX.fmt.dec(p.peso, 1) + '<span class="muted fs-xs"> kg</span>' : '—'}</td>
           <td class="num muted">${p ? p.bultos : '—'}</td>
           <td class="num">${celda}</td>
+          <td>${quienLoPuso}</td>
           <td>${motivo
             ? `<span class="motivo ${motivo.clase}">${FX.icono(motivo.icono)}${FX.escapar(motivo.texto)}</span>`
             : ''}</td>
@@ -690,17 +706,17 @@ FX.listo(async (sesion) => {
           <table class="data">
             <thead>
               <tr>
-                <th>Pedido</th><th>Cliente</th><th>Destino</th>
+                <th>Pedido</th><th>Cliente</th><th>Servicio</th><th>Origen</th><th>Destino</th>
                 <th class="num">Peso</th><th class="num">Bultos</th>
-                <th class="num">Se cobró</th><th>Por qué en cero</th>
+                <th class="num">Se cobró</th><th>Quién lo puso</th><th>Por qué en cero</th>
               </tr>
             </thead>
             <tbody>${cuerpo}</tbody>
             <tfoot>
               <tr>
-                <td colspan="5"><b>Total</b></td>
+                <td colspan="7"><b>Total</b></td>
                 <td class="num"><b id="suma-${indice}">${FX.fmt.money(sumaPedidos)}</b></td>
-                <td></td>
+                <td colspan="2"></td>
               </tr>
             </tfoot>
           </table>
@@ -833,14 +849,14 @@ FX.listo(async (sesion) => {
       if (perdido > 0) lineas.push(['Cobros en cero que hoy se cobrarían', dec(perdido)]);
       lineas.push([]);
 
-      lineas.push(['Pedido', 'Cliente', 'Destino', 'Peso (kg)', 'Bultos',
-                   'Se cobró', 'Por qué en cero']);
-      detalle.forEach(({ id, cobrado, p, motivo }) => {
-        lineas.push([id, p ? p.cliente : '', p ? p.destino : '',
-                     p ? dec(p.peso) : '', p ? p.bultos : '',
-                     dec(cobrado), motivo ? motivo.texto : '']);
+      lineas.push(['Pedido', 'Cliente', 'Servicio', 'Origen', 'Destino', 'Peso (kg)', 'Bultos',
+                   'Se cobró', 'Quién lo puso', 'Por qué en cero']);
+      detalle.forEach(({ id, cobrado, manual, p, motivo }) => {
+        lineas.push([id, p ? p.cliente : '', p ? (p.servicio || 'NORMAL') : '', p ? p.origen : '',
+                     p ? p.destino : '', p ? dec(p.peso) : '', p ? p.bultos : '',
+                     dec(cobrado), manual ? 'Manual' : 'Sistema', motivo ? motivo.texto : '']);
       });
-      lineas.push(['TOTAL', '', '', '', '', dec(sumaPedidos), '']);
+      lineas.push(['TOTAL', '', '', '', '', '', '', dec(sumaPedidos), '', '']);
       lineas.push([]);
       lineas.push([]);
     });

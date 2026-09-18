@@ -155,8 +155,9 @@
   }
 
   // --- Puntos de valor (se arman desde el catálogo de módulos: una sola fuente) ---
+  // Sin página es un permiso, no una pantalla: no es un punto de valor para mostrar aquí.
   document.getElementById('puntos').innerHTML = FX.MODULOS
-    .filter(m => !m.fijo)
+    .filter(m => !m.fijo && m.pagina)
     .map(m => `<li>${FX.icono(m.icono)}<div><b>${m.nombre}</b><span>${m.resumen}</span></div></li>`)
     .join('');
 

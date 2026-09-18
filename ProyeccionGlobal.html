@@ -266,6 +266,49 @@ FX.listo(async (sesion) => {
      recalcularla al pintar ni al exportar. */
   let detalle = [];
 
+  /* ================= Costo fijo de personal =================
+     La hoja «Costo Personal Operación» le pone a cada encargado de área lo
+     que le cuesta su gente por día (FC DÍA). No depende de los pedidos ni
+     de la flota: se paga por abrir el día, así que entra UNA VEZ por fecha.
+
+     Si el mismo encargado ya guardó una proyección para esa fecha, ese
+     costo ya quedó contemplado ahí y no se vuelve a sumar: cobrarlo dos
+     veces inventaría un gasto que no existe. Al día siguiente vuelve a
+     entrar, porque es otro día de operación.
+
+     Quien no está en la hoja no tiene costo fijo y no ve nada de esto. */
+  let miCosto = null;         // { fc, area, encargado } de quien está usando la pantalla
+  let misProyecciones = [];   // las ya guardadas, para saber qué fechas ya lo llevan
+
+  const mismaPersona = (a, b) => {
+    const k = s => String(s == null ? '' : s).trim().toUpperCase().replace(/\s+/g, '');
+    return !!k(a) && k(a) === k(b);
+  };
+
+  /** ¿Esta fecha ya lleva el costo fijo, por una proyección anterior mía? */
+  function yaLoLleva(fecha) {
+    return misProyecciones.some(p =>
+      p.fecha === fecha &&
+      (mismaPersona(p.usuario, sesion.usuario) || mismaPersona(p.usuario, sesion.nombre)));
+  }
+
+  async function cargarCostoPersonal() {
+    try {
+      const [fila, guardadas] = await Promise.all([
+        API.costoPersonalDe(sesion).catch(() => null),
+        API.proyecciones().catch(() => [])
+      ]);
+      miCosto = fila;
+      misProyecciones = guardadas;
+      pintar();
+    } catch (e) { /* sin hoja de costo de personal la pantalla funciona igual */ }
+  }
+
+  /** Relee las proyecciones guardadas y repinta. Se llama después de guardar. */
+  async function refrescarProyecciones() {
+    try { misProyecciones = await API.proyecciones(); pintar(); } catch (e) {}
+  }
+
   let flota = [
     { tipo: TIPOS_UNICOS[0].tipo, cantidad: 1, costo: TIPOS_UNICOS[0].costo }
   ];
@@ -384,8 +427,14 @@ FX.listo(async (sesion) => {
     const cobraAdic = adicionales.filter(a => a.paga)
                                  .reduce((s, a) => s + (Number(a.costo) || 0), 0);
 
+    /* Costo fijo del encargado: entra completo la primera vez que proyecta
+       esa fecha, y en cero cuando ya lo llevó una proyección anterior suya
+       del mismo día. */
+    const yaCubierto   = !!miCosto && yaLoLleva($('fecha').value);
+    const costoPersonal = miCosto && !yaCubierto ? miCosto.fc : 0;
+
     const ingresos = pedidos * tarifa + cobraEstibas + cobraAdic;
-    const costos   = costoFlota + extras + costoEstibas + costoAdic;
+    const costos   = costoFlota + extras + costoEstibas + costoAdic + costoPersonal;
     const utilidad = ingresos - costos;
     const margen   = ingresos > 0 ? (utilidad / ingresos) * 100 : 0;
 
@@ -395,6 +444,7 @@ FX.listo(async (sesion) => {
     return {
       pedidos, tarifa, extras, vehiculos, costoFlota,
       costoEstibas, cobraEstibas, costoAdic, cobraAdic,
+      costoPersonal, yaCubierto,
       ingresos, costos, utilidad, margen, equilibrio,
       porVehiculo: vehiculos ? pedidos / vehiculos : 0,
       costoPorPedido: pedidos ? costos / pedidos : 0
@@ -540,6 +590,12 @@ FX.listo(async (sesion) => {
     $('desglose').innerHTML = `
       <div class="dato"><span>Ingreso proyectado</span><b class="c-ingreso">${FX.fmt.money(c.ingresos)}</b></div>
       <div class="dato"><span>Costo de flota (${c.vehiculos} vehículos)</span><b class="c-costo">${FX.fmt.money(c.costoFlota)}</b></div>
+      ${c.costoPersonal ? `<div class="dato"><span>Personal de operación
+        <span class="fs-xs muted">${FX.escapar(miCosto.area)} · una vez al día</span></span>
+        <b class="c-costo">${FX.fmt.money(c.costoPersonal)}</b></div>` : ''}
+      ${c.yaCubierto ? `<div class="dato"><span>Personal de operación
+        <span class="fs-xs c-ok">ya lo lleva tu proyección de esta fecha</span></span>
+        <b class="muted">${FX.fmt.money(0)}</b></div>` : ''}
       ${c.costoEstibas ? `<div class="dato"><span>Estibas${
         c.cobraEstibas ? ' <span class="fs-xs c-ok">las paga el cliente</span>' : ''
       }</span><b class="c-costo">${FX.fmt.money(c.costoEstibas)}</b></div>` : ''}
@@ -576,6 +632,9 @@ FX.listo(async (sesion) => {
   ['pedidos', 'tarifa', 'extras', 'estibas', 'precioEstiba']
     .forEach(id => $(id).addEventListener('input', pintar));
   $('cobraEstibas').addEventListener('change', pintar);
+  /* Cambiar la fecha puede meter o sacar el costo fijo de personal: es otro
+     día de operación, o uno que ya lo lleva. */
+  $('fecha').addEventListener('change', pintar);
 
   $('btnAdic').innerHTML = FX.icono('plus') + ' Agregar';
   $('btnAdic').onclick = () => {
@@ -638,7 +697,9 @@ FX.listo(async (sesion) => {
   /* ================= Contra la realidad ================= */
   let promedioReal = null;
   try {
-    const rutas = await API.rutas();
+    // Un administrador se compara contra toda la operación; cualquier otro
+    // rol se compara solo contra lo que él mismo cargó.
+    const rutas = FX.soloLoMio(await API.rutas(), sesion);
     const desde = new Date(); desde.setDate(desde.getDate() - 30);
     const recientes = rutas.filter(r => r.fecha >= desde.toISOString().slice(0, 10));
 
@@ -704,23 +765,47 @@ FX.listo(async (sesion) => {
     const c = calcular();
     if (!c.vehiculos) return FX.toast('Agrega al menos un vehículo a la flota.', 'warn');
 
+    const fecha = $('fecha').value || FX.fmt.hoy();
+    const quien = sesion.usuario || sesion.nombre;
+
+    /* El costo fijo de personal queda escrito en el detalle: así, mirando la
+       hoja, se entiende por qué la proyección del primer turno del día cuesta
+       más que las siguientes. */
+    const detalleFlota = [
+      flota.map(f => `${f.cantidad}× ${f.tipo}`).join(' | '),
+      c.costoPersonal ? `Personal ${miCosto.area} $${c.costoPersonal.toFixed(2)}` : ''
+    ].filter(Boolean).join(' | ');
+
     const liberar = FX.ocupar(this, 'Guardando…');
+    let guardada = false;
     try {
       await API.guardarProyeccion({
-        fecha: $('fecha').value || FX.fmt.hoy(),
+        fecha,
         ciudad: $('ciudad').value || sesion.ciudad || '',
         totalPedidos: c.pedidos,
         ingresosProyectados: Math.round(c.ingresos * 100) / 100,
         costoFlota: Math.round(c.costos * 100) / 100,
         utilidad: Math.round(c.utilidad * 100) / 100,
         vehiculos: c.vehiculos,
-        detalleFlota: flota.map(f => `${f.cantidad}× ${f.tipo}`).join(' | '),
-        usuario: sesion.usuario || sesion.nombre
+        detalleFlota,
+        usuario: quien
       });
-      FX.toast('Proyección guardada.', 'ok');
+      guardada = true;
+      FX.toast(c.costoPersonal
+        ? `Proyección guardada, con el costo de personal de ${miCosto.area}.`
+        : 'Proyección guardada.', 'ok');
     } catch (err) {
       FX.toast(err.message || 'No se pudo guardar.', 'danger');
     } finally { liberar(); }
+
+    if (guardada) {
+      /* Esa fecha ya lleva el costo fijo. Se anota de una para que la
+         pantalla lo muestre sin esperar a que vuelva la base, y detrás se
+         relee de verdad para no quedar con un dato inventado. */
+      misProyecciones.push({ fecha, usuario: quien });
+      pintar();
+      refrescarProyecciones();
+    }
   };
 
   /* ================= Historial ================= */
@@ -729,7 +814,8 @@ FX.listo(async (sesion) => {
     $('cuerpoHist').innerHTML = '<div class="skel" style="height:80px"></div>';
     dlg.showModal();
     try {
-      const lista = (await API.proyecciones()).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+      const lista = FX.soloLoMio(await API.proyecciones(), sesion)
+        .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
       $('cuerpoHist').innerHTML = lista.length ? `
         <div class="table-wrap"><table class="data">
           <thead><tr><th>Fecha</th><th class="num">Pedidos</th><th class="num">Ingreso</th><th class="num">Costo</th><th class="num">Utilidad</th></tr></thead>
@@ -753,6 +839,9 @@ FX.listo(async (sesion) => {
   pintarFlota();
   pintarAdicionales();
   pintar();
+  /* Sin await: la pantalla ya está pintada y esto la completa cuando llega.
+     Si la hoja de costo de personal no existe todavía, no cambia nada. */
+  cargarCostoPersonal();
 });
 </script>
 </body>

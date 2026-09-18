@@ -153,6 +153,30 @@
     return n.includes('hector torres') || n === 'hector' || l === 'hector';
   }
 
+  /** Un administrador ve los datos de todos; cualquier otro rol solo ve
+      lo que él mismo subió. Se usa para filtrar Dashboard, Auditoría y
+      Proyección, no solo para dar o quitar el acceso a una pantalla. */
+  function esAdministrador(u) {
+    if (!u) return false;
+    if (esSupremo(u)) return true;
+    return String(u.rol || '').toLowerCase().includes('admin');
+  }
+
+  /** Filtra una lista de filas según quién puede verlas: un administrador
+      se queda con todas, cualquier otro solo con las que él mismo cargó
+      —comparando `campo` (por defecto «usuario») contra su login—.
+      Se aplica apenas se bajan los datos, antes de armar filtros, gráficos
+      o exportaciones, para que nadie pueda mirar lo de otro cambiando un
+      desplegable o escribiendo otra carta porte a mano. */
+  function soloLoMio(lista, u, campo) {
+    campo = campo || 'usuario';
+    if (!Array.isArray(lista)) return lista;
+    if (esAdministrador(u)) return lista;
+    const mio = String(u && u.usuario || '').toLowerCase().trim();
+    if (!mio) return [];
+    return lista.filter(x => String(x && x[campo] || '').toLowerCase().trim() === mio);
+  }
+
   // ======================================================================
   // PERMISOS
   // ======================================================================
@@ -730,7 +754,7 @@
   global.FX = {
     MODULOS, CLAVES, PERFILES,
     icono, escapar, fmt, aNumero, ciudades, opcionesCiudad,
-    leerSesion, guardarSesion, cerrarSesion, esSupremo,
+    leerSesion, guardarSesion, cerrarSesion, esSupremo, esAdministrador, soloLoMio,
     permisosDe, parsePermisos, serializarPermisos, perfilPorRol, puede, modulo,
     toast, confirmar, pedir, dialogo, ocupar, campoCodigos,
     alternarTema, montar, paginaActual, ir,

@@ -733,7 +733,8 @@ FX.listo(async (sesion) => {
     };
 
     $('subtitulo').textContent =
-      `${FX.fmt.num(a.rutas)} cartas porte y ${FX.fmt.num(a.ped)} pedidos en ${diasOperados} días operados.`;
+      `${FX.fmt.num(a.rutas)} cartas porte y ${FX.fmt.num(a.ped)} pedidos en ${diasOperados} días operados.` +
+      (esAdmin ? '' : ' Solo se muestra lo que tú registraste.');
   }
 
   /**
@@ -1013,6 +1014,18 @@ FX.listo(async (sesion) => {
   } catch (err) {
     $('contenido').innerHTML = `<div class="note danger">${FX.icono('alert')}<div>No se pudieron cargar los datos: ${FX.escapar(err.message)}</div></div>`;
     return;
+  }
+
+  /* Quién puede ver qué: un administrador ve la operación completa, cualquier
+     otro rol solo lo que él mismo cargó. Se filtra aquí, apenas llega el
+     dato, para que ningún filtro ni exportación pueda mostrar lo de otro. */
+  const esAdmin = FX.esAdministrador(sesion);
+  if (!esAdmin) {
+    TODAS = FX.soloLoMio(TODAS, sesion);
+    PROYECCIONES = FX.soloLoMio(PROYECCIONES, sesion);
+    $('subtitulo').textContent = 'Solo se muestra lo que tú registraste. Un administrador ve la operación completa.';
+    const campoUsuario = $('filtroUsuario').closest('.field');
+    if (campoUsuario) campoUsuario.style.display = 'none';
   }
 
   /* ==================================================================

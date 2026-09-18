@@ -795,6 +795,10 @@ FX.listo(async (sesion) => {
       const gi = +t.dataset.g, pi = +t.dataset.p;
       const g = grupos[gi], p = g.pedidos[pi];
       p.tarifaFinal = Math.max(0, FX.aNumero(t.value));
+      // Escribir en el campo ya es una corrección manual, aunque el número
+      // que quede coincida con el automático (lo pudo escribir para
+      // comprobarlo). Ver la nota en `tocada`, arriba, en la carga.
+      p.tocada = true;
       const editada = Math.abs(p.tarifaFinal - p.tarifaAuto) > 0.005;
 
       // El mismo pedido aparece en la tarjeta y en el panel de revisión.
@@ -865,6 +869,7 @@ FX.listo(async (sesion) => {
     if (reset) {
       const g = grupos[+reset.dataset.g], p = g.pedidos[+reset.dataset.p];
       p.tarifaFinal = p.tarifaAuto;
+      p.tocada = false;   // se deshizo la corrección: vuelve a ser del sistema
       pintarTodo();
       return;
     }
@@ -1170,6 +1175,15 @@ FX.listo(async (sesion) => {
           ...p,
           trayecto: t.trayecto,
           tarifaAuto: t.total, tarifaFinal: t.total,
+          /* `tocada`: la persona escribió en este campo, sin importar si el
+             número que puso terminó siendo el mismo que calculó el motor.
+             Es la marca que se guarda como «manual» — a diferencia de
+             `editada` (más abajo, visual), que solo avisa cuando el valor
+             final QUEDA distinto del automático. Alguien puede escribir a
+             mano el mismo número que ya calculó el sistema —porque lo
+             verificó, o por coincidencia— y eso sigue siendo un cobro
+             puesto a mano, no uno que el sistema generó solo. */
+          tocada: false,
           origenTarifa: t.origen, detalleTarifa: t.detalle,
           sinTarifa: t.sinTarifa, provisional: !!t.provisional, sinCargo: !!t.sinCargo,
           yaCobrado: !!t.yaCobrado, cobradoEn: t.cobradoEn || null, recobrado: !!t.recobrado,
@@ -1274,8 +1288,13 @@ FX.listo(async (sesion) => {
              quedar en el histórico. Que vayan en $0,00 no crea un doble cobro,
              porque el registro solo bloquea futuros cobros cuando la tarifa
              guardada fue mayor que cero. */
+          /* Se marca manual el pedido que alguien tocó en el panel —campo
+             `tocada`—, así haya quedado con el mismo número que calculó el
+             motor. Auditoría lo lee después para decir si ese cobro lo
+             puso el sistema o una persona. */
           listaIds: g.pedidos.filter(p => !p.anulado)
-                             .map(p => `${p.idPedido} - ($${p.tarifaFinal.toFixed(2)})`).join(', '),
+                             .map(p => API.formatoCobro(p.idPedido, p.tarifaFinal, !!p.tocada))
+                             .join(', '),
           /* Columna «Peso» de DB_Simulador: el peso total de la carta porte. */
           pesoTotal: Math.round(g.pedidos.filter(p => !p.anulado)
                                  .reduce((t, p) => t + (Number(p.peso) || 0), 0) * 100) / 100,
